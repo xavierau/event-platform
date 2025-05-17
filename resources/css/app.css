@@ -185,3 +185,123 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom global scrollbar style for tab-like navigation elements */
+/* Intended for horizontally scrolling <nav> elements used for tabs */
+nav::-webkit-scrollbar {
+  height: 2px;
+  background-color: transparent; /* Optional: if you want the track transparent */
+}
+
+nav::-webkit-scrollbar-thumb {
+  background-color: #a855f7; /* Tailwind's purple-500 */
+  border-radius: 2px; /* Optional: if you want rounded thumbs */
+}
+
+/* Firefox scrollbar styling (less control than WebKit) */
+nav {
+  scrollbar-width: thin; /* "auto" or "thin"  */
+  scrollbar-color: #a855f7 transparent; /* thumb and track color */
+}
+
+/* Custom form component classes */
+.label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+}
+
+.input {
+    @apply mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm;
+}
+
+.input-sm {
+    @apply mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm text-sm;
+}
+
+.input-error {
+    @apply text-sm text-red-600 dark:text-red-400 mt-1;
+}
+
+.btn {
+    @apply inline-flex items-center px-4 py-2 border border-transparent rounded-md font-semibold text-xs uppercase tracking-widest transition ease-in-out duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+}
+
+.btn-primary {
+    @apply bg-indigo-600 text-white hover:bg-indigo-500 active:bg-indigo-700 focus:ring-indigo-500;
+}
+
+.btn-secondary {
+    @apply bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-indigo-500;
+}
+
+/* TipTap RichTextEditor specific styles */
+.btn-toolbar {
+    @apply px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded mr-1 mb-1 hover:bg-gray-100 dark:hover:bg-gray-700;
+}
+
+.btn-toolbar.is-active {
+    @apply bg-indigo-500 text-white;
+}
+
+/* Base styling for ProseMirror (TipTap editor content area) */
+.ProseMirror {
+    min-height: 150px;
+    @apply p-3 focus:outline-none;
+}
+
+.ProseMirror p {
+    margin-bottom: 0.75em;
+}
+
+.ProseMirror p:last-child {
+    margin-bottom: 0;
+}
+
+/* TipTap Toolbar Divider */
+.toolbar-divider {
+  @apply inline-block w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1 align-middle;
+}
+
+/* Responsive YouTube Embeds in TipTap Editor */
+.ProseMirror iframe[src*="youtube.com"],
+.ProseMirror iframe[src*="youtube-nocookie.com"] {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: none;
+}
+
+/* Responsive Images in TipTap Editor */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block; /* Helps with consistent rendering and margin auto */
+  margin-left: auto; /* Optional: center block images */
+  margin-right: auto; /* Optional: center block images */
+}
+
+/* Style for selected image node in TipTap */
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 3px solid #68BBE3; /* Example: blue outline */
+  /* Or use Tailwind focus ring utilities if preferred and can be applied dynamically */
+}
+
+/* Add other common ProseMirror element styles as needed (e.g., h1, h2, ul, ol, blockquote) */
+
+/* Global style for common input types, select, and textarea */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+input[type="time"],
+select,
+textarea {
+  @apply p-1;
+}

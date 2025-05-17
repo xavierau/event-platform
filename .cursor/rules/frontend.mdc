@@ -1,0 +1,83 @@
+---
+description:
+globs: *.vue,*.js,*.ts
+alwaysApply: false
+---
+# Frontend Development Conventions
+
+This document outlines key conventions for frontend development in this Laravel 12 Event Platform project, primarily focusing on Inertia.js with Vue.
+
+## Layouts
+
+-   **Admin Layout**: For all authenticated sections within the admin panel, the primary layout component to use is `resources/js/Layouts/AppLayout.vue`. Ensure all admin Inertia pages correctly import and utilize this layout.
+
+    ```vue
+    <script setup lang="ts">
+    import AppLayout from '@/Layouts/AppLayout.vue';
+    // ... other imports
+    </script>
+
+    <template>
+        <AppLayout>
+            <template #header>
+                <!-- Page specific header -->
+            </template>
+
+            <!-- Page content -->
+
+        </AppLayout>
+    </template>
+    ```
+
+## Design Principles
+
+-   **Mobile-First Design**: The application is designed with a mobile-first approach. Ensure that UIs are responsive and provide an excellent experience on smaller screens before adapting to larger displays.
+-   **Reusable Components**: Build the frontend with a strong emphasis on creating and utilizing reusable UI components. This promotes consistency, a unified layout, and development efficiency. Components should be designed for flexibility and composability.
+
+## Admin CRUD Interfaces
+
+-   **Standardized Structure**: For entities requiring administrative management (CRUD operations), the corresponding Inertia.js Vue components are typically located in `resources/js/Pages/Admin/{EntityName}/`.
+-   **Common Pages**: This usually includes:
+    -   `Index.vue`: For listing entities, providing search/filter functionality, and actions like delete.
+    -   `Create.vue`: A form for creating a new entity.
+    -   `Edit.vue`: A form for updating an existing entity, pre-filled with its data.
+-   **Interaction**: These components interact with the backend through defined Actions and Services, via their respective Controllers (e.g., `app/Http/Controllers/Admin/{EntityName}Controller.php`).
+-   **Layout Usage**: All these admin CRUD pages must use the `AppLayout.vue` as described above.
+
+## Styling
+
+-   **Tailwind CSS**: The project utilizes Tailwind CSS for styling. Adhere to Tailwind's utility-first approach.
+-   **Global Styles**: Global styles or overrides are located in `resources/css/app.css`.
+
+Refer to [vite.config.ts](mdc:vite.config.ts) for frontend build configuration and aliases (e.g., `@` pointing to `resources/js`).
+
+## Rich Text Editor (TipTap)
+
+-   **Editor Choice**: The project will use **TipTap** (via `@tiptap/vue-3` and relevant extensions) as the primary rich text editor.
+-   **Reusable Component**: The TipTap editor will be wrapped into a reusable Vue component (e.g., `resources/js/Components/Form/RichTextEditor.vue`) to ensure consistency and ease of use across different forms.
+-   **Intended Use**: This rich editor component is intended for fields requiring formatted text input, such as `description` fields (e.g., for Venues, Events) and potentially `summary` fields or other similar long-form text areas across various entities.
+-   **Key Features**: The editor integration will aim to support:
+    -   Basic text formatting (bold, italic, lists, headings, etc.).
+    -   Image uploading and insertion (managed through a custom backend endpoint).
+    -   YouTube video embedding.
+-   **Customization**: TipTap's headless nature allows for a custom toolbar and UI to be built using Tailwind CSS, ensuring it matches the application's design system.
+-   **Content Handling**: The output from the editor will typically be HTML. Server-side sanitization (e.g., using HTMLPurifier) will be crucial before storing the content in the database.
+
+## Page Headers: Title & Breadcrumbs
+
+-   **Purpose**: To provide clear context and navigation for users on every page within the admin panel.
+-   **Key Components**:
+    -   **`AppLayout.vue`** (`resources/js/Layouts/AppLayout.vue`): The primary layout for admin pages. It accepts `pageTitle` (string) and `breadcrumbs` (array) as props.
+    -   **`AppSidebarLayout.vue`** (`resources/js/layouts/app/AppSidebarLayout.vue`): An inner layout component utilized by `AppLayout.vue`. It receives `pageTitle` and `breadcrumbs` and passes them to `AppSidebarHeader.vue`.
+    -   **`AppSidebarHeader.vue`** (`resources/js/components/AppSidebarHeader.vue`): This component is responsible for rendering the `pageTitle` (typically as an `<h1>` HTML element) and the breadcrumb navigation.
+    -   **`Breadcrumbs.vue`** (`resources/js/components/Breadcrumbs.vue`): The component that renders the actual list of breadcrumb links.
+-   **Data Flow & Structure**:
+    -   Laravel controller methods that render Inertia pages must pass `pageTitle` and `breadcrumbs` data to the view.
+    -   `pageTitle`: A string representing the main title of the page (e.g., "Create New Venue", "Site Settings").
+    -   `breadcrumbs`: An array of objects, where each object represents a link in the breadcrumb trail.
+        -   Example: `[{ text: 'Admin Dashboard', href: route('admin.dashboard') }, { text: 'Venues', href: route('admin.venues.index') }, { text: 'Create New Venue' }]`
+        -   The last item in the array, representing the current page, typically does not have an `href` property.
+-   **Usage**:
+    -   The `pageTitle` should be prominently displayed in the header area of the page.
+    -   Breadcrumbs should provide a clear navigational path from the main dashboard to the current page.
+    -   All Inertia pages within the admin section must be updated to provide these props through their respective controllers to ensure a consistent header and navigation experience.

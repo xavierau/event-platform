@@ -3,7 +3,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Link } from '@inertiajs/vue3';
 
 interface BreadcrumbItem {
-    title: string;
+    text: string;
     href?: string;
 }
 
@@ -18,11 +18,11 @@ defineProps<{
             <template v-for="(item, index) in breadcrumbs" :key="index">
                 <BreadcrumbItem>
                     <template v-if="index === breadcrumbs.length - 1">
-                        <BreadcrumbPage>{{ item.title }}</BreadcrumbPage>
+                        <BreadcrumbPage>{{ item.text }}</BreadcrumbPage>
                     </template>
                     <template v-else>
                         <BreadcrumbLink as-child>
-                            <Link :href="item.href ?? '#'">{{ item.title }}</Link>
+                            <Link :href="item.href ?? '#'">{{ item.text }}</Link>
                         </BreadcrumbLink>
                     </template>
                 </BreadcrumbItem>
