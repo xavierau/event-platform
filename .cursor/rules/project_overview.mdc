@@ -60,6 +60,7 @@ Following the creation of an entity model, migrations, and seeders, the typical 
 - **Mobile-First Design**: The application is designed with a mobile-first approach, ensuring a seamless experience on smaller screens before scaling up to larger displays.
 - **Reusable Components**: The frontend will be built with a strong emphasis on creating and utilizing reusable UI components. This ensures a consistent user experience, unified layout, and efficient development. Components should be designed for flexibility and composability.
 - **Standardized CRUD Interfaces**: For entities requiring management, corresponding Inertia.js Vue components (e.g., `Index.vue`, `Create.vue`, `Edit.vue` pages) are typically created in the `resources/js/Pages/Admin/{Entity}` directory. These components interact with the backend through the defined Actions and Services via their respective Controllers.
+- **Further Frontend Conventions**: For more detailed frontend conventions, including handling complex forms with translatable data and file uploads, refer to the [frontend.mdc](mdc:.cursor/rules/frontend.mdc) rule file.
 
 ## Project Requirements and Tasks:
 - Project requirements and documentation are located in the `prd/` directory.
@@ -78,10 +79,10 @@ Several key libraries are utilized in this project, each influencing design and 
 
 - **`spatie/laravel-translatable`**:
     - **Purpose**: Provides an easy way to manage translatable model attributes.
-    - **Design Implication**: Model fields intended for translation (e.g., name, description) must be defined as `JSON` type in database migrations. When accessing these attributes on a model, the library automatically provides the translation for the current application locale. Data for these fields is typically saved as a JSON object with locale keys (e.g., `{"en": "English Text", "zh-TW": "繁體中文文本"}`).
-    - **Note on DTO Hydration**: When hydrating a `Spatie\LaravelData\Data` DTO from a model with translatable fields, if the DTO expects these fields as arrays, it's crucial to ensure proper data transformation. Best practice involves:
-        1. Explicitly casting the translatable attribute to `'array'` in the model's `$casts` property (e.g., `protected $casts = ['name' => 'array'];`).
-        2. In the controller or service, convert the model to an array before passing it to the DTO's `from()` method (e.g., `YourData::from($model->toArray())`). This ensures all accessors and casts are applied correctly.
+    - **Design Implication**: Model fields intended for translation (e.g., name, description) must be defined as `JSON` type in database migrations. When accessing these attributes on a model, the library automatically provides the translation for the current application locale. Data for these fields is typically saved as a JSON object with locale keys (e.g., `{"en": "English Text", "zh-TW": "繁體中文文本"}`). The model must use the `Spatie\Translatable\HasTranslations` trait and define a `public array $translatable` property listing the translatable fields.
+    - **Note on DTO Hydration and Interaction**:
+        - When hydrating a `Spatie\LaravelData\Data` DTO from a model with translatable fields, if the DTO expects these fields as arrays (which is the recommended approach for consistency), ensure proper data transformation. This typically involves casting the translatable attribute to `'array'` in the model's `$casts` property (e.g., `protected $casts = ['name' => 'array'];`) and then converting the model to an array before DTO hydration (e.g., `YourData::from($model->toArray())`).
+        - When a DTO receives data for translatable fields (e.g., from a frontend form), it should ideally receive it as a nested array (e.g., `name: {'en': 'Name EN', ...}`). This DTO then passes this structure to the action/service layer, which in turn provides it to the Eloquent model. `spatie/laravel-translatable` handles the persistence of this array into the JSON database column.
 
 - **`spatie/laravel-permission`**:
     - **Purpose**: Manages user roles and permissions.
@@ -89,14 +90,24 @@ Several key libraries are utilized in this project, each influencing design and 
 
 - **`spatie/laravel-data`**:
     - **Purpose**: Enables the creation of rich, type-safe Data Transfer Objects (DTOs).
-    - **Design Implication**: DTOs are typically created in `app/DataTransferObjects` and extend `Spatie\LaravelData\Data`. This library facilitates easy creation of DTOs from various sources (e.g., HTTP requests, Eloquent models), handles data validation and casting, and promotes clear data contracts between different layers of the application (e.g., from Controllers to Services/Actions). Translatable fields within DTOs are often represented as arrays with locale keys.
+    - **Design Implication**: DTOs are typically created in `app/DataTransferObjects` and extend `Spatie\LaravelData\Data`. This library facilitates easy creation of DTOs from various sources (e.g., HTTP requests, Eloquent models), handles data validation and casting, and promotes clear data contracts between different layers of the application.
+    - **Translatable Fields in DTOs**: For fields that are translatable (managed by `spatie/laravel-translatable` in the model), the DTO should define these properties as `array` type (e.g., `public readonly array $name;`). Validation rules in the DTO should then target specific locales within this array (e.g., `rules() { return ['name.en' => 'required|string']; }`).
+    - **Interaction with Frontend Forms (e.g., Inertia.js)**:
+        - When receiving data from frontend forms, especially for complex scenarios involving translatable fields and file uploads, it's crucial that the structure of data submitted by the frontend aligns with the DTO's expected structure.
+        - For translatable fields, the frontend (e.g., using `form.transform()` in Inertia.js) should send data as nested objects/arrays (e.g., `name: {'en': 'Name EN', 'zh-TW': '名稱繁體'}`). The DTO, structured as mentioned above, can then be hydrated directly using `YourData::from($request->all())`.
+        - For detailed frontend conventions on preparing this data, see [frontend.mdc](mdc:.cursor/rules/frontend.mdc).
     - **Note on Hydrating from Translatable Models**: When creating a DTO from an Eloquent model that uses `spatie/laravel-translatable` for fields expected as arrays in the DTO (e.g., `public readonly array $name`), ensure the model data is correctly transformed. It's recommended to:
         1. Cast the translatable field to `'array'` in the Eloquent model's `$casts` property.
-        2. Convert the model instance to an array using `$model->toArray()` before passing it to the DTO's `from()` method (e.g., `YourData::from($model->toArray())`). This helps avoid TypeErrors where a JSON string might be passed instead of an array.
+        2. Convert the model instance to an array using `$model->toArray()` before passing it to the DTO's `from()` method (e.g., `YourData::from($model->toArray())`). This helps avoid TypeErrors.
+
+- **`spatie/laravel-medialibrary`**:
+    - **Purpose**: Provides a robust and easy-to-use system for associating files with Eloquent models.
+    - **Design Implication**: Models that need to manage media (e.g., images, documents) should implement the `Spatie\MediaLibrary\HasMedia` interface and use the `Spatie\MediaLibrary\InteractsWithMedia` trait. This replaces manual management of file paths or JSON-encoded image lists in model attributes. Media are organized into collections.
+    - **Usage with DTOs**: In DTOs, uploaded files are typically instances of `Illuminate\Http\UploadedFile` (e.g., `public readonly ?UploadedFile $uploaded_main_image;`). Actions/Services then use methods like `$model->addMedia($uploadedFile)->toMediaCollection('collection_name');`. For displaying existing media, DTOs can hold instances of `MediaData` objects (a custom DTO representing `Spatie\MediaLibrary\MediaCollections\Models\Media`) or arrays of such objects.
 
 - **`laravel/cashier`** (Stripe - *Note: Assumed for future use as it's not yet installed*):
     - **Purpose**: Offers an expressive, fluent interface to Stripe's subscription billing services.
-    - **Design Implication**: The `User` model (or other billable models) must use the `Billable` trait. This typically adds several columns to the users table (e.g., `stripe_id`, `pm_type`, `pm_last_four`, `trial_ends_at`). It simplifies tasks like creating and managing subscriptions, handling payment methods, and viewing invoices. Requires configuration of Stripe API keys in the `.env` file.
+    - **Design Implication**: The `User` model (or other billable models) must use the `Billable` trait.
 
 This overview serves as a guide for navigating and understanding the project.
 
@@ -108,14 +119,23 @@ The application employs a robust validation strategy to ensure data integrity an
 
 -   **Authority**: Backend validation is the authoritative source of truth for data integrity.
 -   **Method**:
-    -   Primarily, validation is handled using the `rules()` static method within `Spatie\LaravelData\Data` objects (DTOs). This allows validation rules to be co-located with the data definitions. When a DTO is resolved from an HTTP request in a controller, these rules are automatically applied.
-    -   For more complex scenarios not fitting DTO validation or for actions not directly initiated by HTTP requests resolving DTOs, custom Laravel Form Requests can be utilized.
--   **Translatable Fields**: For fields managed by `spatie/laravel-translatable` (e.g., `name`, `description`), validation rules are applied to each locale (e.g., `name.en`, `name.zh-TW`). Typically, the application's primary/fallback locale (e.g., `en`) is made `required`, while other locales can be `nullable`.
--   **Database Constraints**: While application-level validation is comprehensive, database constraints (NOT NULL, UNIQUE, foreign keys) provide a final layer of defense.
+    -   Primarily, validation is handled using the `rules()` static method within `Spatie\LaravelData\Data` objects (DTOs).
+    -   For translatable fields (e.g., `name` defined as `array` in the DTO), validation rules are applied to each locale via dot notation (e.g., `name.en`, `name.zh-TW`). Typically, the application's primary/fallback locale (e.g., `en`) is made `required`, while other locales can be `nullable`.
 
 ### Frontend Validation
 
 -   **Purpose**: To provide immediate feedback to the user, improving UX and reducing unnecessary server requests.
--   **Method**: Frontend forms should implement client-side validation (e.g., using HTML5 attributes, JavaScript libraries, or Vuelidate/Zod with Vue forms).
 -   **Consistency**: Frontend validation rules should mirror backend rules as closely as possible, but backend validation always takes precedence.
--   **Error Display**: Inertia.js makes backend validation errors available to the frontend, which should be displayed clearly next to the relevant form fields.
+
+## Server Configuration Notes for Robust Form Submissions
+
+Recent debugging experiences with complex forms (particularly those involving file uploads and numerous translatable fields) have highlighted the importance of appropriate PHP server configuration. Issues here can lead to request data being silently truncated or lost before reaching the Laravel application, making it appear as if the frontend is not sending data or the backend is not processing it.
+
+Key `php.ini` directives to be mindful of:
+
+-   **`post_max_size`**: Defines the maximum size of POST data that PHP will accept. If this limit is exceeded (e.g., by a large file upload combined with many other form fields), PHP will stop processing the request data, and `$_POST` and `$_FILES` superglobals (and thus Laravel's `$request->all()`) may be empty or incomplete. This should be set to a value larger than the largest total request payload expected. Example: `64M`.
+-   **`upload_max_filesize`**: Defines the maximum allowed size for an individual uploaded file. This must be less than or equal to `post_max_size`. Example: `32M`.
+-   **`max_input_vars`**: Limits the maximum number of input variables PHP will accept (e.g., form fields in `$_GET`, `$_POST`, `$_COOKIE`). Complex forms, especially those with array inputs (e.g., `translations[name][en]`, `amenity_ids[]`), can generate a high number of variables. If this limit is exceeded, input variables beyond the limit may be truncated. Default is often 1000; consider increasing for complex applications (e.g., to `3000` or `5000`).
+-   **`memory_limit`**: While not directly limiting POST data size, PHP scripts (including request processing) need memory. This should generally be set to a value higher than `post_max_size`. Example: `128M` or `256M`.
+
+**Action**: Always ensure these `php.ini` settings are configured appropriately for the application's needs, especially when deploying or if encountering issues with large/complex form submissions resulting in empty or incomplete request data on the backend. When using tools like Laravel Herd, these settings are managed through Herd's PHP configuration interface. Remember to restart PHP-FPM/webserver after changes.
