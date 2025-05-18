@@ -48,7 +48,14 @@ class TicketDefinitionData extends Data
         public readonly TicketDefinitionStatus $status = TicketDefinitionStatus::ACTIVE,
 
         #[Validation\Rule(['nullable', 'array'])]
-        public readonly ?array $metadata
+        public readonly ?array $metadata,
+
+        #[Validation\Rule([
+            'nullable',
+            'array',
+            'event_occurrence_ids.*' => ['integer', 'exists:event_occurrences,id']
+        ])]
+        public readonly ?array $eventOccurrenceIds = null
     ) {}
 
     public static function rules(ValidationContext $context): array
