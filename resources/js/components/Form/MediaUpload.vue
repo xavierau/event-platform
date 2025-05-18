@@ -86,7 +86,7 @@ const getPreviewUrl = (file: File | MediaItem): string => {
     if (file instanceof File) {
         return URL.createObjectURL(file);
     }
-    return file.thumbnail_url || file.preview_url || file.url;
+    return file.thumbnail_url || file.preview_url || file.original_url;
 };
 
 const getFileName = (file: File | MediaItem): string => {

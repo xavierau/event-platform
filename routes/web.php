@@ -10,6 +10,9 @@ use App\Http\Controllers\Admin\EditorUploadController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DevController;
 use App\Http\Controllers\Admin\TagController;
+use App\Http\Controllers\Admin\EventController;
+use App\Http\Controllers\Admin\EventOccurrenceController;
+use App\Http\Controllers\Admin\TicketDefinitionController;
 use Illuminate\Foundation\Application;
 
 Route::get('/', function () {
@@ -42,6 +45,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
     // Editor Image Upload
     Route::post('editor/image-upload', [EditorUploadController::class, 'uploadImage'])->name('editor.image.upload');
+
+    // Event CRUD
+    Route::resource('events', EventController::class)->except(['show']);
+    Route::resource('events.occurrences', EventOccurrenceController::class)->shallow();
+
+    // Ticket Definitions CRUD
+    Route::resource('ticket-definitions', TicketDefinitionController::class);
 
     // });
 });

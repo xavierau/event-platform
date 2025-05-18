@@ -1,6 +1,6 @@
 ---
-description:
-globs: *.vue,*.js,*.ts
+description: the incldue frontend specific rules, resources, guidlines. Must refence if doing frotnend
+globs:
 alwaysApply: false
 ---
 # Frontend Development Conventions
@@ -47,6 +47,13 @@ This document outlines key conventions for frontend development in this Laravel 
 
 -   **Mobile-First Design**: The application is designed with a mobile-first approach. Ensure that UIs are responsive and provide an excellent experience on smaller screens before adapting to larger displays.
 -   **Reusable Components**: Build the frontend with a strong emphasis on creating and utilizing reusable UI components. This promotes consistency, a unified layout, and development efficiency. Components should be designed for flexibility and composability.
+    -   **Shared UI Component Library**: Common UI elements, such as buttons, dialogs, input fields, etc., are located in `resources/js/components/ui/`. These components are often structured similarly to those found in libraries like `shadcn-vue`.
+        -   **Path**: Base path is `[resources/js/components/ui/](mdc:resources/js/components/ui)`. Note the lowercase `components`.
+        -   **Examples**:
+            -   Button: `[Button.vue](mdc:resources/js/components/ui/button/Button.vue)` typically offers variants (e.g., "primary", "secondary", "destructive", "outline").
+            -   Dialog (Modal): Composed of parts like `[Dialog.vue](mdc:resources/js/components/ui/dialog/Dialog.vue)`, `[DialogContent.vue](mdc:resources/js/components/ui/dialog/DialogContent.vue)`, `[DialogHeader.vue](mdc:resources/js/components/ui/dialog/DialogHeader.vue)`, etc. These are often exported via an `[index.ts](mdc:resources/js/components/ui/dialog/index.ts)` in their respective directories.
+        -   **Import Alias**: The `@` alias typically points to `resources/js/`, so imports look like `import Button from '@/components/ui/button/Button.vue';` or `import { Dialog } from '@/components/ui/dialog';`.
+    -   **Custom Application Components**: More specific, application-level reusable components (not part of the general UI kit) might reside directly under `resources/js/components/` or in feature-specific subdirectories.
 
 ## Admin CRUD Interfaces
 

@@ -76,10 +76,10 @@ class VenueController extends Controller
 
         $venueArray = $venue->toArray();
 
-        $mainImageMedia = $venue->getFirstMedia('main_image');
+        $mainImageMedia = $venue->getFirstMedia('featured_image');
         $venueArray['existing_main_image'] = $mainImageMedia ? MediaData::fromModel($mainImageMedia) : null;
 
-        $galleryMediaItems = $venue->getMedia('gallery_images');
+        $galleryMediaItems = $venue->getMedia('gallery');
         $venueArray['existing_gallery_images'] = $galleryMediaItems->isNotEmpty()
             ? $galleryMediaItems->map(fn($media) => MediaData::fromModel($media))->all()
             : [];

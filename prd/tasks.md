@@ -10,7 +10,7 @@
 | LOC-001 | Create Country Entity (Model, Migration) & Seeder for initial data | Medium     | SU-001       | Done       | Include name (translatable), ISO codes, phone code.                  |
 | LOC-002 | Create State/Province Entity (Model, Migration) & Seeder for initial data | Medium     | LOC-001      | Done       | Linked to Country. Include name (translatable), code.                |
 | **VENUE** | | | | | |
-| VEN-001 | Create Venue Entity (Model, Migration) | High       | LOC-002      | Done | All fields as per project_overview.md, inc. translatable fields, organizer_id logic (public/private), lat/long, images (JSON). |
+| VEN-001 | Create Venue Entity (Model, Migration) | High       | LOC-002      | Done | Fields: name (translatable), address components, country_id, lat/long, capacity, contacts, website, description (translatable). `organizer_id` logic (public/private). Media/images via Spatie/MediaLibrary. See `project_overview.md`. |
 | VEN-002 | Implement Venue DTOs, Actions/Services for CRUD operations | Medium     | VEN-001      | Done       | Adhere to thin controllers.                                          |
 | VEN-003 | Develop Admin/Organizer UI for Venue Management (CRUD) | High       | VEN-002      | Done | Spatie Media Library for image uploads integrated. Map integration moved to VEN-004. |
 | VEN-004 | Implement Map Integration for Venue Management (lat/long selection/display) | High | VEN-001    | Pending | Integrate a map for selecting and displaying latitude/longitude for venues. |
@@ -23,19 +23,20 @@
 | TAG-002 | Implement Tag DTOs, Actions/Services for CRUD | Low        | TAG-001      | Done |                                                                      |
 | TAG-003 | Develop Admin UI for Tag Management (CRUD)  | Medium     | TAG-002      | Done |                                                                      |
 | **EVENT** | | | | | |
-| EVT-001 | Create Event Entity (Model, Migration) | High       | CAT-001, TAG-001, SU-002 | Pending | All fields as per overview. Translatable fields. Many-to-many with Tag. |
-| EVT-002 | Create EventOccurrence Entity (Model, Migration) | Medium     | EVT-001, VEN-001 | Pending | Links to Event, Venue. Handles date, time, online status.            |
-| EVT-003 | Implement Event & EventOccurrence DTOs, Actions/Services | High       | EVT-002      | Pending | Complex logic for creating/updating events with multiple occurrences. |
+| EVT-001 | Create Event Entity (Model, Migration) | High       | CAT-001, TAG-001, SU-002 | Done       | All fields as per overview. Translatable fields. Many-to-many with Tag. |
+| EVT-002 | Create EventOccurrence Entity (Model, Migration) | Medium     | EVT-001, VEN-001 | Done       | Model: `EventOccurrence`. Table: `event_occurrences`. Links to `Event` (`event_id`) and `Venue` (`venue_id`). Fields: `name` (translatable, optional), `description` (translatable, optional), `start_at` (datetime), `end_at` (datetime), `timezone` (string), `status` (e.g., 'scheduled'), `is_online` (boolean), `online_meeting_link` (string, nullable), `capacity` (int, nullable), `metadata` (JSON, optional). |
+| EVT-003 | Implement Event & EventOccurrence DTOs, Actions/Services | High       | EVT-002      | Processing | Complex logic for creating/updating events with multiple occurrences. |
 | EVT-004 | Develop Organizer/Admin UI for Event Creation/Management - Details Tab | Medium     | EVT-003      | Pending | Based on screenshot.                                                 |
-| EVT-005 | Develop Organizer/Admin UI for Event Creation/Management - Timings & Location (Occurrences) Tab | High | EVT-003      | Pending | UI for adding multiple date/time/venue pairs. Date picker.         |
+| EVT-005 | Develop Organizer/Admin UI for Event Creation/Management - Timings & Location (Occurrences) Tab | High | EVT-003      | Pending | UI for adding multiple date/time/venue pairs (EventOccurrences). Date picker.         |
 | EVT-006 | Develop Organizer/Admin UI for Event Creation/Management - Media Tab | Medium     | EVT-003      | Pending | Thumbnail, poster, YouTube ID.                                       |
 | EVT-007 | Develop Organizer/Admin UI for Event Creation/Management - SEO Tab | Medium     | EVT-003      | Pending | Meta fields.                                                         |
 | EVT-008 | Develop Organizer/Admin UI for Event Creation/Management - Publish Tab | Medium     | EVT-003      | Pending | Publish/unpublish logic. Event tags.                               |
 | **TICKET DEFINITION** | | | | | |
-| TCKD-001| Create TicketDefinition Entity (Model, Migration) | Medium     | EVT-001      | Pending | All fields as per overview. Translatable title/desc. Integer price. `default_max_check_ins`. |
+| TCKD-001| Create TicketDefinition Entity (Model, Migration) | Medium     | EVT-001      | Done       | Model: `TicketDefinition`. Table: `ticket_definitions`. Fields: `name` (translatable), `description` (translatable, optional), `price` (integer, smallest currency unit e.g., cents), `currency`, `total_quantity` (optional), `sale_starts_at` (datetime, optional), `sale_ends_at` (datetime, optional), `min_per_order` (int, default 1), `max_per_order` (int, optional), `status` (e.g., 'active', 'inactive'), `metadata` (JSON, optional). Note: `event_id` is removed; linked via EventOccurrences. |
+| TCKD-001.1| Create `event_occurrence_ticket_definition` pivot table (Migration) | Medium     | EVT-002, TCKD-001 | Pending | Links `EventOccurrence` with `TicketDefinition` (many-to-many). Fields: `event_occurrence_id`, `ticket_definition_id`, `quantity_for_occurrence` (int, optional), `price_override` (integer, smallest currency unit, optional), `availability_status` (string, e.g., 'available', 'sold_out', optional). |
 | TCKD-002| Implement Tax Entity & `ticket_definition_tax` pivot (Model, Migration) (Placeholder for now) | Medium | TCKD-001     | Pending | Basic structure, full implementation later.                      |
-| TCKD-003| Implement TicketDefinition DTOs, Actions/Services | Medium     | TCKD-001     | Pending |                                                                      |
-| TCKD-004| Develop Organizer/Admin UI for TicketDefinition Management (CRUD within Event) | Medium | TCKD-003, EVT-004 | Pending | Based on "Create Ticket" modal.                                    |
+| TCKD-003| Implement TicketDefinition DTOs, Actions/Services | Medium     | TCKD-001, TCKD-001.1 | Pending | Include logic for managing associations with EventOccurrences.       |
+| TCKD-004| Develop Organizer/Admin UI for TicketDefinition Management (CRUD within Event) | Medium | TCKD-003, EVT-004 | Pending | Based on "Create Ticket" modal. UI should allow associating TicketDefinitions with specific EventOccurrences (via `event_occurrence_ticket_definition` pivot) including per-occurrence quantity/price if applicable. |
 | **ORDER & BOOKING** | | | | | |
 | ORD-001 | Create Order Entity (Model, Migration) | Medium     | SU-002       | Pending | All fields as per overview. Integer amounts. Currency handling.      |
 | ORD-002 | Create Booking Entity (Model, Migration) | High       | ORD-001, EVT-001, TCKD-001, SU-002 | Pending | All fields per overview. Integer amounts. `qr_code_identifier`, `max_allowed_check_ins`. Denormalized fields. |
