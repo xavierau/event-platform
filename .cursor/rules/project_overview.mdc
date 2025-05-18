@@ -109,6 +109,13 @@ Several key libraries are utilized in this project, each influencing design and 
     - **Purpose**: Offers an expressive, fluent interface to Stripe's subscription billing services.
     - **Design Implication**: The `User` model (or other billable models) must use the `Billable` trait.
 
+- **`MCP Context7 Library Documentation`**:
+    - **Purpose**: Provides tools to access up-to-date documentation for various libraries and frameworks directly within the development environment. This is useful for quickly looking up API details, usage examples, and best practices without leaving the IDE.
+    - **Tools**:
+        - `mcp_context7_resolve-library-id`: Resolves a human-readable library name to a specific Context7-compatible ID. This step is necessary to ensure the correct documentation set is targeted.
+        - `mcp_context7_get-library-docs`: Fetches the documentation content for a given Context7-compatible library ID. It can be focused on specific topics within the library's documentation.
+    - **Design Implication**: Encourages reliance on the latest official documentation, potentially reducing errors from outdated information. Facilitates learning and correct implementation of library features.
+
 This overview serves as a guide for navigating and understanding the project.
 
 ## Validation Strategy

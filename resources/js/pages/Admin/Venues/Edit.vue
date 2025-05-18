@@ -1,29 +1,30 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AppLayout.vue';
-import { VenueData, Country, State } from '@/types'; // Assuming these types exist
-import RichTextEditor from '@/Components/Form/RichTextEditor.vue'; // Import the new component
+import { VenueData, Country, State } from '@/types';
+import RichTextEditor from '@/Components/Form/RichTextEditor.vue';
+import MediaUpload from '@/Components/Form/MediaUpload.vue';
 
 interface Props {
     venue: VenueData;
-    countries: Country[]; // For select dropdown, to be passed from controller
-    states: State[];    // For select dropdown, to be passed from controller
+    countries: Country[];
+    states: State[];
 }
 
 const props = defineProps<Props>();
 
-// Ensure all fields from VenueData are destructured and have defaults if not present in props.venue
-// Translatable fields from DTO are arrays, but form expects objects with locales.
-// The controller should ensure VenueData provides these in the correct format for the form if possible,
-// or we transform here.
-// For simplicity, assuming props.venue already has translatable fields as objects e.g. {en: '...'}
-const form = useForm<VenueData>({
+const form = useForm<VenueData & {
+    uploaded_main_image?: File | null;
+    removed_main_image_id?: number | null;
+    uploaded_gallery_images?: File[];
+    removed_gallery_image_ids?: number[];
+}> ({
     id: props.venue.id,
     name: props.venue.name || { en: '', 'zh-TW': '', 'zh-CN': '' },
     slug: props.venue.slug || '',
     description: props.venue.description || { en: '', 'zh-TW': '', 'zh-CN': '' },
     address_line_1: props.venue.address_line_1 || { en: '', 'zh-TW': '', 'zh-CN': '' },
-    address_line_2: props.venue.address_line_2 || { en: '', 'zh-TW': '', 'zh-CN': '' }, // Optional field
+    address_line_2: props.venue.address_line_2 || { en: '', 'zh-TW': '', 'zh-CN': '' },
     city: props.venue.city || { en: '', 'zh-TW': '', 'zh-CN': '' },
     postal_code: props.venue.postal_code || '',
     country_id: props.venue.country_id || null,
@@ -34,28 +35,119 @@ const form = useForm<VenueData>({
     contact_phone: props.venue.contact_phone || '',
     website_url: props.venue.website_url || '',
     seating_capacity: props.venue.seating_capacity || null,
-    is_active: props.venue.is_active === undefined ? true : props.venue.is_active, // Default to true if undefined
+    is_active: props.venue.is_active === undefined ? true : props.venue.is_active,
     organizer_id: props.venue.organizer_id || null,
-    images: props.venue.images || null, // Keep existing images data if any
-    thumbnail_image_path: props.venue.thumbnail_image_path || null,
+
+    uploaded_main_image: null,
+    existing_main_image: props.venue.existing_main_image || null,
+    removed_main_image_id: null,
+
+    uploaded_gallery_images: [],
+    existing_gallery_images: props.venue.existing_gallery_images || [],
+    removed_gallery_image_ids: [],
 });
 
 const submit = () => {
     if (props.venue.id) {
-        form.put(route('admin.venues.update', props.venue.id), {
-            // onSuccess: () => { /* Notification or redirect */ },
+        console.log('Original form data before transform:', JSON.parse(JSON.stringify(form, (k, v) => {
+            if (v instanceof File) return `File(${v.name})`;
+            if (Array.isArray(v) && v.length > 0 && v.every(item => item instanceof File)) return v.map(f => `File(${f.name})`);
+            return v;
+        })));
+
+        form.transform(data => {
+            const dataForSubmission: Record<string, any> = {
+                id: data.id,
+                slug: data.slug,
+                postal_code: data.postal_code,
+                country_id: data.country_id,
+                state_id: data.state_id,
+                latitude: data.latitude,
+                longitude: data.longitude,
+                contact_email: data.contact_email,
+                contact_phone: data.contact_phone,
+                website_url: data.website_url,
+                seating_capacity: data.seating_capacity,
+                is_active: data.is_active,
+                organizer_id: data.organizer_id,
+
+                // Translatable fields - now send as nested objects
+                name: data.name,
+                description: data.description,
+                address_line_1: data.address_line_1,
+                address_line_2: data.address_line_2,
+                city: data.city,
+
+                // File and removal IDs
+                removed_main_image_id: data.removed_main_image_id,
+                removed_gallery_image_ids: data.removed_gallery_image_ids && data.removed_gallery_image_ids.length > 0
+                    ? data.removed_gallery_image_ids
+                    : [],
+            };
+
+            // Handle file uploads
+            if (data.uploaded_main_image instanceof File) {
+                dataForSubmission.uploaded_main_image = data.uploaded_main_image;
+            } else {
+                dataForSubmission.uploaded_main_image = null;
+            }
+            if (data.uploaded_gallery_images && data.uploaded_gallery_images.length > 0 && data.uploaded_gallery_images.every(f => f instanceof File)) {
+                dataForSubmission.uploaded_gallery_images = data.uploaded_gallery_images;
+            } else {
+                dataForSubmission.uploaded_gallery_images = [];
+            }
+
+            console.log('Data after transform (to be submitted):', JSON.parse(JSON.stringify(dataForSubmission, (k, v) => {
+                if (v instanceof File) return `File(${v.name})`;
+                if (Array.isArray(v) && v.length > 0 && v.every(item => item instanceof File)) return v.map(f => `File(${f.name})`);
+                return v;
+            })));
+
+            dataForSubmission["_method"] = "PUT";
+
+            return dataForSubmission;
+        });
+
+        console.log('Submitting PUT request to:', route('admin.venues.update', props.venue.id));
+
+        form.post(route('admin.venues.update', props.venue.id), {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: (page) => {
+                console.log('Venue update successful:', page.props);
+            },
+            onError: (errors) => {
+                console.error('Venue update failed with errors:', errors);
+            },
+            onFinish: () => {
+                console.log('Venue update submission process finished.');
+            }
         });
     }
 };
 
-// Helper to get a specific translation - TODO: Centralize this
+const handleRemoveExistingMainImage = (event: { collection: string; id: number }) => {
+    if (event.collection === 'main_image') {
+        form.removed_main_image_id = event.id;
+        form.existing_main_image = null;
+    }
+};
+
+const handleRemoveExistingGalleryImage = (event: { collection: string; id: number }) => {
+    if (event.collection === 'gallery_images') {
+        if (!form.removed_gallery_image_ids.includes(event.id)) {
+            form.removed_gallery_image_ids.push(event.id);
+        }
+        form.existing_gallery_images = form.existing_gallery_images.filter(image => image.id !== event.id);
+    }
+};
+
 const getTranslation = (translations: any, locale: string = 'en', fallbackLocale: string = 'en') => {
     if (!translations) return '';
     if (typeof translations === 'string') return translations;
     return translations[locale] || translations[fallbackLocale] || Object.values(translations)[0] || '';
 };
 
-// Dummy data for dropdowns - replace with actual props.countries and props.states
 const dummyCountries = [
     { id: 1, name: { en: 'Hong Kong SAR China' } },
     { id: 2, name: { en: 'Macau SAR China' } },
@@ -65,16 +157,12 @@ const dummyStates = [
     { id: 2, country_id: 1, name: { en: 'Kowloon' } },
 ];
 
-
 </script>
 
 <template>
     <Head :title="`Edit Venue: ${getTranslation(form.name)}`" />
 
     <AuthenticatedLayout>
-        <!-- The pageTitle and breadcrumbs are now handled by AppLayout via props passed from the controller -->
-        <!-- The #header slot below is removed as AppLayout/AppSidebarHeader handles the title -->
-
         <div class="py-12">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
@@ -82,7 +170,6 @@ const dummyStates = [
                         <form @submit.prevent="submit">
                             <div class="space-y-6">
 
-                                <!-- Translatable Name -->
                                 <fieldset class="border dark:border-gray-700 p-4 rounded-md">
                                     <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">Venue Name</legend>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
@@ -102,14 +189,12 @@ const dummyStates = [
                                     <div v-if="form.errors.name" class="input-error">{{ form.errors.name }}</div>
                                 </fieldset>
 
-                                <!-- Slug -->
                                 <div>
                                     <label for="slug" class="label">Slug</label>
                                     <input type="text" v-model="form.slug" id="slug" class="mt-1 block w-full input" />
                                     <div v-if="form.errors.slug" class="input-error">{{ form.errors.slug }}</div>
                                 </div>
 
-                                 <!-- Translatable Description -->
                                 <fieldset class="border dark:border-gray-700 p-4 rounded-md">
                                     <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">Description</legend>
                                     <div class="space-y-4 mt-2">
@@ -129,8 +214,30 @@ const dummyStates = [
                                     <div v-if="form.errors.description" class="input-error">{{ form.errors.description }}</div>
                                 </fieldset>
 
+                                <MediaUpload
+                                    v-model="form.uploaded_main_image"
+                                    :existingMedia="form.existing_main_image"
+                                    collectionName="featured_image"
+                                    label="Main Image"
+                                    :multiple="false"
+                                    @remove-existing="handleRemoveExistingMainImage"
+                                />
+                                <div v-if="form.errors.uploaded_main_image" class="input-error mt-1">{{ form.errors.uploaded_main_image }}</div>
+                                <div v-if="form.errors.removed_main_image_id" class="input-error mt-1">{{ form.errors.removed_main_image_id }}</div>
+
+                                <MediaUpload
+                                    v-model="form.uploaded_gallery_images"
+                                    :existingMedia="form.existing_gallery_images"
+                                    collectionName="gallery"
+                                    label="Gallery Images"
+                                    :multiple="true"
+                                    :maxFiles="10"
+                                    @remove-existing="handleRemoveExistingGalleryImage"
+                                />
+                                <div v-if="form.errors.uploaded_gallery_images" class="input-error mt-1">{{ form.errors.uploaded_gallery_images }}</div>
+                                <div v-if="form.errors.removed_gallery_image_ids" class="input-error mt-1">{{ form.errors.removed_gallery_image_ids }}</div>
+
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <!-- Country -->
                                     <div>
                                         <label for="country_id" class="label">Country</label>
                                         <select v-model="form.country_id" id="country_id" class="mt-1 block w-full input">
@@ -142,7 +249,6 @@ const dummyStates = [
                                         <div v-if="form.errors.country_id" class="input-error">{{ form.errors.country_id }}</div>
                                     </div>
 
-                                    <!-- State/Province -->
                                     <div>
                                         <label for="state_id" class="label">State/Province</label>
                                         <select v-model="form.state_id" id="state_id" class="mt-1 block w-full input" :disabled="!form.country_id">
@@ -155,7 +261,6 @@ const dummyStates = [
                                     </div>
                                 </div>
 
-                                <!-- Translatable Address Line 1 -->
                                 <fieldset class="border dark:border-gray-700 p-4 rounded-md">
                                     <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">Address Line 1</legend>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
@@ -175,7 +280,6 @@ const dummyStates = [
                                     <div v-if="form.errors.address_line_1" class="input-error">{{ form.errors.address_line_1 }}</div>
                                 </fieldset>
 
-                                <!-- Translatable Address Line 2 -->
                                 <fieldset class="border dark:border-gray-700 p-4 rounded-md">
                                     <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">Address Line 2 (Optional)</legend>
                                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
@@ -196,8 +300,7 @@ const dummyStates = [
                                 </fieldset>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                     <!-- Translatable City -->
-                                    <fieldset class="border dark:border-gray-700 p-4 rounded-md md:col-span-2">
+                                     <fieldset class="border dark:border-gray-700 p-4 rounded-md md:col-span-2">
                                         <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">City</legend>
                                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
                                             <div>
@@ -216,77 +319,33 @@ const dummyStates = [
                                         <div v-if="form.errors.city" class="input-error">{{ form.errors.city }}</div>
                                     </fieldset>
 
-                                    <!-- Postal Code -->
                                     <div>
                                         <label for="postal_code" class="label">Postal Code</label>
                                         <input type="text" v-model="form.postal_code" id="postal_code" class="mt-1 block w-full input" />
                                         <div v-if="form.errors.postal_code" class="input-error">{{ form.errors.postal_code }}</div>
                                     </div>
 
-                                     <!-- Seating Capacity -->
-                                    <div>
+                                     <div>
                                         <label for="seating_capacity" class="label">Seating Capacity</label>
                                         <input type="number" v-model.number="form.seating_capacity" id="seating_capacity" class="mt-1 block w-full input" />
                                         <div v-if="form.errors.seating_capacity" class="input-error">{{ form.errors.seating_capacity }}</div>
                                     </div>
                                 </div>
 
-
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <!-- Latitude -->
                                     <div>
                                         <label for="latitude" class="label">Latitude</label>
                                         <input type="number" step="any" v-model.number="form.latitude" id="latitude" class="mt-1 block w-full input" />
                                         <div v-if="form.errors.latitude" class="input-error">{{ form.errors.latitude }}</div>
                                     </div>
 
-                                    <!-- Longitude -->
                                     <div>
                                         <label for="longitude" class="label">Longitude</label>
                                         <input type="number" step="any" v-model.number="form.longitude" id="longitude" class="mt-1 block w-full input" />
                                         <div v-if="form.errors.longitude" class="input-error">{{ form.errors.longitude }}</div>
                                     </div>
                                 </div>
-                                <!-- TODO: Add map integration here -->
 
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <!-- Contact Email -->
-                                    <div>
-                                        <label for="contact_email" class="label">Contact Email</label>
-                                        <input type="email" v-model="form.contact_email" id="contact_email" class="mt-1 block w-full input" />
-                                        <div v-if="form.errors.contact_email" class="input-error">{{ form.errors.contact_email }}</div>
-                                    </div>
-
-                                    <!-- Contact Phone -->
-                                    <div>
-                                        <label for="contact_phone" class="label">Contact Phone</label>
-                                        <input type="tel" v-model="form.contact_phone" id="contact_phone" class="mt-1 block w-full input" />
-                                        <div v-if="form.errors.contact_phone" class="input-error">{{ form.errors.contact_phone }}</div>
-                                    </div>
-                                </div>
-
-                                <!-- Website URL -->
-                                <div>
-                                    <label for="website_url" class="label">Website URL</label>
-                                    <input type="url" v-model="form.website_url" id="website_url" class="mt-1 block w-full input" placeholder="https://example.com" />
-                                    <div v-if="form.errors.website_url" class="input-error">{{ form.errors.website_url }}</div>
-                                </div>
-
-
-                                <!-- TODO: Add Image Upload Section -->
-                                <div v-if="form.images">
-                                    <p class="label">Current Images:</p>
-                                    <!-- Display current images - needs proper handling based on 'images' structure -->
-                                    <pre class="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded">{{ form.images }}</pre>
-                                </div>
-                                <div v-if="form.thumbnail_image_path">
-                                    <p class="label">Current Thumbnail:</p>
-                                    <img :src="form.thumbnail_image_path" alt="Thumbnail" class="w-32 h-32 object-cover rounded" /> <!-- Adjust path if it's not a direct URL -->
-                                </div>
-
-
-                                <!-- Is Active -->
                                 <div class="flex items-center">
                                     <input type="checkbox" v-model="form.is_active" id="is_active" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded" />
                                     <label for="is_active" class="ml-2 block text-sm text-gray-900 dark:text-gray-100">Active</label>

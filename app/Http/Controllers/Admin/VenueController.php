@@ -110,19 +110,19 @@ class VenueController extends Controller
 
             // Handle media uploads if present
             if ($request->hasFile('new_featured_image')) {
-                $venue->addMediaFromRequest('new_featured_image')->toMediaCollection('venue_featured_image');
+                $venue->addMediaFromRequest('new_featured_image')->toMediaCollection('featured_image');
             }
 
             if ($request->hasFile('new_gallery_images')) {
                 foreach ($request->file('new_gallery_images') as $file) {
-                    $venue->addMedia($file)->toMediaCollection('venue_gallery_images');
+                    $venue->addMedia($file)->toMediaCollection('gallery');
                 }
             }
             if ($request->hasFile('new_floor_plan_image')) {
-                $venue->addMediaFromRequest('new_floor_plan_image')->toMediaCollection('venue_floor_plan_image');
+                $venue->addMediaFromRequest('new_floor_plan_image')->toMediaCollection('floor_plan');
             }
             if ($request->hasFile('new_menu_pdf')) {
-                $venue->addMediaFromRequest('new_menu_pdf')->toMediaCollection('venue_menu_pdf');
+                $venue->addMediaFromRequest('new_menu_pdf')->toMediaCollection('menu_pdf');
             }
 
             Log::info('Venue updated successfully', ['venue_id' => $venue->id]); // Standard operational log

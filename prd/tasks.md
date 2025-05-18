@@ -12,15 +12,16 @@
 | **VENUE** | | | | | |
 | VEN-001 | Create Venue Entity (Model, Migration) | High       | LOC-002      | Done | All fields as per project_overview.md, inc. translatable fields, organizer_id logic (public/private), lat/long, images (JSON). |
 | VEN-002 | Implement Venue DTOs, Actions/Services for CRUD operations | Medium     | VEN-001      | Done       | Adhere to thin controllers.                                          |
-| VEN-003 | Develop Admin/Organizer UI for Venue Management (CRUD) | High       | VEN-002      | Processing | Include handling for image uploads, map integration for lat/long.    |
+| VEN-003 | Develop Admin/Organizer UI for Venue Management (CRUD) | High       | VEN-002      | Done | Spatie Media Library for image uploads integrated. Map integration moved to VEN-004. |
+| VEN-004 | Implement Map Integration for Venue Management (lat/long selection/display) | High | VEN-001    | Pending | Integrate a map for selecting and displaying latitude/longitude for venues. |
 | **CATEGORY** | | | | | |
 | CAT-001 | Create Category Entity (Model, Migration) for events | Medium     | SU-001       | Done       | Name (translatable), slug, parent_id for hierarchy.                  |
 | CAT-002 | Implement Category DTOs, Actions/Services for CRUD | Low        | CAT-001      | Done       |                                                                      |
 | CAT-003 | Develop Admin UI for Category Management (CRUD) | Medium     | CAT-002      | Done | Include hierarchical management if subcategories are used.         |
 | **TAG** | | | | | |
-| TAG-001 | Create Tag Entity (Model, Migration) for events | Low        | SU-001       | Pending | Name (translatable), slug. Pivot table `event_tag`.                   |
-| TAG-002 | Implement Tag DTOs, Actions/Services for CRUD | Low        | TAG-001      | Pending |                                                                      |
-| TAG-003 | Develop Admin UI for Tag Management (CRUD)  | Medium     | TAG-002      | Pending |                                                                      |
+| TAG-001 | Create Tag Entity (Model, Migration) for events | Low        | SU-001       | Done | Name (translatable), slug. Pivot table `event_tag`.                   |
+| TAG-002 | Implement Tag DTOs, Actions/Services for CRUD | Low        | TAG-001      | Done |                                                                      |
+| TAG-003 | Develop Admin UI for Tag Management (CRUD)  | Medium     | TAG-002      | Done |                                                                      |
 | **EVENT** | | | | | |
 | EVT-001 | Create Event Entity (Model, Migration) | High       | CAT-001, TAG-001, SU-002 | Pending | All fields as per overview. Translatable fields. Many-to-many with Tag. |
 | EVT-002 | Create EventOccurrence Entity (Model, Migration) | Medium     | EVT-001, VEN-001 | Pending | Links to Event, Venue. Handles date, time, online status.            |
