@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 // import FileInput from '@/Components/FileInput.vue';
 // import PrimaryButton from '@/Components/PrimaryButton.vue';
 import RichTextEditor from '@/components/Form/RichTextEditor.vue';
-import { watchEffect, computed, ref, watch } from 'vue';
+import { watchEffect, computed, ref } from 'vue';
 
 // --- START TYPE DEFINITIONS ---
 interface Locale {
@@ -69,14 +69,6 @@ interface EventData {
     portrait_poster_url?: string | null;
     landscape_poster_url?: string | null;
     gallery_items?: MediaItem[];
-    location_venue_id?: number | null;
-    location_address?: string;
-    location_city?: string;
-    location_state_province?: string;
-    location_postal_code?: string;
-    location_country?: string;
-    location_coordinates_lat?: number | null;
-    location_coordinates_lon?: number | null;
 }
 
 interface BreadcrumbItem {
@@ -115,15 +107,6 @@ interface EventFormData {
     uploaded_gallery: File[];
     removed_gallery_ids: number[];
     _method: 'PUT' | 'POST';
-
-    location_venue_id: number | null;
-    location_address: string;
-    location_city: string;
-    location_state_province: string;
-    location_postal_code: string;
-    location_country: string;
-    location_coordinates_lat: number | null;
-    location_coordinates_lon: number | null;
     [key: string]: any; // Index signature for FormDataType compatibility
 }
 // --- END TYPE DEFINITIONS ---
@@ -173,15 +156,6 @@ const form = useForm<EventFormData>({
     uploaded_gallery: [],
     removed_gallery_ids: [],
     _method: 'PUT',
-
-    location_venue_id: null,
-    location_address: '',
-    location_city: '',
-    location_state_province: '',
-    location_postal_code: '',
-    location_country: '',
-    location_coordinates_lat: null,
-    location_coordinates_lon: null,
 });
 
 const currentTab = ref('coreDetails'); // Default active tab for Edit page
@@ -231,59 +205,11 @@ watchEffect(() => {
             uploaded_gallery: [],
             removed_gallery_ids: [],
             _method: 'PUT',
-            location_venue_id: eventData.location_venue_id || null,
-            location_address: eventData.location_address || '',
-            location_city: eventData.location_city || '',
-            location_state_province: eventData.location_state_province || '',
-            location_postal_code: eventData.location_postal_code || '',
-            location_country: eventData.location_country || '',
-            location_coordinates_lat: eventData.location_coordinates_lat || null,
-            location_coordinates_lon: eventData.location_coordinates_lon || null,
         });
         form.reset();
-        if (form.location_venue_id && props.venues?.find(v => v.value === form.location_venue_id)) {
-            isAddressReadOnly.value = true;
-        } else {
-            isAddressReadOnly.value = false;
-        }
+        isAddressReadOnly.value = false;
     }
 });
-
-// Watch for changes in selected venue and auto-fill address
-watch(() => form.location_venue_id, (newVenueId, oldVenueId) => {
-    // Only run if newVenueId is different, and props.venues is available
-    if (newVenueId !== oldVenueId && props.venues) {
-        if (newVenueId) {
-            const selectedVenue = props.venues.find(v => v.value === newVenueId);
-            if (selectedVenue) {
-                form.location_address = selectedVenue.address_line_1 + (selectedVenue.address_line_2 ? ` ${selectedVenue.address_line_2}` : '');
-                form.location_city = selectedVenue.city;
-                form.location_state_province = selectedVenue.state_province;
-                form.location_postal_code = selectedVenue.postal_code;
-                form.location_country = selectedVenue.country;
-                form.location_coordinates_lat = selectedVenue.latitude || null;
-                form.location_coordinates_lon = selectedVenue.longitude || null;
-                isAddressReadOnly.value = true;
-            } else {
-                isAddressReadOnly.value = false;
-                if(newVenueId) clearAddressFields(false);
-            }
-        } else {
-            clearAddressFields();
-        }
-    }
-}, { immediate: false });
-
-const clearAddressFields = (makeReadOnly = false) => {
-    form.location_address = '';
-    form.location_city = '';
-    form.location_state_province = '';
-    form.location_postal_code = '';
-    form.location_country = '';
-    form.location_coordinates_lat = null;
-    form.location_coordinates_lon = null;
-    isAddressReadOnly.value = makeReadOnly;
-};
 
 const submit = () => {
     // Ensure props.event and props.event.id are available for update

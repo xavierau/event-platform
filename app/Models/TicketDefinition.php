@@ -49,7 +49,8 @@ class TicketDefinition extends Model
     ];
 
     /**
-     * The EventOccurrences that this TicketDefinition is available for.
+     * T
+     * e EventOccurrences that this TicketDefinition is available for.
      */
     public function eventOccurrences(): BelongsToMany
     {

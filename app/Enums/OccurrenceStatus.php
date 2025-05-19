@@ -5,6 +5,7 @@ namespace App\Enums;
 enum OccurrenceStatus: string
 {
     case Scheduled = 'scheduled';
+    case Active = 'active';
     case Cancelled = 'cancelled';
     case Postponed = 'postponed';
     case Completed = 'completed'; // Added if applicable
@@ -13,6 +14,7 @@ enum OccurrenceStatus: string
     {
         return [
             self::Scheduled->value => 'Scheduled',
+            self::Active->value => 'Active',
             self::Cancelled->value => 'Cancelled',
             self::Postponed->value => 'Postponed',
             self::Completed->value => 'Completed',

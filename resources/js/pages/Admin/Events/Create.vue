@@ -1,24 +1,67 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue'; // Assuming an AdminLayout exists
+import { Head, useForm, Link } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue'; // Corrected casing
 // import TextInput from '@/Components/TextInput.vue';
 // import SelectInput from '@/Components/SelectInput.vue';
 // import FileInput from '@/Components/FileInput.vue';
 // import PrimaryButton from '@/Components/PrimaryButton.vue';
-import RichTextEditor from '@/Components/Form/RichTextEditor.vue'; // Placeholder
-import { ref, watch } from 'vue';
+import RichTextEditor from '@/components/Form/RichTextEditor.vue'; // Corrected casing
+import { ref } from 'vue';
 
-const props = defineProps({
-    categories: Array,
-    tags: Array,
-    organizers: Array,
-    eventStatuses: Array,
-    visibilities: Array,
-    venues: Array,
-    pageTitle: String, // From controller for AppLayout
-    breadcrumbs: Array, // From controller for AppLayout
-    // errors: Object, // Automatically available
-});
+interface SelectOption {
+    value: string | number;
+    label: string;
+}
+
+interface BreadcrumbItem {
+  title: string;
+  url?: string;
+  disabled?: boolean;
+}
+
+// FormData interface for Create.vue
+interface CreateEventFormData {
+    organizer_id: number | null;
+    category_id: number | null;
+    name: Record<string, string>;
+    slug: Record<string, string>;
+    description: Record<string, string>;
+    short_summary: Record<string, string>;
+    status: string; // 'event_status' in Edit.vue, 'status' here for now.
+    visibility: string;
+    is_featured: boolean;
+    contact_email: string;
+    contact_phone: string;
+    website_url: string;
+    social_facebook: string;
+    social_twitter: string;
+    social_instagram: string;
+    social_linkedin: string;
+    youtube_video_id: string;
+    cancellation_policy: Record<string, string>;
+    meta_title: Record<string, string>;
+    meta_description: Record<string, string>;
+    meta_keywords: Record<string, string>;
+    published_at: string | null;
+    tag_ids: number[];
+    uploaded_portrait_poster: File | null;
+    uploaded_landscape_poster: File | null;
+    uploaded_gallery: File[];
+    [key: string]: any; // Index signature for FormDataType compatibility
+}
+
+interface CreateEventProps {
+    categories?: SelectOption[];
+    tags?: SelectOption[];
+    organizers?: SelectOption[];
+    eventStatuses?: SelectOption[];
+    visibilities?: SelectOption[];
+    venues?: SelectOption[]; // Simplified for now, Edit.vue has VenueSelectItem
+    pageTitle?: string;
+    breadcrumbs?: BreadcrumbItem[];
+}
+
+const props = defineProps<CreateEventProps>();
 
 console.log(props.venues);
 
@@ -28,14 +71,13 @@ const locales = [
     { code: 'zh-CN', name: 'Simplified Chinese' }
 ];
 
-const form = useForm({
-    id: null,
+const form = useForm<CreateEventFormData>({
     organizer_id: null,
     category_id: null,
-    name: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {}),
-    slug: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {}),
-    description: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {}),
-    short_summary: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {}),
+    name: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {} as Record<string, string>),
+    slug: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {} as Record<string, string>),
+    description: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {} as Record<string, string>),
+    short_summary: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {} as Record<string, string>),
     status: 'draft',
     visibility: 'private',
     is_featured: false,
@@ -47,10 +89,10 @@ const form = useForm({
     social_instagram: '',
     social_linkedin: '',
     youtube_video_id: '',
-    cancellation_policy: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {}),
-    meta_title: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {}),
-    meta_description: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {}),
-    meta_keywords: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {}),
+    cancellation_policy: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {} as Record<string, string>),
+    meta_title: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {} as Record<string, string>),
+    meta_description: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {} as Record<string, string>),
+    meta_keywords: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {} as Record<string, string>),
     published_at: null,
     tag_ids: [],
     uploaded_portrait_poster: null,
@@ -59,7 +101,6 @@ const form = useForm({
 });
 
 const currentTab = ref('coreDetails'); // Default active tab
-const isAddressReadOnly = ref(false);
 
 const tabs = [
     { id: 'coreDetails', label: 'Core Details' },
@@ -67,7 +108,6 @@ const tabs = [
     { id: 'contactLinks', label: 'Contact & Links' },
     { id: 'tags', label: 'Tags' },
     { id: 'media', label: 'Media' },
-    { id: 'seo', label: 'SEO' },
 ];
 
 const submit = () => {
@@ -76,42 +116,7 @@ const submit = () => {
     });
 };
 
-const tFieldName = (field, locale) => `${field}.${locale}`;
-
-// Watch for changes in selected venue and auto-fill address
-watch(() => form.location_venue_id, (newVenueId) => {
-    if (newVenueId) {
-        const selectedVenue = props.venues?.find(v => v.value === newVenueId);
-        if (selectedVenue) {
-            form.location_address = selectedVenue.address_line_1 + (selectedVenue.address_line_2 ? ` ${selectedVenue.address_line_2}` : '');
-            form.location_city = selectedVenue.city;
-            form.location_state_province = selectedVenue.state_province;
-            form.location_postal_code = selectedVenue.postal_code;
-            form.location_country = selectedVenue.country;
-            form.location_coordinates_lat = selectedVenue.latitude;
-            form.location_coordinates_lon = selectedVenue.longitude;
-            isAddressReadOnly.value = true;
-        } else {
-            // Venue not found, clear fields and allow manual input
-            clearAddressFields();
-            isAddressReadOnly.value = false;
-        }
-    } else {
-        // No venue selected, clear fields and allow manual input
-        clearAddressFields();
-        isAddressReadOnly.value = false;
-    }
-});
-
-const clearAddressFields = () => {
-    form.location_address = '';
-    form.location_city = '';
-    form.location_state_province = '';
-    form.location_postal_code = '';
-    form.location_country = '';
-    form.location_coordinates_lat = null;
-    form.location_coordinates_lon = null;
-};
+const tFieldName = (field: string, locale: string): string => `${field}.${locale}`;
 
 </script>
 
@@ -407,7 +412,7 @@ const clearAddressFields = () => {
                             <!-- Portrait Poster -->
                             <div>
                                 <label for="uploaded_portrait_poster" class="block text-sm font-medium text-gray-700">Portrait Poster</label>
-                                <input type="file" @input="form.uploaded_portrait_poster = $event.target.files[0]" id="uploaded_portrait_poster" class="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                                <input type="file" @input="form.uploaded_portrait_poster = ($event.target as HTMLInputElement).files?.[0] || null" id="uploaded_portrait_poster" class="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
                                 <p class="mt-1 text-sm text-gray-500">Recommended dimensions: e.g., 800x1200px.</p>
                                 <div v-if="form.errors.uploaded_portrait_poster" class="text-sm text-red-600 mt-1">{{ form.errors.uploaded_portrait_poster }}</div>
                             </div>
@@ -415,7 +420,7 @@ const clearAddressFields = () => {
                             <!-- Landscape Poster -->
                             <div>
                                 <label for="uploaded_landscape_poster" class="block text-sm font-medium text-gray-700">Landscape Poster</label>
-                                <input type="file" @input="form.uploaded_landscape_poster = $event.target.files[0]" id="uploaded_landscape_poster" class="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                                <input type="file" @input="form.uploaded_landscape_poster = ($event.target as HTMLInputElement).files?.[0] || null" id="uploaded_landscape_poster" class="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
                                 <p class="mt-1 text-sm text-gray-500">Recommended dimensions: 1200x675px.</p>
                                 <div v-if="form.errors.uploaded_landscape_poster" class="text-sm text-red-600 mt-1">{{ form.errors.uploaded_landscape_poster }}</div>
                             </div>
@@ -423,7 +428,7 @@ const clearAddressFields = () => {
                             <!-- Gallery -->
                             <div>
                                 <label for="uploaded_gallery" class="block text-sm font-medium text-gray-700">Gallery Images</label>
-                                <input type="file" @input="form.uploaded_gallery = Array.from($event.target.files)" multiple id="uploaded_gallery" class="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                                <input type="file" @input="form.uploaded_gallery = Array.from(($event.target as HTMLInputElement).files || [])" multiple id="uploaded_gallery" class="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
                                 <p class="mt-1 text-sm text-gray-500">Upload multiple images for the event gallery.</p>
                                 <div v-if="form.errors.uploaded_gallery" class="text-sm text-red-600 mt-1">
                                     <span v-if="typeof form.errors.uploaded_gallery === 'string'">{{ form.errors.uploaded_gallery }}</span>
@@ -434,53 +439,15 @@ const clearAddressFields = () => {
                             </div>
                         </div>
 
-                        <!-- Section: SEO / Meta Information -->
-                        <div v-if="currentTab === 'seo'" class="space-y-6">
-                            <div>
-                                <h3 class="text-lg leading-6 font-medium text-gray-900">SEO & Meta Information</h3>
-                                <p class="mt-1 text-sm text-gray-500">Optimize for search engines and social sharing (translatable).</p>
-                            </div>
-
-                            <!-- Translatable Meta Title -->
-                            <div class="border border-gray-200 rounded-md p-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Meta Title</label>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div v-for="locale in locales" :key="locale.code">
-                                        <label :for="tFieldName('meta_title', locale.code)" class="block text-xs font-medium text-gray-500">{{ locale.name }}</label>
-                                        <input type="text" :id="tFieldName('meta_title', locale.code)" v-model="form.meta_title[locale.code]" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
-                                        <div v-if="form.errors[tFieldName('meta_title', locale.code)]" class="text-sm text-red-600 mt-1">{{ form.errors[tFieldName('meta_title', locale.code)] }}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Translatable Meta Description -->
-                            <div class="border border-gray-200 rounded-md p-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
-                                <div v-for="locale in locales" :key="locale.code" class="mb-4">
-                                    <label :for="tFieldName('meta_description', locale.code)" class="block text-sm font-medium text-gray-500 mb-1">{{ locale.name }}</label>
-                                    <textarea :id="tFieldName('meta_description', locale.code)" v-model="form.meta_description[locale.code]" rows="3" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-                                    <div v-if="form.errors[tFieldName('meta_description', locale.code)]" class="text-sm text-red-600 mt-1">{{ form.errors[tFieldName('meta_description', locale.code)] }}</div>
-                                </div>
-                            </div>
-
-                            <!-- Translatable Meta Keywords -->
-                            <div class="border border-gray-200 rounded-md p-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Meta Keywords <span class="text-xs text-gray-500">(comma-separated)</span></label>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div v-for="locale in locales" :key="locale.code">
-                                        <label :for="tFieldName('meta_keywords', locale.code)" class="block text-xs font-medium text-gray-500">{{ locale.name }}</label>
-                                        <input type="text" :id="tFieldName('meta_keywords', locale.code)" v-model="form.meta_keywords[locale.code]" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
-                                        <div v-if="form.errors[tFieldName('meta_keywords', locale.code)]" class="text-sm text-red-600 mt-1">{{ form.errors[tFieldName('meta_keywords', locale.code)] }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="pt-5">
                             <div class="flex justify-end">
-                                <button type="button"
-                                    @click="() => $inertia.visit(route('admin.events.index'))"
-                                    class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Cancel</button>
+                                <Link
+                                    :href="route('admin.events.index')"
+                                    as="button"
+                                    class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    Cancel
+                                </Link>
                                 <button type="submit" :disabled="form.processing"
                                     class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     Create Event
