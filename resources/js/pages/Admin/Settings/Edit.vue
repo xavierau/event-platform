@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm, Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 // If you have a specific AdminLayout, import and use it.
 // Example: import AdminLayout from '@/Layouts/AdminLayout.vue';

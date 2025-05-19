@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue'; // Changed from AdminLayout to AppLayout
+import AppLayout from '@/layouts/AppLayout.vue'; // Changed from AdminLayout to AppLayout
 import { defineProps } from 'vue';
 
 // Assuming PaginatedResponse and Tag types are defined or will be defined

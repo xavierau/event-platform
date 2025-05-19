@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue'; // Corrected casing
-// import TextInput from '@/Components/TextInput.vue';
-// import SelectInput from '@/Components/SelectInput.vue';
-// import FileInput from '@/Components/FileInput.vue';
-// import PrimaryButton from '@/Components/PrimaryButton.vue';
 import RichTextEditor from '@/components/Form/RichTextEditor.vue'; // Corrected casing
 import { ref } from 'vue';
 

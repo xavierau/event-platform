@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import MediaUpload from '@/components/Form/MediaUpload.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Button } from '@/Components/ui/button'; // Assuming you have a Button component
+import { Button } from '@/components/ui/button'; // Assuming you have a Button component
 
 // Form for single file upload
 const singleForm = useForm({

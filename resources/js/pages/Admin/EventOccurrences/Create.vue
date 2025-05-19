@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import InputError from '@/components/InputError.vue';
-import RichTextEditor from '@/Components/Form/RichTextEditor.vue';
+import RichTextEditor from '@/components/Form/RichTextEditor.vue';
 import { Button } from '@/components/ui/button';
 import { ref, computed, watch } from 'vue';
 import { currentLocale } from '@/Utils/i18n';
