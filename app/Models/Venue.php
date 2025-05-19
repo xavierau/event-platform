@@ -102,4 +102,9 @@ class Venue extends Model implements HasMedia
     {
         return $this->belongsTo(Country::class);
     }
+
+    public function getAddressAttribute(): string
+    {
+        return $this->address_line_1 . ' ' . $this->address_line_2 . ' ' . $this->city . ' ' . $this->postal_code . ' ';
+    }
 }

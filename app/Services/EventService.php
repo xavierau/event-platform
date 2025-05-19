@@ -37,7 +37,24 @@ class EventService
 
     public function findEventById(int $id): ?Event
     {
-        return Event::with(['category', 'organizer', 'tags'])->find($id);
+
+        $withSubQuery = [
+            'ticketDefinitions' => function ($subQuery) {
+                return $subQuery->whereNull('availability_window_start_utc')
+                    ->orWhere('availability_window_start_utc', '<=', now());
+            }
+        ];
+
+        $with = [
+            'category',
+            'organizer',
+            'tags',
+            'eventOccurrences' => function ($query) use ($withSubQuery) {
+                return $query->with($withSubQuery)->where('status', 'scheduled');
+            }
+        ];
+        return Event::with($with)
+            ->find($id);
     }
 
     public function getAllEvents(array $filters = [], int $perPage = 15, string $orderBy = 'created_at', string $direction = 'desc'): LengthAwarePaginator

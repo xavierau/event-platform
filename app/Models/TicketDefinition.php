@@ -17,6 +17,7 @@ class TicketDefinition extends Model
         'name',
         'description',
         'price',
+        'currency',
         'total_quantity',
         'availability_window_start',
         'availability_window_end',

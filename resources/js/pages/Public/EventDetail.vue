@@ -65,6 +65,7 @@ const selectOccurrence = (occurrence: EventOccurrence) => {
 };
 
 const formatPrice = (priceRange: string) => {
+
   const parts = priceRange.match(/([¥€$]?)([0-9]+(?:\.[0-9]+)?)(.*)/);
   if (parts) {
     return { currency: parts[1], amount: parts[2], suffix: parts[3] };
@@ -111,6 +112,10 @@ const closePurchaseModal = () => {
   showPurchaseModal.value = false;
 };
 
+if (props.event.occurrences && props.event.occurrences.length > 0) {
+  selectOccurrence(props.event.occurrences[0]);
+}
+
 </script>
 
 <template>
@@ -140,7 +145,7 @@ const closePurchaseModal = () => {
           <span class="text-2xl font-bold text-red-500">
             <span class="text-base">{{ eventPrice.currency }}</span>{{ eventPrice.amount }}
           </span>
-          <span class="text-sm text-red-500">{{ eventPrice.suffix }}</span>
+          <span class="text-2xl font-bold text-red-500">{{ eventPrice.suffix }}</span>
           <span v-if="event.discount_info" class="ml-2 bg-red-100 text-red-600 text-xs font-semibold px-2 py-0.5 rounded">
             {{ event.discount_info }}
           </span>
@@ -149,7 +154,7 @@ const closePurchaseModal = () => {
     </section>
 
     <!-- Occurrences Section -->
-    <section v-if="event.occurrences && event.occurrences.length > 0" class="bg-white pt-4 pb-2 mt-3 shadow-sm">
+    <section v-if="event.occurrences && event.occurrences.length > 1" class="bg-white pt-4 pb-2 mt-3 shadow-sm">
       <div class="container mx-auto">
         <div class="flex overflow-x-auto whitespace-nowrap pb-2 -mb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 scrollbar-thumb-rounded">
           <button
@@ -195,9 +200,6 @@ const closePurchaseModal = () => {
     <section class="bg-white p-4 mt-1 shadow-sm">
       <div class="container mx-auto">
         <h2 class="text-md font-semibold mb-3">演出介绍</h2>
-        <div class="aspect-[16/9] mb-4 bg-gray-200" v-if="event.main_poster_url">
-            <img :src="event.main_poster_url" alt="Main event poster" class="w-full h-full object-contain rounded"/>
-        </div>
         <div class="prose max-w-none" v-html="event.description_html"></div>
         <!-- Placeholder for more images/media -->
       </div>
