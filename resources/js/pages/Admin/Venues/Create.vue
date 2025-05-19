@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AppLayout.vue';
+import AuthenticatedLayout from '@/layouts/AppLayout.vue';
 import { Country, State } from '@/types'; // Assuming these types exist for props
-import RichTextEditor from '@/Components/Form/RichTextEditor.vue'; // Import the new component
-import MediaUpload from '@/Components/Form/MediaUpload.vue'; // Import MediaUpload
+import RichTextEditor from '@/components/Form/RichTextEditor.vue'; // Import the new component
+import MediaUpload from '@/components/Form/MediaUpload.vue'; // Import MediaUpload
 
 // TODO: Define props for countries and states if they will be passed from controller
 interface Props {

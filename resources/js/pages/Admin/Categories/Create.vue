@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AppLayout.vue';
+import AuthenticatedLayout from '@/layouts/AppLayout.vue';
 import { Category } from '@/types'; // Assuming Category type
 
 interface Props {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AppLayout.vue';
+import AuthenticatedLayout from '@/layouts/AppLayout.vue';
 import { Category } from '@/types'; // Assuming Category type with parent relation
 
 interface Props {

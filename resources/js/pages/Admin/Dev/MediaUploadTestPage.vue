@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import MediaUpload from '@/Components/Form/MediaUpload.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
+import MediaUpload from '@/components/Form/MediaUpload.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { Button } from '@/Components/ui/button'; // Assuming you have a Button component
 

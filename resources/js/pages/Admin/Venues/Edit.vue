@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AppLayout.vue';
+import AuthenticatedLayout from '@/layouts/AppLayout.vue';
 import { VenueData, Country, State } from '@/types';
-import RichTextEditor from '@/Components/Form/RichTextEditor.vue';
-import MediaUpload from '@/Components/Form/MediaUpload.vue';
+import RichTextEditor from '@/components/Form/RichTextEditor.vue';
+import MediaUpload from '@/components/Form/MediaUpload.vue';
 
 interface Props {
     venue: VenueData;
