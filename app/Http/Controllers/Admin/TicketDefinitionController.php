@@ -23,10 +23,21 @@ class TicketDefinitionController extends Controller
         // $this->authorizeResource(TicketDefinition::class, 'ticket_definition');
     }
 
-    public function index(): InertiaResponse
+    public function index(Request $request): \Inertia\Response
     {
-        return Inertia::render('Admin/TicketDefinitions/Index', [
-            'ticketDefinitions' => TicketDefinitionData::collect($this->ticketDefinitionService->getAllTicketDefinitions()),
+        $filters = $request->only(['search', 'status']); // Example filters
+        $perPage = $request->input('perPage', 15);
+
+        $ticketDefinitionsPaginator = $this->ticketDefinitionService->getAllTicketDefinitions($filters, (int)$perPage);
+
+        // Explicitly transform models to arrays before DTO hydration
+        $dtoPaginator = $ticketDefinitionsPaginator->through(
+            fn(TicketDefinition $definition) => TicketDefinitionData::from($definition->toArray())
+        );
+
+        return inertia('Admin/TicketDefinitions/Index', [
+            'ticketDefinitions' => $dtoPaginator,
+            'filters' => $filters, // Pass current filters back to the view for UI state
         ]);
     }
 
