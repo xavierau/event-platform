@@ -34,10 +34,10 @@ class DatabaseSeeder extends Seeder
             // Application Data Seeders
             CategorySeeder::class,
             TagSeeder::class,
-            VenueSeeder::class, // Add this if you create it
-            // EventSeeder::class, // Add this later
-            // TicketDefinitionSeeder::class, // Add this later
-            // EventOccurrenceSeeder::class, // Add this later
+            VenueSeeder::class,
+            EventSeeder::class, // Depends on Users (for organizer_id), Categories
+            TicketDefinitionSeeder::class,
+            EventOccurrenceSeeder::class, // Depends on Events, Venues, TicketDefinitions
             // ... other seeders
         ]);
 
