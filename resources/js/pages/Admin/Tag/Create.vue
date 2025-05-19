@@ -18,8 +18,8 @@
     </AdminLayout>
 </template>
 
-<script setup>
-import AdminLayout from '@/Layouts/AppLayout.vue';
+<script setup lang="ts">
+import AdminLayout from '@/layouts/AppLayout.vue';
 import TagForm from './Partials/TagForm.vue';
 import { useForm } from '@inertiajs/vue3';
 
