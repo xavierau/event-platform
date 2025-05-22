@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Category, CategoryData } from '@/types'; // Assuming CategoryData DTO and Category model type
 
 interface Props {
@@ -39,7 +39,7 @@ const getTranslation = (translations: any, locale: string, fallbackLocale: strin
 <template>
     <Head :title="`Edit Category: ${getTranslation(props.category.name, 'en')}`" />
 
-    <AuthenticatedLayout>
+    <AppLayout>
         <div class="py-12">
             <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
@@ -103,5 +103,5 @@ const getTranslation = (translations: any, locale: string, fallbackLocale: strin
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>

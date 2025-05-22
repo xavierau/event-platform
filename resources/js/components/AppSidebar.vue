@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid,Calendar, MapPin, Tag, Settings } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -14,6 +14,32 @@ const mainNavItems: NavItem[] = [
         href: '/dashboard',
         icon: LayoutGrid,
     },
+    {
+        title: 'Events',
+        href: '/admin/events',
+        icon: Calendar,
+    },
+    {
+        title: 'Venues',
+        href: '/admin/venues',
+        icon: MapPin,
+    },
+    {
+        title: 'Categories',
+        href: '/admin/categories',
+        icon: Tag,
+    },
+    {
+        title: 'Tags',
+        href: '/admin/tags',
+        icon: Tag,
+    },
+    {
+        title: 'Settings',
+        href: '/admin/settings',
+        icon: Settings,
+    }
+
 ];
 
 const footerNavItems: NavItem[] = [

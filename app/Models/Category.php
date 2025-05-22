@@ -7,11 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Category extends Model
+class Category extends Model implements HasMedia
 {
     use HasFactory;
     use HasTranslations;
+    use InteractsWithMedia;
 
     public array $translatable = ['name'];
 
@@ -27,6 +31,13 @@ class Category extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * Get the events in this category.
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(Event::class);
+    }
     /**
      * Get the parent category.
      */

@@ -2,7 +2,18 @@
 import InnerAppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
 import type { BreadcrumbItemType } from '@/types';
 import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+
+// Stagewise Toolbar Integration
+import { StagewiseToolbar } from '@stagewise/toolbar-vue';
+
+const stagewiseConfig = ref({ // Use ref for reactivity if config needs to change, though likely static here
+  plugins: []
+});
+
+// Vite specific check for development mode
+const isDevelopment = import.meta.env.DEV;
+// End Stagewise Toolbar Integration
 
 // Props that this AppLayout component itself might receive if nested or used with direct props.
 // These are less likely to be used for pageTitle/breadcrumbs if this is always the root layout for a page.
@@ -36,4 +47,6 @@ const currentPageTitle = computed(() => {
     <InnerAppSidebarLayout :breadcrumbs="currentBreadcrumbs" :page-title="currentPageTitle">
         <slot />
     </InnerAppSidebarLayout>
+    <!-- Stagewise Toolbar Integration: Only render in development -->
+    <StagewiseToolbar v-if="isDevelopment" :config="stagewiseConfig" />
 </template>

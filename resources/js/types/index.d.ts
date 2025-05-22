@@ -8,7 +8,7 @@ export interface Auth {
 
 export interface BreadcrumbItem {
     title: string;
-    href: string;
+    href?: string;
 }
 
 export interface NavItem {
@@ -37,3 +37,69 @@ export interface User {
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;
+
+export type Translatable = Record<string, string>;
+
+export interface MediaItem {
+    id: number;
+    name: string;
+    file_name: string;
+    mime_type: string;
+    size: number;
+    order_column?: number;
+    original_url: string;
+    preview_url?: string;
+    thumbnail_url?: string;
+    responsive_images?: any;
+    custom_properties?: Record<string, any>;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Country {
+    id: number;
+    name: Translatable | string;
+}
+
+export interface State {
+    id: number;
+    country_id: number;
+    name: Translatable | string;
+}
+
+export interface VenueData {
+    id?: number;
+    name: Translatable;
+    slug: string;
+    description: Translatable;
+    address_line_1: Translatable;
+    address_line_2?: Translatable | null;
+    city: Translatable;
+    postal_code?: string | null;
+    country_id: number | null;
+    state_id?: number | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    contact_email?: string | null;
+    contact_phone?: string | null;
+    website_url?: string | null;
+    seating_capacity?: number | null;
+    is_active: boolean;
+    organizer_id?: number | null;
+
+    uploaded_main_image?: File | null;
+    existing_main_image?: MediaItem | null;
+    removed_main_image_id?: number | null;
+
+    uploaded_gallery_images?: File[];
+    existing_gallery_images?: MediaItem[];
+    removed_gallery_image_ids?: number[];
+
+    media?: {
+        main_image?: MediaItem[] | null;
+        gallery_images?: MediaItem[] | null;
+    };
+
+    created_at?: string;
+    updated_at?: string;
+}

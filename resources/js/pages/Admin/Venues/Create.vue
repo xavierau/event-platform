@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AppLayout.vue';
+import AuthenticatedLayout from '@/layouts/AppLayout.vue';
 import { Country, State } from '@/types'; // Assuming these types exist for props
-import RichTextEditor from '@/Components/Form/RichTextEditor.vue'; // Import the new component
+import RichTextEditor from '@/components/Form/RichTextEditor.vue'; // Import the new component
+import MediaUpload from '@/components/Form/MediaUpload.vue'; // Import MediaUpload
 
 // TODO: Define props for countries and states if they will be passed from controller
 interface Props {
@@ -29,13 +30,29 @@ const form = useForm({
     seating_capacity: null as number | null,
     is_active: true,
     organizer_id: null as number | null, // Assuming this might be set automatically or passed
-    // images: null, // Will be handled by a separate upload component
-    // thumbnail_image_path: '', // Will be handled by image selection
+
+    // Media fields
+    uploaded_main_image: null as File | null,
+    uploaded_gallery_images: [] as File[],
 });
 
 const submit = () => {
-    form.post(route('admin.venues.store'), {
-        // onSuccess: () => form.reset(),
+    // Ensure media fields are correctly prepared for submission if they are optional
+    // and might not be part of the initial form data sent by useForm by default
+    // if they are null/empty.
+    // However, Inertia's useForm typically sends all defined fields.
+    // We might need to explicitly set them to undefined if the backend expects them to be absent
+    // when no files are uploaded, rather than null or empty array.
+    // For now, let's assume sending null/empty array is fine.
+    const dataToSubmit = {
+        ...form.data(),
+        uploaded_main_image: form.uploaded_main_image || undefined,
+        uploaded_gallery_images: form.uploaded_gallery_images.length > 0 ? form.uploaded_gallery_images : undefined,
+    };
+
+    form.transform(data => dataToSubmit) // Use transform to ensure these are definitely part of the payload
+        .post(route('admin.venues.store'), {
+        // onSuccess: () => form.reset(), // Consider resetting form, including file inputs
     });
 };
 
@@ -119,6 +136,23 @@ const getTranslation = (translations: any, locale: string = 'en', fallbackLocale
                                     </div>
                                     <div v-if="form.errors.description" class="input-error">{{ form.errors.description }}</div>
                                 </fieldset>
+
+                                <MediaUpload
+                                    v-model="form.uploaded_main_image"
+                                    collectionName="main_image"
+                                    label="Main Image"
+                                    :multiple="false"
+                                />
+                                <div v-if="form.errors.uploaded_main_image" class="input-error mt-1">{{ form.errors.uploaded_main_image }}</div>
+
+                                <MediaUpload
+                                    v-model="form.uploaded_gallery_images"
+                                    collectionName="gallery_images"
+                                    label="Gallery Images"
+                                    :multiple="true"
+                                    :maxFiles="10"
+                                />
+                                <div v-if="form.errors.uploaded_gallery_images" class="input-error mt-1">{{ form.errors.uploaded_gallery_images }}</div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <!-- Country -->
@@ -266,14 +300,10 @@ const getTranslation = (translations: any, locale: string = 'en', fallbackLocale
                                 </div>
 
 
-                                <!-- TODO: Add Image Upload Section -->
-                                <!-- This will likely be a more complex component -->
-
-
                                 <!-- Is Active -->
                                 <div class="flex items-center">
-                                    <input type="checkbox" v-model="form.is_active" id="is_active" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded" />
-                                    <label for="is_active" class="ml-2 block text-sm text-gray-900 dark:text-gray-100">Active</label>
+                                    <input type="checkbox" v-model="form.is_active" id="is_active" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" />
+                                    <label for="is_active" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Active</label>
                                 </div>
                                 <div v-if="form.errors.is_active" class="input-error">{{ form.errors.is_active }}</div>
 
@@ -282,15 +312,10 @@ const getTranslation = (translations: any, locale: string = 'en', fallbackLocale
                                 <div v-if="form.errors.organizer_id" class="input-error">Organizer ID Error: {{ form.errors.organizer_id }}</div>
 
 
-                            </div>
-
-                            <div class="mt-8 flex justify-end space-x-3">
-                                <Link :href="route('admin.venues.index')" class="btn btn-secondary">Cancel</Link>
-                                <button type="submit" :disabled="form.processing"
-                                        class="btn btn-primary"
-                                        :class="{ 'opacity-25': form.processing }">
-                                    Create Venue
-                                </button>
+                                <div class="flex items-center justify-end gap-4 mt-8">
+                                    <Link :href="route('admin.venues.index')" class="btn btn-secondary">Cancel</Link>
+                                    <button type="submit" class="btn btn-primary" :disabled="form.processing">Create Venue</button>
+                                </div>
                             </div>
                         </form>
                     </div>

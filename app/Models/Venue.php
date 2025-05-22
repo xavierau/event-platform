@@ -6,11 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Translatable\HasTranslations;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Venue extends Model
+class Venue extends Model implements HasMedia
 {
     use HasFactory;
     use HasTranslations;
+    use InteractsWithMedia;
 
     public array $translatable = [
         'name',
@@ -37,8 +40,6 @@ class Venue extends Model
         'contact_phone',
         'website_url',
         'seating_capacity',
-        'images',
-        'thumbnail_image_path',
         'is_active',
     ];
 
@@ -48,12 +49,44 @@ class Venue extends Model
         'address_line_1' => 'array',
         'address_line_2' => 'array',
         'city' => 'array',
-        'images' => 'array',
         'is_active' => 'boolean',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
         'seating_capacity' => 'integer',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('featured_image')
+            ->singleFile();
+
+        $this->addMediaCollection('gallery');
+
+        $this->addMediaCollection('floor_plan')
+            ->singleFile();
+
+        $this->addMediaCollection('menu_pdf')
+            ->singleFile();
+    }
+
+    public function registerMediaConversions(\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        if ($media && in_array($media->collection_name, ['featured_image', 'gallery', 'floor_plan'])) {
+            $this->addMediaConversion('thumbnail')
+                ->width(200)
+                ->height(200)
+                ->keepOriginalImageFormat()
+                ->sharpen(5)
+                ->nonQueued();
+
+            $this->addMediaConversion('preview')
+                ->width(400)
+                ->height(400)
+                ->keepOriginalImageFormat()
+                ->sharpen(5)
+                ->nonQueued();
+        }
+    }
 
     public function organizer(): BelongsTo
     {
@@ -68,5 +101,10 @@ class Venue extends Model
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
+    }
+
+    public function getAddressAttribute(): string
+    {
+        return $this->address_line_1 . ' ' . $this->address_line_2 . ' ' . $this->city . ' ' . $this->postal_code . ' ';
     }
 }

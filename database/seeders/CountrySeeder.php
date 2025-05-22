@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Country;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Country;
 
 class CountrySeeder extends Seeder
 {
@@ -15,29 +14,42 @@ class CountrySeeder extends Seeder
     {
         $countries = [
             [
-                'name' => ['en' => 'Hong Kong', 'zh-TW' => '香港', 'zh-CN' => '香港'],
-                'iso_code_2' => 'HK',
-                'iso_code_3' => 'HKG',
-                'phone_code' => '+852',
+                'name' => ['en' => 'United States', 'zh-TW' => '美國'],
+                'iso_code_2' => 'US',
+                'iso_code_3' => 'USA',
+                'phone_code' => '+1',
                 'is_active' => true,
             ],
             [
-                'name' => ['en' => 'Macau', 'zh-TW' => '澳門', 'zh-CN' => '澳门'],
-                'iso_code_2' => 'MO',
-                'iso_code_3' => 'MAC',
-                'phone_code' => '+853',
+                'name' => ['en' => 'Canada', 'zh-TW' => '加拿大'],
+                'iso_code_2' => 'CA',
+                'iso_code_3' => 'CAN',
+                'phone_code' => '+1',
                 'is_active' => true,
             ],
+            [
+                'name' => ['en' => 'United Kingdom', 'zh-TW' => '英國'],
+                'iso_code_2' => 'GB',
+                'iso_code_3' => 'GBR',
+                'phone_code' => '+44',
+                'is_active' => true,
+            ],
+            [
+                'name' => ['en' => 'Taiwan', 'zh-TW' => '台灣'],
+                'iso_code_2' => 'TW',
+                'iso_code_3' => 'TWN',
+                'phone_code' => '+886',
+                'is_active' => true,
+            ],
+            // Add more countries as needed
         ];
-
-        // Remove existing countries first to ensure only HK and Macau are present if re-running
-        // Country::query()->delete(); // Or be more specific if needed
 
         foreach ($countries as $countryData) {
             Country::updateOrCreate(
-                ['iso_code_2' => $countryData['iso_code_2']], // Unique key
+                ['iso_code_2' => $countryData['iso_code_2']], // Use a unique key for lookup
                 $countryData
             );
         }
+        $this->command->info('Countries seeded.');
     }
 }

@@ -1,0 +1,10 @@
+---
+description: git rules for tasks completed
+globs:
+alwaysApply: false
+---
+# Commit After Task Completion
+
+After successfully completing a task (e.g., one outlined in [prd/tasks.md](mdc:prd/tasks.md) or a sub-task discussed during our session), please remember to commit the changes.
+
+This ensures that our work is saved incrementally and helps maintain a clean version history, aligning with good Git practices and Git Flow methodology.

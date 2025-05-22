@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 // Define props if needed, for example, if you pass specific data to the dashboard
 // const props = defineProps({

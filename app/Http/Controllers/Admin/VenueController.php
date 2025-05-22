@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Illuminate\Http\RedirectResponse;
+use App\DataTransferObjects\MediaData;
+use Illuminate\Support\Facades\Log;
+use App\Models\Country;
+use App\Models\State;
+use Spatie\LaravelData\Exceptions\CannotCreateData;
 
 class VenueController extends Controller
 {
@@ -67,11 +72,17 @@ class VenueController extends Controller
 
     public function edit(Venue $venue): InertiaResponse
     {
-        $venue->load('country', 'state', 'organizer');
-        // Pass necessary data for form selects
+        $venue->load('country', 'state', 'organizer', 'media');
 
-        // Explicitly convert model to array to ensure accessors and casts are applied
         $venueArray = $venue->toArray();
+
+        $mainImageMedia = $venue->getFirstMedia('featured_image');
+        $venueArray['existing_main_image'] = $mainImageMedia ? MediaData::fromModel($mainImageMedia) : null;
+
+        $galleryMediaItems = $venue->getMedia('gallery');
+        $venueArray['existing_gallery_images'] = $galleryMediaItems->isNotEmpty()
+            ? $galleryMediaItems->map(fn($media) => MediaData::fromModel($media))->all()
+            : [];
 
         return Inertia::render('Admin/Venues/Edit', [
             'pageTitle' => 'Edit Venue',
@@ -80,16 +91,60 @@ class VenueController extends Controller
                 ['text' => 'Venues', 'href' => route('admin.venues.index')],
                 ['text' => 'Edit Venue']
             ],
-            'venue' => VenueData::from($venueArray), // Pass the array to from()
-            // 'countries' => Country::all(),
-            // 'states' => State::all(),
+            'venue' => VenueData::from($venueArray),
+            'countries' => Country::all(),
+            'states' => State::all(),
         ]);
     }
 
-    public function update(VenueData $venueData, Venue $venue): RedirectResponse
+    public function update(Request $request, Venue $venue): RedirectResponse
     {
-        $this->venueService->updateVenue($venue->id, $venueData);
-        return redirect()->route('admin.venues.index')->with('success', 'Venue updated successfully.');
+        try {
+            // The DTO will handle validation based on its rules.
+            // Data is sourced from $request->all(), which merges query, post, and file data.
+            // For multipart/form-data, Laravel handles parsing of fields like name[en] into nested arrays if accessed directly via $request->input('name').
+            // Spatie/laravel-data should correctly map these if the DTO expects an array for 'name'.
+            $validatedData = VenueData::from($request->all());
+
+            $this->venueService->updateVenue($venue->id, $validatedData);
+
+            // Handle media uploads if present
+            if ($request->hasFile('new_featured_image')) {
+                $venue->addMediaFromRequest('new_featured_image')->toMediaCollection('featured_image');
+            }
+
+            if ($request->hasFile('new_gallery_images')) {
+                foreach ($request->file('new_gallery_images') as $file) {
+                    $venue->addMedia($file)->toMediaCollection('gallery');
+                }
+            }
+            if ($request->hasFile('new_floor_plan_image')) {
+                $venue->addMediaFromRequest('new_floor_plan_image')->toMediaCollection('floor_plan');
+            }
+            if ($request->hasFile('new_menu_pdf')) {
+                $venue->addMediaFromRequest('new_menu_pdf')->toMediaCollection('menu_pdf');
+            }
+
+            Log::info('Venue updated successfully', ['venue_id' => $venue->id]); // Standard operational log
+
+            // Redirect to the venue index page upon successful update.
+            return redirect()->route('admin.venues.index')->with('success', 'Venue updated successfully.');
+        } catch (CannotCreateData $e) {
+            Log::error('VenueController@update: DTO Creation/Validation Failed.', [
+                'message' => $e->getMessage(),
+                // 'errors' => property_exists($e, 'errors') ? $e->errors() : [], // If you need specific DTO validation errors
+                'trace_snippet' => mb_substr($e->getTraceAsString(), 0, 500),
+                'request_data_snippet' => mb_substr(json_encode($request->all()), 0, 1000),
+            ]);
+            return back()->withInput()->withErrors(['dto_error' => 'Error processing venue data: ' . $e->getMessage()]);
+        } catch (\Exception $e) {
+            Log::error('VenueController@update: General Exception.', [
+                'message' => $e->getMessage(),
+                'trace_snippet' => mb_substr($e->getTraceAsString(), 0, 500),
+                'request_data_snippet' => mb_substr(json_encode($request->all()), 0, 1000),
+            ]);
+            return back()->withInput()->withErrors(['error' => 'An unexpected error occurred. Please try again.']);
+        }
     }
 
     public function destroy(Venue $venue): RedirectResponse

@@ -40,10 +40,37 @@ class CategoryService
     {
         // Basic retrieval. Add pagination or specific filtering as needed.
         // Example for hierarchical data: get root categories, or categories with children counts.
-        return Category::with($with)
-            // ->whereNull('parent_id') // Example: to get only root categories
-            ->orderBy($orderBy, $direction)
+        $query = Category::with($with);
+
+        // Add filtering based on $filters array
+        if (isset($filters['parent_id']) && is_null($filters['parent_id'])) {
+            $query->whereNull('parent_id');
+        } elseif (isset($filters['parent_id'])) {
+            $query->where('parent_id', $filters['parent_id']);
+        }
+        // Add more filters here as needed
+
+        return $query->orderBy($orderBy, $direction)
             ->get(); // Using get() for now, paginate() if list becomes very long
+    }
+
+    /**
+     * Get root categories for public display (e.g., landing page).
+     *
+     * @param array $with
+     * @param string $orderBy
+     * @param string $direction
+     * @return Collection
+     */
+    public function getPublicCategories(array $with = [], string $orderBy = 'name', string $direction = 'asc'): Collection
+    {
+        // For now, we assume 'name' is a translatable field and ordering by it directly
+        // might need specific locale ordering in a more complex setup.
+        // spatie/laravel-translatable handles ordering by translated attribute if model is configured.
+        return Category::with($with)
+            ->whereNull('parent_id')
+            ->orderBy($orderBy, $direction) // Orders by the 'name' json column's current locale.
+            ->get();
     }
 
     /**

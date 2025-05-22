@@ -170,22 +170,22 @@ const toggleFullScreen = () => {
     }"
   >
     <div v-if="editor" class="toolbar flex flex-wrap items-center gap-1 p-2 border-b border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-      <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" class="btn-toolbar" title="Undo">
+      <button type="button" @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" class="btn-toolbar" title="Undo">
         <ArrowUturnLeftIcon class="w-5 h-5" />
       </button>
-      <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" class="btn-toolbar" title="Redo">
+      <button type="button" @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" class="btn-toolbar" title="Redo">
         <ArrowUturnRightIcon class="w-5 h-5" />
       </button>
 
       <span class="toolbar-divider"></span>
 
-      <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': isActive('bold') }" class="btn-toolbar" title="Bold">
+      <button type="button" @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': isActive('bold') }" class="btn-toolbar" title="Bold">
         <BoldIcon class="w-5 h-5" />
       </button>
-      <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': isActive('italic') }" class="btn-toolbar" title="Italic">
+      <button type="button" @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': isActive('italic') }" class="btn-toolbar" title="Italic">
         <ItalicIcon class="w-5 h-5" />
       </button>
-      <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': isActive('strike') }" class="btn-toolbar" title="Strikethrough">
+      <button type="button" @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': isActive('strike') }" class="btn-toolbar" title="Strikethrough">
         <StrikethroughIcon class="w-5 h-5" />
       </button>
 
@@ -242,38 +242,38 @@ const toggleFullScreen = () => {
 
       <span class="toolbar-divider"></span>
 
-      <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': isActive('bulletList') }" class="btn-toolbar" title="Bullet List">
+      <button type="button" @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': isActive('bulletList') }" class="btn-toolbar" title="Bullet List">
         <ListBulletIcon class="w-5 h-5" />
       </button>
-      <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': isActive('orderedList') }" class="btn-toolbar" title="Ordered List">
+      <button type="button" @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': isActive('orderedList') }" class="btn-toolbar" title="Ordered List">
         <QueueListIcon class="w-5 h-5" />
       </button>
 
       <span class="toolbar-divider"></span>
 
-      <button @click="editor.chain().focus().toggleBlockquote().run()" :class="{ 'is-active': isActive('blockquote') }" class="btn-toolbar" title="Blockquote">
+      <button type="button" @click="editor.chain().focus().toggleBlockquote().run()" :class="{ 'is-active': isActive('blockquote') }" class="btn-toolbar" title="Blockquote">
         <ChatBubbleLeftEllipsisIcon class="w-5 h-5" />
       </button>
 
-      <button @click="editor.chain().focus().setHorizontalRule().run()" class="btn-toolbar" title="Horizontal Rule">
+      <button type="button" @click="editor.chain().focus().setHorizontalRule().run()" class="btn-toolbar" title="Horizontal Rule">
         <MinusIcon class="w-5 h-5" />
       </button>
 
       <span class="toolbar-divider"></span>
 
-      <button @click="editor.chain().focus().toggleCodeBlock().run()" :class="{ 'is-active': isActive('codeBlock') }" class="btn-toolbar" title="Code Block">
+      <button type="button" @click="editor.chain().focus().toggleCodeBlock().run()" :class="{ 'is-active': isActive('codeBlock') }" class="btn-toolbar" title="Code Block">
         <CodeBracketIcon class="w-5 h-5" />
       </button>
 
       <span class="toolbar-divider"></span>
 
-      <button @click="addYoutubeVideo" class="btn-toolbar" title="Embed YouTube Video">
+      <button type="button" @click="addYoutubeVideo" class="btn-toolbar" title="Embed YouTube Video">
         <VideoCameraIcon class="w-5 h-5" />
       </button>
 
       <span class="toolbar-divider"></span>
 
-      <button @click="triggerImageUpload" class="btn-toolbar" title="Upload Image">
+      <button type="button" @click="triggerImageUpload" class="btn-toolbar" title="Upload Image">
         <PhotoIcon class="w-5 h-5" />
       </button>
       <input
@@ -286,7 +286,7 @@ const toggleFullScreen = () => {
 
       <span class="toolbar-divider"></span>
 
-      <button @click="toggleFullScreen" class="btn-toolbar" :title="isFullScreen ? 'Exit Full Screen' : 'Full Screen'">
+      <button type="button" @click="toggleFullScreen" class="btn-toolbar" :title="isFullScreen ? 'Exit Full Screen' : 'Full Screen'">
         <ArrowsPointingInIcon v-if="isFullScreen" class="w-5 h-5" />
         <ArrowsPointingOutIcon v-else class="w-5 h-5" />
       </button>
