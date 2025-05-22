@@ -10,6 +10,22 @@ import { Button } from '@/components/ui/button';
 import { ref, computed, watch } from 'vue';
 import { currentLocale } from '@/Utils/i18n';
 
+// Ticket Management Components & Types
+import TicketDefinitionMiniForm from '@/pages/Admin/Events/Partials/TicketDefinitionMiniForm.vue';
+import TicketDefinitionSelector from '@/pages/Admin/Events/Partials/TicketDefinitionSelector.vue';
+import type { TicketDefinitionOption as SelectorTicketDefinitionOption } from '@/pages/Admin/Events/Partials/TicketDefinitionSelector.vue';
+import type { StatusOption as TicketStatusOption } from '@/pages/Admin/Events/Partials/TicketDefinitionMiniForm.vue';
+
+// For ticket assignments within this occurrence
+interface OccurrenceTicketAssignment {
+    ticket_definition_id: number;
+    name?: string; // For display convenience, fetched from main TicketDefinition
+    original_price?: number; // For display convenience
+    original_currency_code?: string; // For display convenience
+    quantity_for_occurrence: number | undefined;
+    price_override: number | undefined; // In cents
+}
+
 // Define interfaces for props
 interface EventProp {
     id: number;
@@ -28,7 +44,6 @@ interface OccurrenceProp {
     capacity: number | null;
     status: string;
     timezone: string;
-    // Ensure all fields accessed from props.occurrence are here
 }
 
 interface VenueSelectItem {
@@ -59,6 +74,10 @@ interface PageProps {
     errors?: Record<string, string>;
     pageTitle?: string;
     breadcrumbs?: BreadcrumbItem[];
+    // Props for ticket management
+    allAvailableTicketDefinitions: SelectorTicketDefinitionOption[];
+    ticketDefinitionStatuses: TicketStatusOption[];
+    assignedTickets: OccurrenceTicketAssignment[]; // Added as a top-level required prop
 }
 
 const props = defineProps<PageProps>();
@@ -77,6 +96,7 @@ interface OccurrenceFormData {
     capacity: number | null;
     status: string;
     timezone: string;
+    assigned_tickets: OccurrenceTicketAssignment[]; // Added for form data
     [key: string]: any; // Add index signature for Inertia's FormDataType
 }
 
@@ -104,6 +124,7 @@ const form = useForm<OccurrenceFormData>({
     capacity: props.occurrence.capacity ?? null,
     status: props.occurrence.status || (props.occurrenceStatuses.find(s => s.value === 'scheduled')?.value || props.occurrenceStatuses[0]?.value || ''),
     timezone: props.occurrence.timezone || 'Asia/Hong_Kong',
+    assigned_tickets: props.assignedTickets ? JSON.parse(JSON.stringify(props.assignedTickets)) : [], // Use top-level prop
 });
 
 watch(() => form.is_online, (isOnline) => {
@@ -130,6 +151,14 @@ const statusOptions = computed(() => {
 
 const submit = () => {
     form.post(route('admin.occurrences.update', { occurrence: props.occurrence.id }), {
+        // Consider preserveState: true, preserveScroll: true if appropriate after backend update
+        onSuccess: () => {
+            // Potentially show a success notification
+        },
+        onError: (formErrors) => {
+            console.error("Error updating occurrence:", formErrors);
+            // Potentially show an error notification
+        }
     });
 };
 
@@ -145,9 +174,77 @@ watch(() => props.occurrence, (newOccurrence) => {
         form.capacity = newOccurrence.capacity ?? null;
         form.status = newOccurrence.status || (props.occurrenceStatuses.find(s => s.value === 'scheduled')?.value || props.occurrenceStatuses[0]?.value || '');
         form.timezone = newOccurrence.timezone || 'Asia/Hong_Kong';
-        form.errors = {};
+        form.errors = {}; // Clear previous errors
+        // No longer need to update from newOccurrence.assigned_tickets as it's a separate prop now.
+        // If assignedTickets prop itself becomes reactive and can change, a separate watcher for it might be needed.
+        // For now, assuming it's loaded once with the page.
+        // If a refresh of assigned_tickets is needed without full page reload, that's a more complex scenario.
     }
 }, { deep: true });
+
+
+// --- Ticket Management Logic ---
+const showTicketMiniForm = ref(false);
+const showTicketSelector = ref(false);
+
+// This event informs that a ticket was created.
+// The parent page (served by Inertia controller) should ensure that `props.allAvailableTicketDefinitions`
+// is up-to-date on the next page load or through a subsequent data refresh mechanism.
+const handleTicketDefinitionCreated = (newTicketDefData: any) => {
+    showTicketMiniForm.value = false;
+    // Emitting an event to the parent might be needed if dynamic refresh without full page reload is required.
+    // For now, relies on backend to update `allAvailableTicketDefinitions` for subsequent interactions.
+    // router.reload({ only: ['allAvailableTicketDefinitions'] }); // Example if such partial reload is setup
+    alert('Ticket definition "' + (newTicketDefData.name?.en || newTicketDefData.id) + '" created. It will be available in the selector after a page refresh or next visit.');
+};
+
+const handleTicketDefinitionsSelected = (selectedIds: number[]) => {
+    const newAssignments: OccurrenceTicketAssignment[] = [];
+    selectedIds.forEach(id => {
+        const existingAssignment = form.assigned_tickets.find(at => at.ticket_definition_id === id);
+        if (existingAssignment) {
+            newAssignments.push(existingAssignment);
+        } else {
+            const ticketDef = props.allAvailableTicketDefinitions.find(td => td.id === id);
+            if (ticketDef) {
+                newAssignments.push({
+                    ticket_definition_id: id,
+                    name: ticketDef.name,
+                    original_price: ticketDef.price,
+                    original_currency_code: ticketDef.currency_code,
+                    quantity_for_occurrence: undefined, // Default, user can edit
+                    price_override: undefined, // Default, user can edit
+                });
+            }
+        }
+    });
+    form.assigned_tickets = newAssignments;
+    showTicketSelector.value = false;
+};
+
+const removeAssignedTicket = (ticketDefIdToRemove: number) => {
+    form.assigned_tickets = form.assigned_tickets.filter(
+        (at) => at.ticket_definition_id !== ticketDefIdToRemove
+    );
+};
+
+const getTicketDefinitionName = (id: number): string => {
+    return props.allAvailableTicketDefinitions.find(td => td.id === id)?.name || 'Unknown Ticket';
+};
+
+const formatPrice = (price: number | undefined | null, currencyCode: string | undefined | null): string => {
+    if (price === null || price === undefined || currencyCode === null || currencyCode === undefined) return 'N/A';
+    try {
+        return new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode }).format(price / 100);
+    } catch {
+        return ` ${(price / 100).toFixed(2)} ${currencyCode}`;
+    }
+};
+
+const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTicketAssignment) => {
+    const errorKey = `assigned_tickets.${index}.${fieldName}`;
+    return (form.errors as Record<string, string>)?.[errorKey];
+};
 
 </script>
 
@@ -286,6 +383,52 @@ watch(() => props.occurrence, (newOccurrence) => {
                         </div>
                     </div>
 
+                    <!-- Ticket Management Section -->
+                    <div class="px-6 py-5 border-t border-gray-200 dark:border-gray-700">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-base font-medium text-gray-900 dark:text-white">Manage Tickets for this Occurrence</h3>
+                            <div class="space-x-2">
+                                <Button type="button" variant="outline" size="sm" @click="showTicketSelector = true">
+                                    Assign Existing Tickets
+                                </Button>
+                                <Button type="button" variant="outline" size="sm" @click="showTicketMiniForm = true">
+                                    Create New Ticket Type
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div v-if="!form.assigned_tickets || form.assigned_tickets.length === 0" class="p-4 border border-dashed rounded-md text-center text-gray-500 dark:text-gray-400">
+                            No tickets assigned to this specific occurrence yet.
+                        </div>
+                        <div v-else class="space-y-4">
+                            <div v-for="(assignedTicket, ticketIndex) in form.assigned_tickets" :key="assignedTicket.ticket_definition_id" class="p-4 border rounded-md bg-gray-50 dark:bg-gray-700/50">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 dark:text-gray-100">{{ assignedTicket.name || getTicketDefinitionName(assignedTicket.ticket_definition_id) }}</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            Original Price: {{ formatPrice(assignedTicket.original_price, assignedTicket.original_currency_code) }}
+                                        </p>
+                                    </div>
+                                    <Button type="button" variant="ghost" size="sm" @click="removeAssignedTicket(assignedTicket.ticket_definition_id)" class="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400">
+                                        Remove
+                                    </Button>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label :for="`assigned_ticket_qty_${ticketIndex}`">Quantity for Occurrence</Label>
+                                        <Input :id="`assigned_ticket_qty_${ticketIndex}`" type="number" v-model.number="assignedTicket.quantity_for_occurrence" placeholder="Unlimited" class="mt-1 block w-full" min="0"/>
+                                        <InputError :message="assignedTicketFieldError(ticketIndex, 'quantity_for_occurrence')" class="mt-1" />
+                                    </div>
+                                    <div>
+                                        <Label :for="`assigned_ticket_price_override_${ticketIndex}`">Price Override (in cents)</Label>
+                                        <Input :id="`assigned_ticket_price_override_${ticketIndex}`" type="number" v-model.number="assignedTicket.price_override" placeholder="Use original price" class="mt-1 block w-full" min="0"/>
+                                        <InputError :message="assignedTicketFieldError(ticketIndex, 'price_override')" class="mt-1" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="p-6 flex justify-end space-x-3">
                         <Link :href="route('admin.events.occurrences.index', {event: props.event.id})" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
                             Cancel
@@ -297,5 +440,23 @@ watch(() => props.occurrence, (newOccurrence) => {
                 </form>
             </div>
         </div>
+
+        <!-- Modals for Ticket Management -->
+        <TicketDefinitionMiniForm
+            :show="showTicketMiniForm"
+            :statuses="props.ticketDefinitionStatuses"
+            :available-locales="props.availableLocales"
+            @close="showTicketMiniForm = false"
+            @ticket-definition-created="handleTicketDefinitionCreated"
+        />
+
+        <TicketDefinitionSelector
+            :show="showTicketSelector"
+            :available-ticket-definitions="props.allAvailableTicketDefinitions"
+            :initially-selected-ids="form.assigned_tickets.map(at => at.ticket_definition_id)"
+            @close="showTicketSelector = false"
+            @ticket-definitions-selected="handleTicketDefinitionsSelected"
+        />
+
     </AppLayout>
 </template>

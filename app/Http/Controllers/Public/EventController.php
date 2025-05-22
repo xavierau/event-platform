@@ -41,7 +41,7 @@ class EventController extends Controller
     {
         $categorySlug = $request->query('category');
         $category = null;
-        $categoryName = '全部活动';
+        $categoryName = __('全部活动');
         $posterUrl = null;
         $events = collect();
 
@@ -118,5 +118,58 @@ class EventController extends Controller
             return $start->translatedFormat('Y.m.d') . '-' . $end->translatedFormat('d');
         }
         return $start->translatedFormat('Y.m.d') . '-' . $end->translatedFormat('Y.m.d');
+    }
+
+    public function show($eventId)
+    {
+        $service = new \App\Services\EventService(new \App\Actions\Event\UpsertEventAction());
+        $placeholderEvent = $service->findEventById($eventId);
+
+        if (!$placeholderEvent) {
+            abort(404);
+        }
+
+        // Transform the event data to match the expected format
+        $placeholderEvent = [
+            'id' => $placeholderEvent->id,
+            'name' => $placeholderEvent->name,
+            'category_tag' => $placeholderEvent->category?->name,
+            'duration_info' => $placeholderEvent->duration_info,
+            'price_range' => $placeholderEvent->eventOccurrences->map(function ($occurrence) {
+                return $occurrence->ticketDefinitions->first()->currency . $occurrence->ticketDefinitions->min('price') / 100 . '-' . $occurrence->ticketDefinitions->max('price') / 100;
+            })->first(),
+            'discount_info' => $placeholderEvent->discount_info,
+            'main_poster_url' => $placeholderEvent->getFirstMediaUrl('portrait_poster'),
+            'thumbnail_url' => $placeholderEvent->getFirstMediaUrl('portrait_poster', 'thumb'),
+            'landscape_poster_url' => $placeholderEvent->getFirstMediaUrl('landscape_poster'),
+            'description_html' => $placeholderEvent->description,
+            'venue_name' => $placeholderEvent->venue?->name,
+            'venue_address' => $placeholderEvent->venue?->address,
+            'occurrences' => $placeholderEvent->eventOccurrences->map(function ($occurrence) {
+                return [
+                    'id' => $occurrence->id,
+                    'name' => $occurrence->name,
+                    'date_short' => $occurrence->start_at_utc?->format('m.d'),
+                    'full_date_time' => $occurrence->start_at_utc?->format('Y.m.d') . ' ' . $occurrence->start_at_utc?->locale(app()->getLocale())->isoFormat('dddd') . ' ' . $occurrence->start_at_utc?->format('H:i'),
+                    'status_tag' => $occurrence->status,
+                    'venue_name' => $occurrence->venue?->name,
+                    'venue_address' => $occurrence->venue?->address,
+                    'tickets' => $occurrence->ticketDefinitions->map(function ($ticket) {
+                        return [
+                            'id' => $ticket->id,
+                            'name' => $ticket->name,
+                            'description' => $ticket->description,
+                            'currency' => $ticket->currency,
+                            'price' => $ticket->price / 100,
+                            'quantity_available' => $ticket->quantity_available
+                        ];
+                    })->toArray()
+                ];
+            })->toArray()
+        ];
+
+        return \Inertia\Inertia::render('Public/EventDetail', [
+            'event' => $placeholderEvent
+        ]);
     }
 }

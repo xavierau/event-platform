@@ -30,62 +30,7 @@ Route::get('/', HomeController::class)->name('home');
 // })->name('home');
 
 // Route for Public Event Detail Page
-Route::get('/events/{event}', function ($eventId) {
-
-
-    // In a real application, you would fetch event data from the database using $eventId
-    // For now, we'll use placeholder data similar to what's in EventDetail.vue
-    // This should be handled by a dedicated controller, e.g., PublicEventController@show
-    $service = new EventService(new \App\Actions\Event\UpsertEventAction());
-    $placeholderEvent = $service->findEventById($eventId);
-
-    if (!$placeholderEvent) {
-        abort(404);
-    }
-
-    // Transform the event data to match the expected format
-    $placeholderEvent = [
-        'id' => $placeholderEvent->id,
-        'name' => $placeholderEvent->name,
-        'category_tag' => $placeholderEvent->category?->name,
-        'duration_info' => $placeholderEvent->duration_info,
-        'price_range' => $placeholderEvent->eventOccurrences->map(function ($occurrence) {
-            return $occurrence->ticketDefinitions->first()->currency . $occurrence->ticketDefinitions->min('price') / 100 . '-' . $occurrence->ticketDefinitions->max('price') / 100;
-        })->first(),
-        'discount_info' => $placeholderEvent->discount_info,
-        'main_poster_url' => $placeholderEvent->getFirstMediaUrl('portrait_poster'),
-        'thumbnail_url' => $placeholderEvent->getFirstMediaUrl('portrait_poster', 'thumb'),
-        'landscape_poster_url' => $placeholderEvent->getFirstMediaUrl('landscape_poster'),
-        'description_html' => $placeholderEvent->description,
-        'venue_name' => $placeholderEvent->venue?->name,
-        'venue_address' => $placeholderEvent->venue?->address,
-        'occurrences' => $placeholderEvent->eventOccurrences->map(function ($occurrence) {
-            return [
-                'id' => $occurrence->id,
-                'name' => $occurrence->name,
-                'date_short' => $occurrence->start_at_utc?->format('m.d'),
-                'full_date_time' => $occurrence->start_at_utc?->format('Y.m.d') . ' ' . $occurrence->start_at_utc?->locale(app()->getLocale())->isoFormat('dddd') . ' ' . $occurrence->start_at_utc?->format('H:i'),
-                'status_tag' => $occurrence->status,
-                'venue_name' => $occurrence->venue?->name,
-                'venue_address' => $occurrence->venue?->address,
-                'tickets' => $occurrence->ticketDefinitions->map(function ($ticket) {
-                    return [
-                        'id' => $ticket->id,
-                        'name' => $ticket->name,
-                        'description' => $ticket->description,
-                        'currency' => $ticket->currency,
-                        'price' => $ticket->price / 100,
-                        'quantity_available' => $ticket->quantity_available
-                    ];
-                })->toArray()
-            ];
-        })->toArray()
-    ];
-
-    return Inertia::render('Public/EventDetail', [
-        'event' => $placeholderEvent
-    ]);
-})->name('events.show');
+Route::get('/events/{event}', [\App\Http\Controllers\Public\EventController::class, 'show'])->name('events.show');
 
 Route::get('/events', [PublicEventController::class, 'index'])->name('events.index');
 
@@ -118,8 +63,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
     // Ticket Definitions CRUD
     Route::resource('ticket-definitions', TicketDefinitionController::class);
-
-    // });
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
