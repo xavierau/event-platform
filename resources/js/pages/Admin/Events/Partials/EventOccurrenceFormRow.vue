@@ -11,7 +11,7 @@ interface OccurrenceTicketAssignment {
     // availability_status_for_occurrence: string | null; // Potentially managed by backend
 }
 
-import { computed, ref } from 'vue';
+import { computed, ref, watch, reactive, toRaw } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -19,14 +19,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import InputError from '@/components/InputError.vue';
 // Assuming i18n utility exists, similar to other forms
 import { currentLocale as i18nLocale } from '@/Utils/i18n';
-import { Textarea } from '@/components/ui/textarea'; // Assuming Textarea component exists
+import { Textarea } from '@/components/ui/textarea';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select'; // Assuming Select components
+} from '@/components/ui/select';
 
 import TicketDefinitionMiniForm from './TicketDefinitionMiniForm.vue';
 import TicketDefinitionSelector from './TicketDefinitionSelector.vue';
@@ -82,7 +82,20 @@ const props = defineProps<{
     ticketDefinitionStatuses: TicketStatusOption[]; // Statuses for new TicketDefinitions (via mini form)
 }>();
 
-const emit = defineEmits(['removeOccurrence', 'newTicketDefinitionCreated']);
+const emit = defineEmits(['removeOccurrence', 'newTicketDefinitionCreated', 'update:occurrence']);
+
+// --- Create a deep reactive copy of the prop for local mutation ---
+const editableOccurrence = reactive<EventOccurrenceFormData>(JSON.parse(JSON.stringify(toRaw(props.occurrence))));
+
+// --- Watch for changes in the prop and update the local copy ---
+watch(() => props.occurrence, (newVal) => {
+    Object.assign(editableOccurrence, JSON.parse(JSON.stringify(toRaw(newVal))));
+}, { deep: true });
+
+// --- Watch for changes in the local copy and emit update event ---
+watch(editableOccurrence, (newVal) => {
+    emit('update:occurrence', JSON.parse(JSON.stringify(toRaw(newVal))));
+}, { deep: true });
 
 // --- Modal Visibility State ---
 const showTicketMiniForm = ref(false);
@@ -94,39 +107,39 @@ const activeLocaleTab = ref(i18nLocale.value || (localeTabs.value.length > 0 ? l
 
 // --- Computed properties for v-model on translatable fields ---
 const currentName = computed({
-    get: () => props.occurrence.name[activeLocaleTab.value] || '',
+    get: () => editableOccurrence.name[activeLocaleTab.value] || '',
     set: (value) => {
-        props.occurrence.name[activeLocaleTab.value] = value;
+        editableOccurrence.name[activeLocaleTab.value] = value;
     }
 });
 
 const currentDescription = computed({
-    get: () => props.occurrence.description[activeLocaleTab.value] || '',
+    get: () => editableOccurrence.description[activeLocaleTab.value] || '',
     set: (value) => {
-        props.occurrence.description[activeLocaleTab.value] = value;
+        editableOccurrence.description[activeLocaleTab.value] = value;
     }
 });
 
 // --- Computed properties for nullable fields to interface with v-model ---
 const computedTimezone = computed({
-    get: () => props.occurrence.timezone || '',
+    get: () => editableOccurrence.timezone || '',
     set: (value: string) => {
-        props.occurrence.timezone = value === '' ? null : value;
+        editableOccurrence.timezone = value === '' ? null : value;
     }
 });
 
 const computedCapacity = computed({
-    get: () => props.occurrence.capacity === null || props.occurrence.capacity === undefined ? '' : props.occurrence.capacity.toString(),
+    get: () => editableOccurrence.capacity === null || editableOccurrence.capacity === undefined ? '' : editableOccurrence.capacity.toString(),
     set: (value: string) => {
         const num = parseInt(value, 10);
-        props.occurrence.capacity = isNaN(num) ? null : num;
+        editableOccurrence.capacity = isNaN(num) ? null : num;
     }
 });
 
 const computedOnlineMeetingLink = computed({
-    get: () => props.occurrence.online_meeting_link || '',
+    get: () => editableOccurrence.online_meeting_link || '',
     set: (value: string) => {
-        props.occurrence.online_meeting_link = value === '' ? null : value;
+        editableOccurrence.online_meeting_link = value === '' ? null : value;
     }
 });
 
@@ -138,11 +151,11 @@ const removeThisOccurrence = () => {
 // Parent form should populate occurrence.errors
 const fieldError = (fieldName: string) => {
     const key = `${fieldName}`; // Adjust if parent prefixes with `occurrences.${props.index}.`
-    return props.occurrence.errors?.[key];
+    return editableOccurrence.errors?.[key];
 };
 const translatableFieldError = (fieldName: string, locale: string) => {
     const key = `${fieldName}.${locale}`;
-    return props.occurrence.errors?.[key];
+    return editableOccurrence.errors?.[key];
 }
 
 // --- Ticket Management Logic ---
@@ -160,7 +173,7 @@ const handleTicketDefinitionCreated = (newTicketDefData: any) => {
 const handleTicketDefinitionsSelected = (selectedIds: number[]) => {
     const newAssignments: OccurrenceTicketAssignment[] = [];
     selectedIds.forEach(id => {
-        const existingAssignment = props.occurrence.assigned_tickets.find(at => at.ticket_definition_id === id);
+        const existingAssignment = editableOccurrence.assigned_tickets.find(at => at.ticket_definition_id === id);
         if (existingAssignment) {
             newAssignments.push(existingAssignment);
         } else {
@@ -175,12 +188,12 @@ const handleTicketDefinitionsSelected = (selectedIds: number[]) => {
             });
         }
     });
-    props.occurrence.assigned_tickets = newAssignments;
+    editableOccurrence.assigned_tickets = newAssignments;
     showTicketSelector.value = false;
 };
 
 const removeAssignedTicket = (ticketDefIdToRemove: number) => {
-    props.occurrence.assigned_tickets = props.occurrence.assigned_tickets.filter(
+    editableOccurrence.assigned_tickets = editableOccurrence.assigned_tickets.filter(
         (at) => at.ticket_definition_id !== ticketDefIdToRemove
     );
 };
@@ -202,7 +215,7 @@ const formatPrice = (price: number | null | undefined, currencyCode: string | nu
 // --- Error Handling Helpers ---
 const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTicketAssignment) => {
     // Error key might be like: assigned_tickets.0.quantity_for_occurrence
-    return props.occurrence.errors?.[`assigned_tickets.${index}.${fieldName}`];
+    return editableOccurrence.errors?.[`assigned_tickets.${index}.${fieldName}`];
 }
 
 </script>
@@ -265,7 +278,7 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
             <div>
                 <Label :for="`occurrence_venue_${index}`" required>Venue</Label>
-                 <Select v-model="occurrence.venue_id">
+                 <Select v-model="editableOccurrence.venue_id">
                     <SelectTrigger :id="`occurrence_venue_${index}`" class="mt-1 w-full">
                         <SelectValue placeholder="Select a venue" />
                     </SelectTrigger>
@@ -283,7 +296,7 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
 
             <div>
                 <Label :for="`occurrence_status_${index}`" required>Status</Label>
-                <Select v-model="occurrence.status">
+                <Select v-model="editableOccurrence.status">
                      <SelectTrigger :id="`occurrence_status_${index}`" class="mt-1 w-full">
                         <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -301,7 +314,7 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
                 <Input
                     :id="`occurrence_start_at_${index}`"
                     type="datetime-local"
-                    v-model="occurrence.start_at"
+                    v-model="editableOccurrence.start_at"
                     class="mt-1 block w-full"
                 />
                 <InputError :message="fieldError('start_at')" class="mt-1" />
@@ -312,7 +325,7 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
                 <Input
                     :id="`occurrence_end_at_${index}`"
                     type="datetime-local"
-                    v-model="occurrence.end_at"
+                    v-model="editableOccurrence.end_at"
                     class="mt-1 block w-full"
                 />
                 <InputError :message="fieldError('end_at')" class="mt-1" />
@@ -345,14 +358,14 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
 
             <div class="md:col-span-2 space-y-2">
                  <div class="flex items-center space-x-2">
-                    <Checkbox :id="`occurrence_is_online_${index}`" v-model:checked="occurrence.is_online" />
+                    <Checkbox :id="`occurrence_is_online_${index}`" v-model:checked="editableOccurrence.is_online" />
                     <Label :for="`occurrence_is_online_${index}`" class="font-normal">This occurrence is online</Label>
                 </div>
                  <InputError :message="fieldError('is_online')" class="mt-1" />
             </div>
 
 
-            <div v-if="occurrence.is_online" class="md:col-span-2">
+            <div v-if="editableOccurrence.is_online" class="md:col-span-2">
                 <Label :for="`occurrence_online_link_${index}`">Online Meeting Link</Label>
                 <Input
                     :id="`occurrence_online_link_${index}`"
@@ -379,11 +392,11 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
                 </div>
             </div>
 
-            <div v-if="!occurrence.assigned_tickets || occurrence.assigned_tickets.length === 0" class="p-4 border border-dashed rounded-md text-center text-muted-foreground">
+            <div v-if="!editableOccurrence.assigned_tickets || editableOccurrence.assigned_tickets.length === 0" class="p-4 border border-dashed rounded-md text-center text-muted-foreground">
                 No tickets assigned to this specific occurrence yet.
             </div>
             <div v-else class="space-y-4">
-                <div v-for="(assignedTicket, ticketIndex) in occurrence.assigned_tickets" :key="assignedTicket.ticket_definition_id" class="p-4 border rounded-md bg-muted/30">
+                <div v-for="(assignedTicket, ticketIndex) in editableOccurrence.assigned_tickets" :key="assignedTicket.ticket_definition_id" class="p-4 border rounded-md bg-muted/30">
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <h5 class="font-semibold">{{ assignedTicket.name || getTicketDefinitionName(assignedTicket.ticket_definition_id) }}</h5>
@@ -423,7 +436,7 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
         <TicketDefinitionSelector
             :show="showTicketSelector"
             :available-ticket-definitions="props.allAvailableTicketDefinitions"
-            :initially-selected-ids="occurrence.assigned_tickets.map(at => at.ticket_definition_id)"
+            :initially-selected-ids="editableOccurrence.assigned_tickets.map(at => at.ticket_definition_id)"
             @close="showTicketSelector = false"
             @ticket-definitions-selected="handleTicketDefinitionsSelected"
         />
