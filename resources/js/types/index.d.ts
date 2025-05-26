@@ -103,3 +103,25 @@ export interface VenueData {
     created_at?: string;
     updated_at?: string;
 }
+
+// Define a basic Event type for use in Booking
+export interface Event {
+    id: number;
+    name: string;
+    // Add other relevant event properties as needed
+}
+
+export interface Booking {
+    id: number;
+    event_id: number;
+    user_id: number;
+    status: string; // Consider using an enum for status if applicable
+    quantity: number;
+    price_per_unit: number;
+    total_price: number;
+    currency: string;
+    created_at?: string;
+    updated_at?: string;
+    event?: Event; // Optional: for eager loaded event data
+    user?: User; // Optional: for eager loaded user data
+}

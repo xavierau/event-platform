@@ -7,20 +7,45 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Route as RouteFacade;
 use Inertia\Inertia;
-use Inertia\Response;
+use Inertia\Response as InertiaResponse;
+use App\Enums\RoleNameEnum;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Show the login page.
+     * Display the login view.
      */
-    public function create(Request $request): Response
+    public function create(Request $request): InertiaResponse
     {
-        return Inertia::render('auth/Login', [
-            'canResetPassword' => Route::has('password.request'),
+        return Inertia::render('Auth/Login', [
+            'canResetPassword' => RouteFacade::has('password.request'),
             'status' => $request->session()->get('status'),
+        ]);
+    }
+
+    /**
+     * Display the admin login view.
+     */
+    public function createAdminLogin(Request $request): InertiaResponse
+    {
+        return Inertia::render('Auth/AdminLogin', [
+            'canResetPassword' => RouteFacade::has('password.request'),
+            'status' => $request->session()->get('status'),
+            'loginRoute' => route('admin.login'),
+        ]);
+    }
+
+    /**
+     * Display the organizer login view.
+     */
+    public function createOrganizerLogin(Request $request): InertiaResponse
+    {
+        return Inertia::render('Auth/OrganizerLogin', [
+            'canResetPassword' => RouteFacade::has('password.request'),
+            'status' => $request->session()->get('status'),
+            'loginRoute' => route('organizer.login'),
         ]);
     }
 
@@ -34,6 +59,44 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    /**
+     * Handle an incoming admin authentication request.
+     */
+    public function storeAdminLogin(LoginRequest $request): RedirectResponse
+    {
+        $request->authenticate();
+        $user = Auth::user();
+
+        if (!$user || !$user->hasRole(RoleNameEnum::ADMIN->value)) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('admin.login')->withErrors(['email' => 'These credentials do not match an administrator account.']);
+        }
+
+        $request->session()->regenerate();
+        return redirect()->intended(route('admin.dashboard', absolute: false));
+    }
+
+    /**
+     * Handle an incoming organizer authentication request.
+     */
+    public function storeOrganizerLogin(LoginRequest $request): RedirectResponse
+    {
+        $request->authenticate();
+        $user = Auth::user();
+
+        if (!$user || !$user->hasRole(RoleNameEnum::ORGANIZER->value)) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('organizer.login')->withErrors(['email' => 'These credentials do not match an organizer account.']);
+        }
+
+        $request->session()->regenerate();
+        return redirect()->intended(route('organizer.dashboard', absolute: false));
     }
 
     /**

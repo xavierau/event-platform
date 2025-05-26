@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call([
+            PermissionSeeder::class, // Creates all granular permissions
             // Core Seeders - run in order of dependency
             RolePermissionSeeder::class, // Must run first to create roles
             CountrySeeder::class,

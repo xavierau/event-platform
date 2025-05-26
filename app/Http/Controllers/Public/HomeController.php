@@ -45,6 +45,7 @@ class HomeController extends Controller
         $upcomingEventIds = collect($upcomingEvents)->pluck('id')->all();
         $moreEvents = $this->eventService->getMoreEventsForHomepage(15, $upcomingEventIds); // Fetch 4 more events
 
+
         // Placeholder for other data to be passed to the landing page
         $featuredEvent = null; // Or fetch actual featured event
 

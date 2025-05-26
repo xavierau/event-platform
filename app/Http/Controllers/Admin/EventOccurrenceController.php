@@ -105,8 +105,8 @@ class EventOccurrenceController extends Controller
             return Redirect::route('admin.events.occurrences.index', $event->id)
                 ->with('success', 'Event occurrence created successfully.');
         } catch (InvalidDataClass $e) {
-            Log::error('DTO Validation Error: ' . $e->getMessage(), $e->errors());
-            return back()->withErrors($e->errors())->withInput();
+            Log::error('DTO Validation Error: ' . $e->getMessage(), ['payload' => $request->all()]);
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         } catch (ValidationException $e) {
             Log::error('Laravel Validation Error: ' . $e->getMessage(), $e->errors());
             return back()->withErrors($e->errors())->withInput();
@@ -145,7 +145,7 @@ class EventOccurrenceController extends Controller
                     'id' => $ticketDef->id,
                     'name' => $ticketDef->getTranslation('name', app()->getLocale()), // Use current locale
                     'price' => $ticketDef->price,
-                    'currency_code' => $ticketDef->currency_code,
+                    'currency_code' => $ticketDef->currency, // Fixed: use 'currency' field from model
                     // Add any other fields needed by the selector or display
                 ];
             });
@@ -162,7 +162,7 @@ class EventOccurrenceController extends Controller
                 'ticket_definition_id' => $ticketDef->id,
                 'name' => $ticketDef->getTranslation('name', app()->getLocale()),
                 'original_price' => $ticketDef->price,
-                'original_currency_code' => $ticketDef->currency_code,
+                'original_currency_code' => $ticketDef->currency, // Fixed: use 'currency' field from model
                 'quantity_for_occurrence' => $ticketDef->pivot->quantity_for_occurrence,
                 'price_override' => $ticketDef->pivot->price_override,
                 // 'availability_status_for_occurrence' => $ticketDef->pivot->availability_status, // If you have this
@@ -203,13 +203,17 @@ class EventOccurrenceController extends Controller
     public function update(Request $request, EventOccurrence $occurrence): RedirectResponse // Route model binding (shallow)
     {
         try {
+            Log::info('EventOccurrenceController@update request data: ', $request->all());
+
             $validatedData = EventOccurrenceData::from($request->all());
+            Log::info('Validated DTO: ', $validatedData->toArray());
+
             $this->eventOccurrenceService->updateOccurrence($occurrence->id, $validatedData);
             return Redirect::route('admin.events.occurrences.index', $occurrence->event_id)
                 ->with('success', 'Event occurrence updated successfully.');
         } catch (InvalidDataClass $e) {
-            Log::error('DTO Validation Error on update: ' . $e->getMessage(), $e->errors());
-            return back()->withErrors($e->errors())->withInput();
+            Log::error('DTO Validation Error on update: ' . $e->getMessage(), ['payload' => $request->all()]);
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         } catch (ValidationException $e) {
             Log::error('Laravel Validation Error on update: ' . $e->getMessage(), $e->errors());
             return back()->withErrors($e->errors())->withInput();

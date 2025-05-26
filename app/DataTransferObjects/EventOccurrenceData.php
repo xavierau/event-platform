@@ -21,6 +21,24 @@ use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 // use Spatie\LaravelData\Casts\ArrayObjectOrArrayCast; // For metadata if needed
 
+// DTO for ticket assignments within an occurrence
+class OccurrenceTicketAssignmentData extends Data
+{
+    public function __construct(
+        public readonly int $ticket_definition_id,
+        #[Nullable]
+        public readonly ?int $quantity_for_occurrence,
+        #[Nullable, Min(0)]
+        public readonly ?int $price_override, // In cents
+        #[Nullable]
+        public readonly ?string $name, // For display convenience, not stored
+        #[Nullable]
+        public readonly ?int $original_price, // For display convenience, not stored
+        #[Nullable]
+        public readonly ?string $original_currency_code, // For display convenience, not stored
+    ) {}
+}
+
 #[MapName(SnakeCaseMapper::class)]
 class EventOccurrenceData extends Data
 {
@@ -42,6 +60,9 @@ class EventOccurrenceData extends Data
         // #[In(OccurrenceStatus::class)] // Redundant if using Enum type hint directly
         public readonly OccurrenceStatus $status, // PHP 8.1+ Enum type hint is sufficient for In validation
         public readonly string $timezone,
+        #[Nullable]
+        /** @var OccurrenceTicketAssignmentData[] */
+        public readonly ?array $assigned_tickets = null, // Array of ticket assignments
         public readonly ?int $id = null, // For existing occurrence ID during updates
     ) {}
 
@@ -60,6 +81,10 @@ class EventOccurrenceData extends Data
             'capacity' => 'nullable|integer|min:0',
             'status' => ['required', new Enum(OccurrenceStatus::class)],
             'timezone' => 'required|string|timezone:all', // Use timezone:all for general timezones
+            'assigned_tickets' => 'nullable|array',
+            'assigned_tickets.*.ticket_definition_id' => 'required|exists:ticket_definitions,id',
+            'assigned_tickets.*.quantity_for_occurrence' => 'nullable|integer|min:0',
+            'assigned_tickets.*.price_override' => 'nullable|integer|min:0',
         ];
 
         $availableLocales = config('app.available_locales', ['en' => 'English']);

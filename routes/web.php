@@ -17,6 +17,9 @@ use App\Services\CategoryService;
 use App\Actions\Categories\UpsertCategoryAction;
 use App\Services\EventService;
 use App\Actions\Events\UpsertEventAction;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 
 use App\Http\Controllers\Public\EventController as PublicEventController;
 
@@ -63,16 +66,35 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
     // Ticket Definitions CRUD
     Route::resource('ticket-definitions', TicketDefinitionController::class);
+
+    // Bookings CRUD (Admin)
+    Route::resource('bookings', AdminBookingController::class);
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
+
+    Route::post('/bookings/initiate', [BookingController::class, 'initiateBooking'])->name('bookings.initiate');
+
+
     Route::get('/admin/dev/media-upload-test', [DevController::class, 'mediaUploadTest'])->name('admin.dev.media-upload-test');
     Route::post('/admin/dev/media-upload-test/post', [DevController::class, 'handleMediaPost'])->name('admin.dev.media-upload-test.post');
     Route::put('/admin/dev/media-upload-test/put', [DevController::class, 'handleMediaPut'])->name('admin.dev.media-upload-test.put');
 });
 
+Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');
+    // Add other admin routes here
+});
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+
+// Payment Routes
+Route::get('/payment/success', [PaymentController::class, 'handlePaymentSuccess'])->name('payment.success');
+Route::get('/payment/cancel', [PaymentController::class, 'handlePaymentCancel'])->name('payment.cancel');
+
+// Stripe Webhook Route (must be outside middleware groups)
+Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook'])->name('stripe.webhook');

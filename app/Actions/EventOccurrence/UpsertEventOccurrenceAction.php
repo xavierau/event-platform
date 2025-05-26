@@ -72,9 +72,36 @@ class UpsertEventOccurrenceAction
             $occurrence->fill($dataToUpdate);
             $occurrence->save();
 
-            // Handle any related logic here, e.g., syncing tickets if this occurrence has direct ticket definitions.
+            // Handle ticket assignments if provided
+            if ($occurrenceData->assigned_tickets !== null) {
+                $this->syncTicketAssignments($occurrence, $occurrenceData->assigned_tickets);
+            }
 
             return $occurrence->refresh();
         });
+    }
+
+    /**
+     * Sync ticket assignments for the occurrence
+     *
+     * @param EventOccurrence $occurrence
+     * @param array $assignedTickets Array of OccurrenceTicketAssignmentData
+     */
+    private function syncTicketAssignments(EventOccurrence $occurrence, array $assignedTickets): void
+    {
+        $syncData = [];
+
+        foreach ($assignedTickets as $ticketAssignment) {
+            // $ticketAssignment is an OccurrenceTicketAssignmentData object
+            // Extract only the pivot data (exclude display fields like name, original_price, etc.)
+            $syncData[$ticketAssignment->ticket_definition_id] = [
+                'quantity_for_occurrence' => $ticketAssignment->quantity_for_occurrence,
+                'price_override' => $ticketAssignment->price_override,
+                // 'availability_status' => null, // Add if needed
+            ];
+        }
+
+        // Sync the ticket definitions with pivot data
+        $occurrence->ticketDefinitions()->sync($syncData);
     }
 }

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import axios from 'axios'; // Import axios
+// import { router } from '@inertiajs/vue3'; // Removed unused import
 
 interface TicketType {
   id: string | number;
@@ -7,6 +9,8 @@ interface TicketType {
   description?: string;
   price: number;
   quantity_available?: number;
+  max_per_order?: number;
+  min_per_order?: number;
 }
 
 interface EventOccurrence {
@@ -47,10 +51,42 @@ watch(() => props.occurrence, (newOccurrence) => {
 
 
 const incrementQuantity = (ticketId: string | number) => {
-  if (selectedTickets.value[ticketId] !== undefined) {
-    // TODO: Add check against quantity_available if needed
-    selectedTickets.value[ticketId]++;
+  // Ensure props.occurrence and props.occurrence.tickets are available
+  if (!props.occurrence || !props.occurrence.tickets) {
+    console.error('Occurrence or tickets data is not available.');
+    return;
   }
+
+  const ticket = props.occurrence.tickets.find(t => t.id === ticketId);
+
+  if (!ticket) {
+    console.error(`Ticket details for ID ${ticketId} not found.`);
+    return;
+  }
+
+  if (selectedTickets.value[ticketId] === undefined) {
+    console.warn(`Ticket ${ticket.name || ticketId} is not in the current selection. Cannot increment.`);
+    return;
+  }
+
+  const currentQuantity = selectedTickets.value[ticketId];
+
+  // Use a default for quantity_available if it's undefined (e.g., 0 or Infinity depending on desired behavior)
+  // Assuming 0 if undefined, meaning if not specified, it's unavailable.
+  const availableStock = ticket.quantity_available ?? 0;
+  if (currentQuantity >= availableStock) {
+    console.warn(`Cannot select more of ticket ${ticket.name || ticketId}. Available stock: ${availableStock}. Currently selected: ${currentQuantity}.`);
+    return;
+  }
+
+  // max_per_order can be null or undefined if there's no limit.
+  // If ticket.max_per_order is null or undefined, the condition (currentQuantity >= ticket.max_per_order) effectively becomes false, allowing increment.
+  if (ticket.max_per_order !== null && ticket.max_per_order !== undefined && currentQuantity >= ticket.max_per_order) {
+    console.warn(`Cannot select more of ticket ${ticket.name || ticketId}. Max per order: ${ticket.max_per_order}. Currently selected: ${currentQuantity}.`);
+    return;
+  }
+
+  selectedTickets.value[ticketId]++;
 };
 
 const decrementQuantity = (ticketId: string | number) => {
@@ -72,11 +108,90 @@ const closeModal = () => {
   emit('close');
 };
 
-const confirmPurchase = () => {
-  // Placeholder for purchase logic
-  console.log('Purchase confirmed:', selectedTickets.value, 'Total:', totalPrice.value);
-  // Potentially emit an event with ticket details
-  closeModal();
+const isLoading = ref(false);
+
+// Type for the items to be sent to the new booking endpoint
+interface BookingRequestItem {
+  ticket_id: string | number;
+  quantity: number;
+  price_at_purchase: number; // Good to record the price when booking started
+  name: string; // For quick reference, though backend should re-verify
+}
+
+const hasSelectedTickets = computed(() => {
+  if (!props.occurrence || !props.occurrence.tickets) return false;
+  return Object.values(selectedTickets.value).some(quantity => quantity > 0);
+});
+
+const confirmPurchase = async () => {
+  isLoading.value = true;
+
+  const bookingItems: BookingRequestItem[] = [];
+  if (props.occurrence && props.occurrence.tickets) {
+    props.occurrence.tickets.forEach(ticket => {
+      const quantity = selectedTickets.value[ticket.id];
+      if (quantity > 0) {
+        bookingItems.push({
+          ticket_id: ticket.id,
+          quantity: quantity,
+          price_at_purchase: ticket.price,
+          name: ticket.name
+        });
+      }
+    });
+  }
+
+  if (bookingItems.length === 0 && totalPrice.value > 0) {
+      console.error('No items selected for a paid purchase.');
+      alert('Please select tickets before proceeding.');
+      isLoading.value = false;
+      return;
+  }
+
+  // Even if totalPrice is 0, we might still want to record the "booking" of free tickets.
+  // The backend will decide if a payment gateway is needed.
+
+  const payload = {
+    occurrence_id: props.occurrence?.id,
+    items: bookingItems,
+    // total_amount: totalPrice.value // Send for backend verification
+  };
+
+  try {
+    // Use Axios for the POST request
+    const response = await axios.post('/bookings/initiate', payload);
+    const responseData = response.data; // Axios automatically parses JSON
+
+    // No need to check response.ok, Axios throws an error for non-2xx responses
+
+    if (responseData.requires_payment && responseData.checkout_url) {
+      // Paid booking, redirect to Stripe
+      window.location.href = responseData.checkout_url;
+      // Modal will close upon redirection or page change
+    } else if (responseData.booking_confirmed) {
+      // Free booking confirmed, or payment not required
+      alert(responseData.message || 'Your booking is confirmed!'); // Show success message
+      closeModal(); // Close the modal
+    } else {
+      // Unexpected response
+      console.error('Unexpected response from server:', responseData);
+      alert('An unexpected error occurred. Please contact support.');
+    }
+
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+        // Error response from server (e.g., 4xx, 5xx)
+        console.error('Booking/Payment initiation failed:', error.response.data.message || error.response.data.error || error.response.statusText);
+        alert(error.response.data.message || error.response.data.error || 'Could not process your request. Please try again.');
+    } else {
+        // Network error or other issues
+        console.error('Error during booking confirmation:', error);
+        alert('An unexpected error occurred. Please try again.');
+    }
+  } finally {
+    isLoading.value = false;
+    // Don't close modal if redirecting, only if it's a free booking confirmation or error.
+  }
 };
 
 </script>
@@ -143,9 +258,10 @@ const confirmPurchase = () => {
           <button
             @click="confirmPurchase"
             class="w-full bg-pink-500 text-white py-2.5 rounded-md hover:bg-pink-600 font-semibold disabled:opacity-70"
-            :disabled="totalPrice === 0"
+            :disabled="isLoading || (totalPrice > 0 && !hasSelectedTickets)"
           >
-            确认购买
+            <span v-if="isLoading">Processing...</span>
+            <span v-else>确认购买</span>
           </button>
         </div>
       </div>

@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import TicketPurchaseModal from '@/components/Modals/TicketPurchaseModal.vue';
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
+
 interface TicketType {
   id: string | number;
   name: string;
   description?: string;
   price: number;
   quantity_available?: number;
+  max_per_order?: number;
+  min_per_order?: number;
 }
 
 interface EventOccurrence {
@@ -20,7 +23,6 @@ interface EventOccurrence {
   venue_name?: string; // Venue specific to this occurrence
   venue_address?: string; // Address specific to this occurrence
   tickets?: TicketType[]; // Added tickets array
-  // tickets?: any[]; // Future use for occurrence-specific tickets
 }
 
 interface EventDetails {
@@ -51,8 +53,16 @@ const props = defineProps({
   event: {
     type: Object as () => EventDetails,
     required: true,
-  }
+  },
+  // It's good practice to explicitly define auth props if they are passed directly
+  // However, $page.props.auth.user is generally available globally if middleware is set up.
 });
+
+const page = usePage(); // Get access to $page
+
+// Accessing auth state for login check
+// Ensure your HandleInertiaRequests middleware shares 'auth.user'
+const isAuthenticated = computed(() => !!(page.props.auth as any)?.user);
 
 const selectedOccurrence = ref<EventOccurrence | undefined>(
   props.event.occurrences && props.event.occurrences.length > 1
@@ -64,7 +74,10 @@ const selectOccurrence = (occurrence: EventOccurrence) => {
   selectedOccurrence.value = occurrence;
 };
 
-const formatPrice = (priceRange: string) => {
+const formatPrice = (priceRange: string | null) => {
+  if (!priceRange) {
+    return { currency: '', amount: 'Free', suffix: '' };
+  }
 
   const parts = priceRange.match(/([¥€$]?)([0-9]+(?:\.[0-9]+)?)(.*)/);
   if (parts) {
@@ -98,6 +111,17 @@ const currentVenueAddress = computed(() => {
 const showPurchaseModal = ref(false);
 
 const openPurchaseModal = () => {
+  // Check if user is logged in
+  if (!isAuthenticated.value) {
+    console.log('not authenticated');
+
+    // If using Ziggy for named routes, route('login') is correct.
+    // If not, replace with the actual path e.g., '/login'.
+    router.visit(route('login'));
+    return;
+  }
+
+  // Existing logic to open modal if tickets are available
   if (selectedOccurrence.value && selectedOccurrence.value.tickets && selectedOccurrence.value.tickets.length > 0) {
     showPurchaseModal.value = true;
   } else {
@@ -110,6 +134,21 @@ const openPurchaseModal = () => {
 
 const closePurchaseModal = () => {
   showPurchaseModal.value = false;
+};
+
+const addToWishlist = () => {
+  // Check if user is logged in - similar to openPurchaseModal
+  if (!isAuthenticated.value) {
+    // If using Ziggy for named routes, route('login') is correct.
+    // If not, replace with the actual path e.g., '/login'.
+    router.visit(route('login'));
+    return;
+  }
+  // Placeholder for wishlist logic
+  // TODO: Implement actual wishlist functionality (e.g., API call)
+  // This will be tracked by a task in prd/tasks.md
+  console.log('Add to wishlist clicked for event:', props.event.id);
+  alert('想看功能待实现 (Wishlist feature pending implementation) Event ID: ' + props.event.id);
 };
 
 if (props.event.occurrences && props.event.occurrences.length > 0) {
@@ -221,7 +260,10 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
           </Link>
         </div>
         <div class="flex space-x-2">
-          <button class="px-4 py-2 text-sm border border-pink-500 text-pink-500 rounded-full hover:bg-pink-50">
+          <button
+            class="px-4 py-2 text-sm border border-pink-500 text-pink-500 rounded-full hover:bg-pink-50"
+            @click="addToWishlist"
+          >
             <!-- Placeholder for Heart Icon --> ❤️ 想看
           </button>
           <button

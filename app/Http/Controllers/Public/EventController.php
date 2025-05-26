@@ -161,6 +161,8 @@ class EventController extends Controller
                             'description' => $ticket->description,
                             'currency' => $ticket->currency,
                             'price' => $ticket->price / 100,
+                            'max_per_order' => $ticket->max_per_order,
+                            'min_per_order' => $ticket->min_per_order,
                             'quantity_available' => $ticket->quantity_available
                         ];
                     })->toArray()
