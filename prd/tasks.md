@@ -2,7 +2,7 @@
 |---------|-------------|------------|--------------|---------|----------------------------------------------------------------------|
 | **SETUP & CORE** | | | | | |
 | SU-001  | Setup Laravel project, basic configuration, .env files | Medium     |              | Done    | Includes initial Vite setup for frontend if not already done.        |
-| SU-002  | Implement User Model & Authentication (Platform Admin, Organizer, General User roles) | Medium     | SU-001       | Done    | Consider Spatie/laravel-permission or similar for roles.             |
+| SU-002  | Implement User Model & Authentication (Platform Admin, Organizer, General User roles) | Medium     | SU-001       | Done    | Consider Spatie/laravel-permission or similar for roles. Sanctum and Cashier Billable trait configured. |
 | SU-003  | Setup multi-language support (middleware, translation files for en, zh-TW, zh-CN) | Medium     | SU-001       | Done    | Include helper functions for easy translation.                       |
 | SU-004  | Define base DTOs, Actions, Service class structures as per SOLID. | Low        | SU-001       | Done    | Establish conventions early.                                         |
 | SU-005  | Implement Site Setting Entity (Model, Migration, basic CRUD for Admin) | Medium     | SU-002       | Done    | Key-value store for site-wide configurations. Translatable values.   |
@@ -64,15 +64,22 @@
 | TCKD-003| Implement TicketDefinition DTOs, Actions/Services | Medium     | TCKD-001, TCKD-001.1 | Done | Include logic for managing associations with EventOccurrences.       |
 | TCKD-004| Develop Organizer/Admin UI for TicketDefinition Management (CRUD within Event) | Medium | TCKD-003, EVT-004 | Pending | Based on "Create Ticket" modal. UI should allow associating TicketDefinitions with specific EventOccurrences (via `event_occurrence_ticket_definition` pivot) including per-occurrence quantity/price if applicable. |
 | **ORDER & BOOKING** | | | | | |
-| ORD-001 | Create Order Entity (Model, Migration) | Medium     | SU-002       | Pending | All fields as per overview. Integer amounts. Currency handling.      |
-| ORD-002 | Create Booking Entity (Model, Migration) | High       | ORD-001, EVT-001, TCKD-001, SU-002 | Pending | All fields per overview. Integer amounts. `qr_code_identifier`, `max_allowed_check_ins`. Denormalized fields. |
+| ORD-001 | Create Transaction Entity (Model, Migration) (used in place of Order) | Medium     | SU-002       | Done | Current `Transaction` model serves as the primary record for financial transactions. All fields as per overview. Integer amounts. Currency handling.      |
+| ORD-002 | Create Booking Entity (Model, Migration) | High       | ORD-001, EVT-001, TCKD-001, SU-002 | Done | All fields per overview. Integer amounts. `qr_code_identifier`, `max_allowed_check_ins`. Denormalized fields. Model and migration implemented. |
 | ORD-003 | Implement Monetary Helper Functions (Integer amounts, rounding, tax calc) | Medium     | SU-001       | Pending | Crucial for financial accuracy. Tax rounding up (ceiling).         |
-| ORD-004 | Implement Order & Booking DTOs, Actions/Services for Booking Process | High       | ORD-003, ORD-002 | Pending | Core booking logic. Includes QR code generation.                     |
+| ORD-004 | Implement Transaction & Booking DTOs, Actions/Services for Booking Process | High       | ORD-003, ORD-002 | Processing | Core booking logic. Includes QR code generation. Current implementation in BookingService. Refactor to Actions (TRX-003, TRX-004) pending. DTOs partially covered by InitiateBookingData (TRX-001, TRX-002). |
 | ORD-005 | Implement "My Bookings" page for General Users | Medium     | ORD-004      | Pending | Display purchased tickets/bookings.                                  |
 | ORD-006 | Develop Admin/Organizer UI for viewing Orders & Bookings | Medium     | ORD-004      | Pending | Search, filter, view details.                                        |
 | **CHECK-IN** | | | | | |
-| CHK-001 | Create CheckInLog Entity (Model, Migration) | Medium     | ORD-002      | Pending | All fields as per overview.                                          |
-| CHK-002 | Implement Check-in Logic (Action/Service) | High       | CHK-001, ORD-002 | Pending | Validate QR, check `max_allowed_check_ins`, log to `CheckInLog`.     |
+| CHK-001 | Create CheckInLog Entity (Model, Migration) | Medium     | ORD-002      | Done | All fields as per overview.                                          |
+| CHK-002 | Implement Check-in Logic (Action/Service) (Epic) | High       | CHK-001, ORD-002 | Decomposed | Validate QR, check `max_allowed_check_ins`, log to `CheckInLog`. Broken down into subtasks. |
+| CHK-002.1 | Add missing fields to Booking table (qr_code_identifier, max_allowed_check_ins) | Medium | CHK-001, ORD-002 | Done | Migration to add `qr_code_identifier` (varchar, unique, indexed, nullable) and `max_allowed_check_ins` (integer, default 1) fields to bookings table. |
+| CHK-002.2 | Create CheckInData DTO (`spatie/laravel-data`) | Low | CHK-002.1 | Done | DTO for check-in request data including QR code, method, device info, location, operator. |
+| CHK-002.3 | Implement QR Code Validation Logic | Medium | CHK-002.2 | Done | Validate QR code format, find booking by qr_code_identifier, check booking exists and is valid. |
+| CHK-002.4 | Implement Check-in Eligibility Validation | Medium | CHK-002.3 | Done | Check booking status (confirmed), event timing (not expired, within check-in window), max_allowed_check_ins limit. |
+| CHK-002.5 | Implement `ProcessCheckInAction` | Medium | CHK-002.4 | Pending | Core action to process check-in attempt, validate eligibility, create CheckInLog entry, update booking status if needed. |
+| CHK-002.6 | Implement `CheckInService` | Low | CHK-002.5 | Pending | Service layer to orchestrate check-in process, handle different check-in methods, provide clean API for controllers. |
+| CHK-002.7 | Add QR Code Generation to Booking Process | Medium | CHK-002.1 | Pending | Update booking creation/confirmation to generate unique QR codes and set max_allowed_check_ins from ticket definition. |
 | CHK-003 | Develop Check-in Interface (Mobile-friendly Web App / API for native app) | High   | CHK-002      | Pending | For staff to scan QR codes.                                        |
 | **FRONTEND - LANDING PAGE** | | | | | Based on reference image provided.                                                  |
 | FE-LP-001 | Design & Implement Public Landing Page (Homepage) Structure                | High       | FE-001, CAT-001 | Processing | Overall page layout for `~/` route. Will aggregate multiple sections/components.         |
@@ -100,10 +107,28 @@
 | FEAT-001.4 | Image Upload & Insertion for TipTap | High        | FEAT-001.2 | Done | Backend API endpoint for uploads. Frontend @tiptap/extension-image integration. |
 | FEAT-001.5 | Integrate TipTap into Venue Forms | Medium      | VEN-003, FEAT-001.2 | Done | Replace textarea in Venue Create/Edit. Bind to form.description.{locale}. Update VenueData/Action if needed. |
 | FEAT-001.6 | Server-Side Content Sanitization | Medium      | FEAT-001.5 | Done | Use HTMLPurifier in UpsertVenueAction for TipTap HTML output. |
-| FEAT-002| Implement Role-Specific Dashboards | Medium-High | SU-002, admin.dashboard route | Pending | Design and implement different dashboard views/widgets based on user roles (e.g., Platform Admin, Organizer). |
+| FEAT-002| Implement Role-Specific Dashboards | Medium-High | SU-002, admin.dashboard route | Decomposed | Design and implement different dashboard views/widgets based on user roles (e.g., Platform Admin, Organizer). |
+| FEAT-002.1 | Implement Admin Dashboard (Backend & Frontend) | Medium | FEAT-002, SU-002 | Processing | Create routes, controller, and Inertia view for `/admin/dashboard`. Basic structure implemented. Path alias issue in Vue component pending resolution. |
+| FEAT-002.2 | Implement Organizer Dashboard (Backend & Frontend) | Medium | FEAT-002, SU-002 | Pending | Create routes, controller, and Inertia view for `/organizer/dashboard`. |
+| FEAT-002.3 | Implement General User Dashboard (Backend & Frontend) | Medium | FEAT-002, SU-002 | Pending | Create routes, controller, and Inertia view for `/user/dashboard` (e.g., for profile, bookings). |
+| FEAT-002.4 | Update Authenticated Layout for Role-Based Navigation | Medium | FEAT-002.1, FEAT-002.2, FEAT-002.3 | Pending | Modify main navigation to show appropriate links based on user role. |
+| FEAT-003 | Clarify/Implement Multi-Login Page Strategy | Low        | SU-002       | Pending    | Determine if separate login pages are needed for different roles or if a single login page with role-based redirection is sufficient. Implement chosen strategy. |
 | **FRONTEND - HOME PAGE CONTROLLERS** | | | | | Fetching data for the public landing page (Home.vue)                       |
 | FE-HPC-001 | Create `CategoryController` to fetch event categories for landing page | Medium | CAT-001 | Superseded by FE-HPC-005 | Endpoint to serve categories for FE-LP-003. API route still exists but not used by Home.vue. |
 | FE-HPC-002 | Create `FeaturedEventController` to fetch featured event for landing page | Medium | EVT-001 | On Hold | Logic to be part of `HomeController` (FE-HPC-005). Endpoint for "Ticket Rush" section (FE-LP-004). |
 | FE-HPC-003 | Create `UpcomingEventsController` to fetch upcoming events for landing page | Medium | EVT-001 | On Hold | Logic to be part of `HomeController` (FE-HPC-005). Endpoint for "Upcoming Events" section (FE-LP-005). |
 | FE-HPC-004 | Create `MoreEventsController` to fetch additional events for landing page | Medium | EVT-001 | On Hold | Logic to be part of `HomeController` (FE-HPC-005). Endpoint for "More Events" section (FE-LP-007), consider pagination. |
 | FE-HPC-005 | Implement `HomeController` for landing page data via Inertia props | Medium | CAT-001, EVT-001 | Processing | Controller for `/` route to provide categories, featured event, upcoming events, more events to `Public/Home.vue`. |
+| **TRANSACTION & BOOKING** | | | | | |
+| TRX-001 | Create TransactionData DTO (`spatie/laravel-data`) | Low        | SU-004       | Processing    | Partially covered by InitiateBookingData. Review if separate DTO still needed. |
+| TRX-002 | Create BookingData DTO (`spatie/laravel-data`)     | Low        | SU-004       | Processing    | Partially covered by InitiateBookingData and its nested items. Review if separate DTO still needed. |
+| TRX-003 | Implement `UpsertTransactionAction`              | Medium     | TRX-001      | Pending    | Action to handle creation/update of Transaction model.               |
+| TRX-004 | Implement `CreateBookingAction`                  | Medium     | TRX-002, TCKD-001, EVT-002 | Pending    | Action to handle creation of Booking model, including inventory checks and price determination. |
+| TRX-005 | Implement `TransactionService`                   | Medium     | TRX-003      | Pending    | Service to orchestrate transaction-related operations.             |
+| TRX-006 | Implement `BookingService`                       | Medium     | TRX-004      | Processing    | Core booking initiation logic with Stripe checkout implemented. Further refinements (e.g., cancellation, updates) may be needed. |
+| **WISHLIST** | | | | | |
+| WSH-001 | Implement Add to Wishlist Feature (Backend)    | Medium     | SU-002, EVT-001 | Pending    | Create Wishlist model, API endpoint to add/remove event from user's wishlist. |
+| WSH-002 | Implement Add to Wishlist Feature (Frontend)   | Medium     | WSH-001      | Pending    | Call API from EventDetail.vue, provide visual feedback (e.g., toggle button state). |
+| **PAYMENT PROCESSING** | | | | | |
+| PAY-001 | Implement PaymentController to handle payment intents and process webhook notifications from Stripe. | High       | ORD-001, TRX-005 | Done    | Checkout session creation, success/cancel handlers, and webhook handling implemented. Webhook processing for checkout.session.completed, payment_intent.succeeded, and payment_intent.payment_failed events complete. |
+| PAY-002 | Update Stripe Success Callback URL Logic | Medium     | PAY-001      | Done    | Modified `PaymentController@handlePaymentSuccess` to include booking/order details and redirect to a user-specific booking confirmation page (Payment/Success.vue) instead of a generic success page. |

@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use App\Enums\RoleNameEnum;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -17,56 +18,88 @@ class RolePermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()['cache']->forget('spatie.permission.cache');
 
-        // Define Roles
+        // Define Roles using Enum
         $roles = [
-            'Platform Admin', // Super admin with all permissions
-            'Organizer',      // Can manage their own events, venues, etc.
-            'General User',   // Standard user, can purchase tickets, view events
-            // Add any other roles you might need, e.g., 'Support Staff', 'Venue Manager'
+            RoleNameEnum::ADMIN->value => 'Platform Admin',
+            RoleNameEnum::ORGANIZER->value => 'Organizer',
+            RoleNameEnum::USER->value => 'General User',
         ];
 
-        foreach ($roles as $roleName) {
-            Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
-            $this->command->info("Role '{$roleName}' created or ensured.");
+        foreach ($roles as $roleValue => $displayName) {
+            Role::firstOrCreate(['name' => $roleValue, 'guard_name' => 'web']);
+            $this->command->info("Role '{$displayName}' ({$roleValue}) created or ensured.");
         }
 
-        // Define Permissions (example)
-        // You can expand this significantly based on your application needs
-        // $permissions = [
-        //     'view events',
-        //     'create events',
-        //     'edit events',
-        //     'delete events',
-        //     'manage users',
-        //     'manage site_settings',
-        //     // etc.
-        // ];
+        // Assign Permissions to Roles
+        $platformAdminRole = Role::findByName(RoleNameEnum::ADMIN->value, 'web');
+        if ($platformAdminRole) {
+            // Platform Admin gets all permissions
+            $allPermissions = Permission::all();
+            $platformAdminRole->givePermissionTo($allPermissions);
+            $this->command->info('All permissions assigned to Platform Admin.');
+        }
 
-        // foreach ($permissions as $permissionName) {
-        //     Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
-        // }
-        // $this->command->info('Basic permissions created or ensured. Expand as needed.');
+        $organizerRole = Role::findByName(RoleNameEnum::ORGANIZER->value, 'web');
+        if ($organizerRole) {
+            $organizerPermissions = [
+                'viewAny Event',
+                'view Event',
+                'create Event',
+                'update Event',
+                'delete Event',
+                'viewAny EventOccurrence',
+                'view EventOccurrence',
+                'create EventOccurrence',
+                'update EventOccurrence',
+                'delete EventOccurrence',
+                'viewAny Venue',
+                'view Venue',
+                'create Venue',
+                'update Venue',
+                'delete Venue',
+                'viewAny Booking',
+                'view Booking',
+                'viewAny TicketDefinition',
+                'view TicketDefinition',
+                'create TicketDefinition',
+                'update TicketDefinition',
+                'delete TicketDefinition',
+                'viewAny Tag',
+                'view Tag',
+                'viewAny Category',
+                'view Category',
+            ];
+            foreach ($organizerPermissions as $permissionName) {
+                Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']); // Ensure permission exists
+            }
+            $organizerRole->givePermissionTo($organizerPermissions);
+            $this->command->info('Permissions assigned to Organizer.');
+        }
 
-        // Assign Permissions to Roles (example)
-        // $platformAdminRole = Role::findByName('Platform Admin');
-        // if ($platformAdminRole) {
-        //    // Platform Admin gets all permissions (Spatie typically handles this if using a Gate check like ->before())
-        //    // Or assign all created permissions explicitly if preferred:
-        //    // $platformAdminRole->givePermissionTo(Permission::all());
-        //    $this->command->info('Permissions for Platform Admin can be set here (e.g., all permissions).');
-        // }
+        $generalUserRole = Role::findByName(RoleNameEnum::USER->value, 'web');
+        if ($generalUserRole) {
+            $generalUserPermissions = [
+                'viewAny Event',
+                'view Event',
+                'viewAny EventOccurrence',
+                'view EventOccurrence',
+                'viewAny Venue',
+                'view Venue',
+                'viewAny Booking', // Typically for their own bookings, handled by policy/query scope
+                'view Booking',    // Typically for their own bookings, handled by policy/query scope
+                'create Booking',
+                'viewAny Tag',
+                'view Tag',
+                'viewAny Category',
+                'view Category',
+            ];
+            foreach ($generalUserPermissions as $permissionName) {
+                Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']); // Ensure permission exists
+            }
+            $generalUserRole->givePermissionTo($generalUserPermissions);
+            $this->command->info('Permissions assigned to General User.');
+        }
 
-        // $organizerRole = Role::findByName('Organizer');
-        // if ($organizerRole) {
-        //     // $organizerRole->givePermissionTo(['view events', 'create events', 'edit events', 'delete events']); // Example
-        //     $this->command->info('Permissions for Organizer can be set here.');
-        // }
-
-        // $generalUserRole = Role::findByName('General User');
-        // if ($generalUserRole) {
-        //     // $generalUserRole->givePermissionTo(['view events']); // Example
-        //     $this->command->info('Permissions for General User can be set here.');
-        // }
-        $this->command->info('Role creation complete. Permission definition and assignment logic is commented out; uncomment and configure as needed.');
+        $this->command->info('Role creation and permission assignment complete.');
     }
 }

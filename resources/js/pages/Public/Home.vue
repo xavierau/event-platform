@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+
 import CategoryLink from '@/components/LandingPage/CategoryLink.vue';
 import EventPreviewCard from '@/components/Shared/EventPreviewCard.vue';
 import EventListItem from '@/components/Shared/EventListItem.vue';
@@ -8,6 +9,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
+
 dayjs.extend(utc)
 
 interface Category {

@@ -29,8 +29,61 @@ This project follows the standard Laravel directory structure:
 - **`vendor/`**: Contains Composer dependencies.
 - **`node_modules/`**: Contains NPM dependencies.
 
+## Development Methodology: Test-Driven Development (TDD)
+
+This project follows **Test-Driven Development (TDD)** methodology. The TDD cycle consists of:
+
+1. **Red**: Write a failing test that describes the desired functionality
+2. **Green**: Write the minimal code necessary to make the test pass
+3. **Refactor**: Improve the code while keeping tests green
+
+### TDD Guidelines:
+
+- **Test First**: Always write tests before implementing functionality
+- **Small Steps**: Make incremental changes with frequent test runs
+- **Test Coverage**: Aim for comprehensive test coverage of business logic
+- **Test Types**:
+  - **Unit Tests**: Test individual classes, methods, and functions in isolation
+  - **Feature Tests**: Test complete user workflows and API endpoints
+  - **Integration Tests**: Test interactions between different components
+- **Test Organization**: Tests are located in the `tests/` directory with `Unit/` and `Feature/` subdirectories
+- **Test Naming**: Use descriptive test method names that explain what is being tested
+- **Test Data**: Use factories and seeders for consistent test data
+
+### Testing Code Protection:
+
+**⚠️ CRITICAL: Unless explicitly indicated otherwise, NEVER modify, delete, or change existing testing code.** This includes:
+- Test files in `tests/Unit/` and `tests/Feature/`
+- Factory files in `database/factories/`
+- Test-specific seeders
+- PHPUnit configuration files
+- Test helper classes and traits
+
+Testing code should only be modified when:
+1. Explicitly requested by the developer
+2. Adding new tests for new functionality
+3. Fixing broken tests due to intentional API changes
+4. Refactoring tests as part of a specific testing improvement task
+
 ## Coding Standards:
-The application aims to adhere to **SOLID principles** to ensure maintainable, scalable, and robust code.
+The application aims to adhere to **SOLID principles** and the principles of **Clean Code** to ensure maintainable, scalable, and robust code. Key principles include:
+
+-   **Meaningful Naming**: Use descriptive and unambiguous names for variables, functions, and classes. Avoid single-letter variables or cryptic abbreviations.
+-   **Function Simplicity**: Keep functions short and focused on a single task (Single Responsibility Principle).
+-   **Avoid Duplication (DRY - Don't Repeat Yourself)**: Refactor code to eliminate redundant logic.
+-   **Side Effect Management**: Minimize or eliminate side effects in functions.
+-   **Clarity and Expressiveness**: Write code that is easy to understand at a glance.
+-   **Consistent Formatting**: Maintain consistent code formatting and style throughout the project.
+-   **Error Handling**: Implement robust error handling and provide meaningful error messages.
+-   **Comments**: Use comments sparingly and only when necessary to explain the *why* behind the code, not the *what*.
+-   **Testing**: Write thorough unit and feature tests following TDD principles to ensure the code functions as expected.
+-   **Modularization**: Structure code into modular components with clear separation of concerns.
+-   **Avoid Global Variables**: Minimize the use of global variables to reduce side effects.
+-   **KISS (Keep It Simple, Stupid)**: Apply this principle to keep code concise and straightforward.
+-   **Rule of Three**: If you find yourself writing similar code three times, consider refactoring it into a reusable function or abstraction.
+-   **Source Code Structure**: Organize code in a way that reflects the logical structure of the problem being solved.
+-   **Object and Data Structure**: Design objects and data structures that are easy to understand, use, and maintain.
+-   **Clarity Over Cleverness**: Prioritize readability and simplicity over overly complex or "clever" solutions.
 
 # Modular Monolithic Design Approach
 
@@ -48,12 +101,25 @@ Key architectural patterns include:
 - **Services**: Classes that provide specific functionalities or business logic that doesn't neatly fit into a model or action. They help to keep controllers and models focused. For new entities, a corresponding service (e.g., `EntityService`) is often created to orchestrate actions and provide a comprehensive API for entity lifecycle management (CRUD operations like `createEntity`, `updateEntity`, `deleteEntity`, `findEntity`, `getAllEntities`).
 - **Data Transfer Objects (DTOs)**: Simple objects used to transfer data between layers, particularly from requests to actions/services or from services/models back to controllers/responses. This promotes clear data contracts and immutability where appropriate. This project utilizes **`spatie/laravel-data`** for creating these DTOs, enhancing type safety and developer experience.
 
-Following the creation of an entity model, migrations, and seeders, the typical workflow involves:
-1.  Defining a `Spatie\LaravelData\Data` object (DTO) in `app/DataTransferObjects/` to represent the data structure for creating/updating the entity.
-2.  Creating Action classes in `app/Actions/{EntityName}/` (e.g., `UpsertEntityAction.php`) to handle the core business logic for creating or updating the entity, taking the DTO as input.
-3.  Developing a Service class in `app/Services/` (e.g., `EntityService.php`) that uses the Action(s) and provides a clean API for the controller to interact with (e.g., `createEntity(EntityData $data)`, `updateEntity(int $id, EntityData $data)`).
-4.  Implementing a Controller in `app/Http/Controllers/Admin/` (e.g., `EntityController.php`) which uses the Service to handle HTTP requests and responses, often rendering Inertia.js views.
-5.  Developing frontend Vue components (typically in `resources/js/Pages/Admin/{EntityName}/` like `Index.vue`, `Create.vue`, `Edit.vue`) for the entity's CRUD interface, interacting with the controller endpoints.
+Following the creation of an entity model, migrations, and seeders, the typical **TDD workflow** involves:
+
+### Backend Development (TDD Approach):
+1.  **Write Tests First**: Create unit tests for the entity model, and feature tests for the expected API endpoints
+2.  **Define DTOs**: Create a `Spatie\LaravelData\Data` object (DTO) in `app/DataTransferObjects/` to represent the data structure for creating/updating the entity
+3.  **Test-Drive Actions**: Write tests for Action classes, then implement them in `app/Actions/{EntityName}/` (e.g., `UpsertEntityAction.php`) to handle the core business logic
+4.  **Test-Drive Services**: Write tests for Service classes, then develop them in `app/Services/` (e.g., `EntityService.php`) that use the Action(s) and provide a clean API
+5.  **Test-Drive Controllers**: Write feature tests for HTTP endpoints, then implement Controllers in `app/Http/Controllers/Admin/` (e.g., `EntityController.php`) which use the Service to handle requests and responses
+6.  **Refactor**: Continuously refactor code while maintaining green tests
+
+### Frontend Development:
+7.  Developing frontend Vue components (typically in `resources/js/Pages/Admin/{EntityName}/` like `Index.vue`, `Create.vue`, `Edit.vue`) for the entity's CRUD interface, interacting with the tested controller endpoints
+
+### Test Coverage Requirements:
+- **Models**: Test relationships, scopes, mutators, accessors, and business logic methods
+- **Actions**: Test all business logic paths, edge cases, and error conditions
+- **Services**: Test orchestration logic and integration between actions
+- **Controllers**: Test HTTP responses, validation, authorization, and error handling
+- **DTOs**: Test validation rules and data transformation
 
 ## Frontend Development Conventions
 

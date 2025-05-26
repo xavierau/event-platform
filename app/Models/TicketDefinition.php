@@ -60,6 +60,30 @@ class TicketDefinition extends Model
             ->withTimestamps();
     }
 
+    public function getQuantityAvailableAttribute(): int
+    {
+        // If total_quantity is not set (null), it signifies unlimited availability.
+        // PHP_INT_MAX is used to represent this concept for an integer return type,
+        // ensuring compatibility with consumers that expect a number (e.g., frontend).
+        if (is_null($this->total_quantity)) {
+            return PHP_INT_MAX;
+        }
+
+        // For finite quantities:
+        // Start with the total quantity defined for this ticket definition.
+        // The original comments regarding pivot data (e.g., quantity_for_occurrence)
+        // would apply if such pivot data were being accessed and used to override total_quantity here.
+        // This accessor, by default, uses the TicketDefinition's own total_quantity.
+        $initialStock = $this->total_quantity;
+
+        // Sum all quantities from bookings made for this ticket definition ID.
+        // As per the Booking model, each Booking record has its quantity typically set to 1.
+        $bookedQuantity = Booking::where('ticket_definition_id', $this->id)
+            ->sum('quantity');
+
+        return $initialStock - $bookedQuantity;
+    }
+
     // Removed eventOccurrence() belongsTo relationship
     // Removed event() relationship
 

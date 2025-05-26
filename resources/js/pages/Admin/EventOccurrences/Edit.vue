@@ -82,6 +82,8 @@ interface PageProps {
 
 const props = defineProps<PageProps>();
 
+// Props are now properly structured for ticket management
+
 // Define interface for form data
 interface OccurrenceFormData {
     _method: 'PUT';
@@ -135,6 +137,11 @@ watch(() => form.is_online, (isOnline) => {
     }
 });
 
+// Watch for changes in assigned tickets to ensure reactivity
+watch(() => form.assigned_tickets, () => {
+    // Tickets have been updated - form is reactive
+}, { deep: true });
+
 const venueOptions = computed(() => {
     return [
         { value: '' as any, label: 'Select a Venue (if applicable)' },
@@ -187,6 +194,15 @@ watch(() => props.occurrence, (newOccurrence) => {
 const showTicketMiniForm = ref(false);
 const showTicketSelector = ref(false);
 
+// Modal state management
+watch(() => showTicketSelector.value, () => {
+    // Ticket selector modal state changed
+});
+
+watch(() => showTicketMiniForm.value, () => {
+    // Ticket mini form modal state changed
+});
+
 // This event informs that a ticket was created.
 // The parent page (served by Inertia controller) should ensure that `props.allAvailableTicketDefinitions`
 // is up-to-date on the next page load or through a subsequent data refresh mechanism.
@@ -215,9 +231,12 @@ const handleTicketDefinitionsSelected = (selectedIds: number[]) => {
                     quantity_for_occurrence: undefined, // Default, user can edit
                     price_override: undefined, // Default, user can edit
                 });
+            } else {
+                console.error('Ticket definition not found for ID:', id);
             }
         }
     });
+
     form.assigned_tickets = newAssignments;
     showTicketSelector.value = false;
 };
@@ -397,8 +416,10 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
                             </div>
                         </div>
 
+
+
                         <div v-if="!form.assigned_tickets || form.assigned_tickets.length === 0" class="p-4 border border-dashed rounded-md text-center text-gray-500 dark:text-gray-400">
-                            No tickets assigned to this specific occurrence yet.
+                            No tickets assigned to this specific occurrence yet. (Count: {{ form.assigned_tickets?.length || 0 }})
                         </div>
                         <div v-else class="space-y-4">
                             <div v-for="(assignedTicket, ticketIndex) in form.assigned_tickets" :key="assignedTicket.ticket_definition_id" class="p-4 border rounded-md bg-gray-50 dark:bg-gray-700/50">

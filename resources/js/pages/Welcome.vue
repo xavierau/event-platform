@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+
 </script>
 
 <template>
@@ -784,4 +785,5 @@ import { Head, Link } from '@inertiajs/vue3';
         </div>
         <div class="h-14.5 hidden lg:block"></div>
     </div>
+
 </template>

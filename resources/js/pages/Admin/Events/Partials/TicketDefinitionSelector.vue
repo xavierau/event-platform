@@ -40,11 +40,11 @@ watch(
         if (props.show) {
             internalSelectedIds.value = new Set(props.initiallySelectedIds || []);
         } else {
-            // Optionally reset searchTerm when modal is hidden if desired
-            // searchTerm.value = '';
+            // Reset searchTerm when modal is hidden
+            searchTerm.value = '';
         }
     },
-    { immediate: true, deep: true } // deep might be overkill if initiallySelectedIds is simple array of numbers
+    { immediate: true, deep: true }
 );
 
 const filteredTicketDefinitions = computed(() => {
@@ -59,7 +59,7 @@ const filteredTicketDefinitions = computed(() => {
 const formatPrice = (price: number, currencyCode: string) => {
     try {
         return new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode }).format(price / 100);
-    } catch (e) {
+    } catch {
         // Fallback for invalid currency codes or other issues
         return `${(price / 100).toFixed(2)} ${currencyCode}`;
     }
@@ -84,10 +84,15 @@ const closeModal = () => {
     emit('close');
 };
 
+// Computed property to determine if confirm button should be enabled
+const canConfirm = computed(() => {
+    return internalSelectedIds.value.size > 0;
+});
+
 </script>
 
 <template>
-    <Dialog :open="show" @update:open="show ? closeModal() : null">
+    <Dialog :open="show" @update:open="(open) => !open && closeModal()">
         <DialogContent class="sm:max-w-lg" @escape-key-down="closeModal" @pointer-down-outside="closeModal">
             <DialogHeader>
                 <DialogTitle>Select Ticket Definitions</DialogTitle>
@@ -115,8 +120,8 @@ const closeModal = () => {
                         <div class="flex items-center space-x-3">
                              <Checkbox
                                 :id="`td-select-${ticketDef.id}`"
-                                :checked="internalSelectedIds.has(ticketDef.id)"
-                                @update:checked="(isChecked) => handleSelectionChange(ticketDef.id, isChecked)"
+                                :model-value="internalSelectedIds.has(ticketDef.id)"
+                                @update:model-value="(isChecked) => handleSelectionChange(ticketDef.id, isChecked)"
                             />
                             <Label :for="`td-select-${ticketDef.id}`" class="cursor-pointer">
                                 <span class="font-medium">{{ ticketDef.name }}</span>
@@ -137,8 +142,8 @@ const closeModal = () => {
                 <DialogClose as-child>
                     <Button type="button" variant="outline" @click="closeModal">Cancel</Button>
                 </DialogClose>
-                <Button type="button" @click="confirmSelection" :disabled="internalSelectedIds.size === 0 && (props.initiallySelectedIds || []).length === 0">
-                    Confirm Selection
+                <Button type="button" @click="confirmSelection" :disabled="!canConfirm">
+                    Confirm Selection ({{ internalSelectedIds.size }})
                 </Button>
             </DialogFooter>
         </DialogContent>
