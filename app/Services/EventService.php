@@ -225,14 +225,26 @@ class EventService
             ->map(function (Event $event) {
                 // Transform event for frontend needs
                 $firstOccurrence = $event->eventOccurrences->first();
+                $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
+                    return $occurrence->ticketDefinitions->map(function ($ticket) {
+                        return [
+                            'price' => $ticket->price,
+                            'currency' => $ticket->currency
+                        ];
+                    });
+                });
+
+                $prices = $ticketData->pluck('price');
+                $currency = $ticketData->first()['currency'] ?? 'USD'; // Use first ticket's currency or default to USD
+
                 return [
                     'id' => $event->id,
                     'name' => $event->name, // Translatable
                     'href' => route('events.show', $event->id),
                     'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
-                    'price_from' => $event->eventOccurrences->flatMap(function ($occurrence) {
-                        return $occurrence->ticketDefinitions->pluck('price');
-                    })->min() / 100 ?? null,
+                    'price_from' => $prices->min() / 100 ?? null,
+                    'price_to' => $prices->max() / 100 ?? null,
+                    'currency' => $currency,
                     'date_short' => $firstOccurrence ? $this->formatDateShort($firstOccurrence->start_at_utc) : null,
                     'category_name' => $event->category ? $event->category->name : null, // Translatable
                 ];
@@ -301,15 +313,26 @@ class EventService
             ->map(function (Event $event) {
                 $firstOccurrence = $event->eventOccurrences->first();
                 $lastOccurrence = $event->eventOccurrences->last();
+                $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
+                    return $occurrence->ticketDefinitions->map(function ($ticket) {
+                        return [
+                            'price' => $ticket->price,
+                            'currency' => $ticket->currency
+                        ];
+                    });
+                });
+
+                $prices = $ticketData->pluck('price');
+                $currency = $ticketData->first()['currency'] ?? 'USD'; // Use first ticket's currency or default to USD
 
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
                     'href' => route('events.show', $event->id),
                     'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: $event->getFirstMediaUrl('event_thumbnail') ?: 'https://via.placeholder.com/300x400.png?text=Event',
-                    'price_from' => $event->eventOccurrences->flatMap(function ($occurrence) {
-                        return $occurrence->ticketDefinitions->pluck('price');
-                    })->min() / 100 ?? null,
+                    'price_from' => $prices->min() / 100 ?? null,
+                    'price_to' => $prices->max() / 100 ?? null,
+                    'currency' => $currency,
                     'date_range' => $this->formatDateRange(
                         $firstOccurrence ? $firstOccurrence->start_at_utc : null,
                         $lastOccurrence ? $lastOccurrence->start_at_utc : null,
@@ -359,17 +382,32 @@ class EventService
         return $this->getPublishedEventsWithFutureOccurrences(
             $limit,
             [],
-            $today->startOfDay(),
-            $today->endOfDay()
+            $today->copy()->startOfDay(),
+            $today->copy()->endOfDay()
         )
             ->get()
             ->map(function (Event $event) {
                 $firstOccurrence = $event->eventOccurrences->first();
+                $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
+                    return $occurrence->ticketDefinitions->map(function ($ticket) {
+                        return [
+                            'price' => $ticket->price,
+                            'currency' => $ticket->currency
+                        ];
+                    });
+                });
+
+                $prices = $ticketData->pluck('price');
+                $currency = $ticketData->first()['currency'] ?? 'USD'; // Use first ticket's currency or default to USD
+
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
                     'href' => route('events.show', $event->id),
                     'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
+                    'price_from' => $prices->min() / 100 ?? null,
+                    'price_to' => $prices->max() / 100 ?? null,
+                    'currency' => $currency,
                     'start_time' => $firstOccurrence ? $firstOccurrence->start_at_utc->format('H:i') : null,
                     'venue_name' => $firstOccurrence && $firstOccurrence->venue ? $firstOccurrence->venue->name : null,
                     'category_name' => $event->category ? $event->category->name : null,
@@ -393,15 +431,26 @@ class EventService
             ->map(function (Event $event) {
                 $firstOccurrence = $event->eventOccurrences->first();
                 $lastOccurrence = $event->eventOccurrences->last();
+                $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
+                    return $occurrence->ticketDefinitions->map(function ($ticket) {
+                        return [
+                            'price' => $ticket->price,
+                            'currency' => $ticket->currency
+                        ];
+                    });
+                });
+
+                $prices = $ticketData->pluck('price');
+                $currency = $ticketData->first()['currency'] ?? 'USD'; // Use first ticket's currency or default to USD
 
                 return [
                     'id' => $event->id,
                     'name' => $event->name,
                     'href' => route('events.show', $event->id),
                     'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
-                    'price_from' => $event->eventOccurrences->flatMap(function ($occurrence) {
-                        return $occurrence->ticketDefinitions->pluck('price');
-                    })->min() / 100 ?? null,
+                    'price_from' => $prices->min() / 100 ?? null,
+                    'price_to' => $prices->max() / 100 ?? null,
+                    'currency' => $currency,
                     'date_range' => $this->formatDateRange(
                         $firstOccurrence ? $firstOccurrence->start_at_utc : null,
                         $lastOccurrence ? $lastOccurrence->start_at_utc : null,

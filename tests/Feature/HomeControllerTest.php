@@ -28,7 +28,9 @@ class HomeControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
-        $venue = Venue::factory()->create();
+
+        // Use existing venue or create one with existing country to avoid constraint violations
+        $venue = Venue::first() ?: Venue::factory()->create();
 
         $event = Event::factory()->create([
             'organizer_id' => $user->id,
@@ -290,6 +292,9 @@ class HomeControllerTest extends TestCase
                         ->has('name')
                         ->has('href')
                         ->has('image_url')
+                        ->has('price_from')
+                        ->has('price_to')
+                        ->has('currency')
                         ->has('start_time')
                         ->has('venue_name')
                         ->has('category_name')
@@ -302,6 +307,8 @@ class HomeControllerTest extends TestCase
                         ->has('href')
                         ->has('image_url')
                         ->has('price_from')
+                        ->has('price_to')
+                        ->has('currency')
                         ->has('date_short')
                         ->has('category_name')
                 )

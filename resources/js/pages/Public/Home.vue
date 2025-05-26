@@ -26,6 +26,8 @@ interface EventItem {
   href: string;
   image_url: string;
   price_from: number;
+  price_to?: number;
+  currency: string;
   date_short?: string; // For upcoming events
   date_range?: string; // For more events
   venue_name?: string; // For more events

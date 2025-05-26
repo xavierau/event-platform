@@ -34,7 +34,9 @@ class EventServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
-        $venue = Venue::factory()->create();
+
+        // Use existing venue or create one with existing country to avoid constraint violations
+        $venue = Venue::first() ?: Venue::factory()->create();
 
         $event = Event::factory()->create([
             'organizer_id' => $user->id,
@@ -108,6 +110,9 @@ class EventServiceTest extends TestCase
             $this->assertArrayHasKey('name', $event);
             $this->assertArrayHasKey('href', $event);
             $this->assertArrayHasKey('image_url', $event);
+            $this->assertArrayHasKey('price_from', $event);
+            $this->assertArrayHasKey('price_to', $event);
+            $this->assertArrayHasKey('currency', $event);
             $this->assertArrayHasKey('start_time', $event);
             $this->assertArrayHasKey('venue_name', $event);
             $this->assertArrayHasKey('category_name', $event);
@@ -163,7 +168,7 @@ class EventServiceTest extends TestCase
         // Create draft event (should not be included)
         $user = User::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
-        $venue = Venue::factory()->create();
+        $venue = Venue::first() ?: Venue::factory()->create();
 
         $draftEvent = Event::factory()->create([
             'organizer_id' => $user->id,
@@ -191,7 +196,7 @@ class EventServiceTest extends TestCase
         $todayStart = now()->utc()->startOfDay();
         $user = User::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
-        $venue = Venue::factory()->create();
+        $venue = Venue::first() ?: Venue::factory()->create();
 
         $event = Event::factory()->create([
             'organizer_id' => $user->id,
@@ -260,6 +265,8 @@ class EventServiceTest extends TestCase
             $this->assertArrayHasKey('href', $event);
             $this->assertArrayHasKey('image_url', $event);
             $this->assertArrayHasKey('price_from', $event);
+            $this->assertArrayHasKey('price_to', $event);
+            $this->assertArrayHasKey('currency', $event);
             $this->assertArrayHasKey('date_short', $event);
             $this->assertArrayHasKey('category_name', $event);
         }

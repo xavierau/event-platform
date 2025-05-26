@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { useCurrency } from '@/composables/useCurrency';
 
 defineProps({
   event: {
@@ -11,6 +12,7 @@ defineProps({
       href: '#',
       image_url: 'https://via.placeholder.com/300x400.png?text=Event+Portrait',
       price_from: 0,
+      price_to: 0,
       date_range: 'YYYY.MM.DD - MM.DD',
       venue_name: 'Some Venue Hall - City Center Complex',
       category_name: 'Category'
@@ -18,9 +20,21 @@ defineProps({
   }
 });
 
-const formatPrice = (price: number) => {
-  if (price === 0) return 'Free';
-  return `¥${price}起`;
+const { formatPrice: formatCurrency, formatPriceRange } = useCurrency();
+
+const formatPrice = (priceFrom: number, priceTo?: number, currency: string = 'USD') => {
+  if (priceFrom === 0) return 'Free';
+
+  // Backend already sends prices in currency units (divided by 100)
+  // Convert back to cents for the currency formatter
+  const priceFromCents = Math.round(priceFrom * 100);
+
+  if (priceTo && priceTo !== priceFrom) {
+    const priceToCents = Math.round(priceTo * 100);
+    return `${formatPriceRange(priceFromCents, priceToCents, currency)}`;
+  }
+
+  return `${formatCurrency(priceFromCents, currency)}起`;
 };
 
 </script>
@@ -55,7 +69,7 @@ const formatPrice = (price: number) => {
           </p>
         </div>
         <div class="text-right mt-2">
-          <span class="text-base md:text-lg font-bold text-red-500">{{ formatPrice(event.price_from) }}</span>
+          <span class="text-base md:text-lg font-bold text-red-500">{{ formatPrice(event.price_from, event.price_to, event.currency) }}</span>
         </div>
       </div>
     </div>
