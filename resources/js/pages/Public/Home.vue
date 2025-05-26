@@ -135,15 +135,15 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
 <template>
   <Head title="Welcome to EventPlatform" />
 
-  <div class="min-h-screen bg-gray-100">
+  <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
     <!-- Header Section (FE-LP-002) -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
+    <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b dark:border-gray-700">
       <div class="container mx-auto flex justify-between items-center p-4">
         <div class="flex items-center space-x-4">
-          <div class="text-sm text-gray-600 cursor-pointer hover:text-indigo-600">
+          <div class="text-sm text-gray-600 dark:text-gray-300 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400">
             <span class="font-semibold">Nationwide</span> ▼
           </div>
-          <input type="search" placeholder="Search events, artists, venues..." class="px-4 py-2 border border-gray-300 rounded-full text-sm focus:ring-indigo-500 focus:border-indigo-500 w-64 md:w-96" />
+          <input type="search" placeholder="Search events, artists, venues..." class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:ring-indigo-500 focus:border-indigo-500 w-64 md:w-96 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400" />
         </div>
       </div>
     </header>
@@ -159,15 +159,15 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
       <!-- Upcoming Events Section (FE-LP-005) -->
       <section id="upcoming-events" class="mb-12">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">Upcoming Events</h2>
+            <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-0">Upcoming Events</h2>
             <div class="flex space-x-2 text-sm flex-wrap">
               <button
                 @click="showTodayEvents"
                 :class="[
                   'px-3 py-1 rounded-full font-medium',
                   activeFilter === 'today'
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'hover:bg-gray-200'
+                    ? 'bg-indigo-100 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                 ]"
               >
                 Today
@@ -177,23 +177,23 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
                 :class="[
                   'px-3 py-1 rounded-full font-medium',
                   activeFilter === 'upcoming'
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'hover:bg-gray-200'
+                    ? 'bg-indigo-100 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                 ]"
               >
                 Upcoming
               </button>
-              <button class="px-3 py-1 rounded-full hover:bg-gray-200" @click="goToTomorrow">Tomorrow</button>
-              <button class="px-3 py-1 rounded-full hover:bg-gray-200" @click="goToThisWeek">This Week</button>
-              <button class="px-3 py-1 rounded-full hover:bg-gray-200 flex items-center" @click="openCalendar">
+              <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" @click="goToTomorrow">Tomorrow</button>
+              <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" @click="goToThisWeek">This Week</button>
+              <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center" @click="openCalendar">
                 Calendar <span class="ml-1.5 text-base">📅</span>
               </button>
             </div>
           </div>
-          <div class="flex overflow-x-auto pb-4 -mb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 scrollbar-thumb-rounded-full">
+          <div class="flex overflow-x-auto pb-4 -mb-4 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-500 scrollbar-track-gray-200 dark:scrollbar-track-gray-700 scrollbar-thumb-rounded-full">
             <EventPreviewCard v-for="event in displayedEvents" :key="event.id" :event="event" />
             <!-- Add a few more for scrolling demonstration if needed -->
-             <div v-if="!displayedEvents || displayedEvents.length === 0" class="w-full p-4 border border-dashed border-gray-300 rounded-md min-h-[200px] text-center text-gray-500 flex items-center justify-center">
+             <div v-if="!displayedEvents || displayedEvents.length === 0" class="w-full p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-md min-h-[200px] text-center text-gray-500 dark:text-gray-400 flex items-center justify-center bg-white dark:bg-gray-800">
                 <span v-if="activeFilter === 'today'">No events happening today.</span>
                 <span v-else>No upcoming events at the moment.</span>
             </div>
@@ -203,17 +203,17 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
       <!-- More Events Section (FE-LP-007) -->
       <section id="more-events">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <h2 class="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">More Events</h2>
+          <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-0">More Events</h2>
           <div class="flex space-x-2 text-sm flex-wrap">
-            <button class="px-3 py-1 rounded-full hover:bg-gray-200">All Categories ▼</button>
-            <button class="px-3 py-1 rounded-full hover:bg-gray-200">All Times ▼</button>
-            <button class="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 font-medium">Recommended</button>
-            <button class="px-3 py-1 rounded-full hover:bg-gray-200">Nearest</button>
+            <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">All Categories ▼</button>
+            <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">All Times ▼</button>
+            <button class="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200 font-medium">Recommended</button>
+            <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">Nearest</button>
           </div>
         </div>
         <div>
           <EventListItem v-for="event in moreEventsData" :key="event.id" :event="event" />
-          <div v-if="!moreEventsData || moreEventsData.length === 0" class="p-4 border border-dashed border-gray-300 rounded-md min-h-[150px] text-center text-gray-500 flex items-center justify-center">
+          <div v-if="!moreEventsData || moreEventsData.length === 0" class="p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-md min-h-[150px] text-center text-gray-500 dark:text-gray-400 flex items-center justify-center bg-white dark:bg-gray-800">
             No more events to display.
           </div>
           <!-- Potentially add a "Load More" button or pagination here -->
@@ -221,13 +221,13 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
       </section>
     </main>
 
-    <footer class="bg-gray-800 text-white p-8 text-center mt-12">
+    <footer class="bg-gray-800 dark:bg-gray-950 text-white dark:text-gray-300 p-8 text-center mt-12 border-t dark:border-gray-700">
       <p>&copy; {{ new Date().getFullYear() }} EventPlatform. All rights reserved. Made with ❤️</p>
     </footer>
   </div>
 
-  <div v-if="showCalendar" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;justify-content:center;align-items:center;background:rgba(0,0,0,0.3);">
-    <div style="background:#fff;padding:24px;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,0.15);">
+  <div v-if="showCalendar" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;justify-content:center;align-items:center;background:rgba(0,0,0,0.5);" class="dark:bg-opacity-75 dark:bg-black">
+    <div style="background:#fff;padding:24px;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,0.15);" class="dark:bg-gray-800 dark:text-gray-200">
       <Datepicker
         v-model="selectedRange"
         range
@@ -237,8 +237,12 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
         :enable-time-picker="false"
         @close="showCalendar = false"
         @update:model-value="onDateRangeSelected"
+        :dark="true"
+        calendar-cell-class-name="dp-custom-cell"
+        calendar-class-name="dp-custom-calendar"
+        menu-class-name="dp-custom-menu"
       />
-      <button @click="showCalendar = false" style="margin-top:16px;">Close</button>
+      <button @click="showCalendar = false" style="margin-top:16px;" class="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md dark:bg-indigo-500 dark:hover:bg-indigo-600">Close</button>
     </div>
   </div>
 </template>
@@ -246,8 +250,13 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
 <style scoped>
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: #9ca3af #e5e7eb;
+  scrollbar-color: #9ca3af #e5e7eb; /* thumb track */
 }
+
+.dark .scrollbar-thin {
+ scrollbar-color: #6b7280 #374151; /* dark:thumb dark:track */
+}
+
 
 .scrollbar-thin::-webkit-scrollbar {
   height: 8px;
@@ -257,14 +266,50 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
   background: #e5e7eb;
   border-radius: 10px;
 }
+.dark .scrollbar-thin::-webkit-scrollbar-track {
+  background: #374151; /* dark:track */
+}
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background-color: #9ca3af;
   border-radius: 10px;
   border: 2px solid #e5e7eb;
 }
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #6b7280; /* dark:thumb */
+  border-color: #374151; /* dark:track */
+}
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: #6b7280;
 }
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #4b5563; /* dark:thumb-hover */
+}
+
+/* Custom styles for Vue Datepicker in dark mode */
+:global(.dp-custom-calendar) {
+    /* You might need to target specific elements within the datepicker for full control */
+    --dp-background-color: #1f2937; /* dark:bg-gray-800 */
+    --dp-text-color: #d1d5db; /* dark:text-gray-300 */
+    --dp-hover-color: #374151; /* dark:bg-gray-700 */
+    --dp-hover-text-color: #f9fafb; /* dark:text-gray-50 */
+    --dp-active-color: #4f46e5; /* indigo-600 */
+    --dp-active-text-color: #ffffff;
+    --dp-border-color: #4b5563; /* dark:border-gray-600 */
+    --dp-border-color-hover: #6b7280; /* dark:border-gray-500 */
+    --dp-disabled-color: #4b5563; /* dark:text-gray-500 */
+    --dp-highlight-color: rgba(79, 70, 229, 0.2);
+}
+
+:global(.dp-custom-menu) {
+     background-color: #1f2937 !important; /* dark:bg-gray-800 */
+     border: 1px solid #4b5563 !important; /* dark:border-gray-600 */
+}
+
+:global(.dp-custom-cell) {
+    /* Example: customize individual cell appearance if needed */
+}
+
+
 </style>

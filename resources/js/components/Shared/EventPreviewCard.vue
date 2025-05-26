@@ -39,8 +39,8 @@ const formatPrice = (priceFrom: number, priceTo?: number, currency: string = 'US
 
 <template>
   <Link :href="event.href || '#'" class="block w-26 flex-shrink-0 mr-4 last:mr-0">
-    <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 ease-in-out overflow-hidden">
-      <div class="aspect-[9/16] bg-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl dark:hover:shadow-gray-700/50 transition-shadow duration-300 ease-in-out overflow-hidden border border-transparent hover:border-indigo-300 dark:hover:border-indigo-700">
+      <div class="aspect-[9/16] bg-gray-200 dark:bg-gray-700">
         <img
           :src="event.image_url"
           :alt="`Image for ${event.name}`"
@@ -49,11 +49,11 @@ const formatPrice = (priceFrom: number, priceTo?: number, currency: string = 'US
         />
       </div>
       <div class="p-4">
-        <h4 class="font-semibold text-gray-900 truncate mb-1" :title="event.name">
+        <h4 class="font-semibold text-gray-900 dark:text-gray-100 truncate mb-1" :title="event.name">
           {{ event.name }}
         </h4>
         <div class="flex justify-between items-center">
-          <span class="font-bold text-indigo-600">{{ formatPrice(event.price_from, event.price_to, event.currency) }}</span>
+          <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ formatPrice(event.price_from, event.price_to, event.currency) }}</span>
         </div>
       </div>
     </div>
