@@ -207,44 +207,44 @@ const confirmPurchase = async () => {
   <Transition name="modal">
     <div
       v-if="showModal && occurrence"
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50 p-4"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50 dark:bg-opacity-75 p-4"
       @click.self="closeModal"
     >
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
-        <div class="flex justify-between items-center p-4 border-b">
-          <h2 class="text-lg font-semibold text-gray-800">Choose Tickets</h2>
-          <button @click="closeModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+        <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Choose Tickets</h2>
+          <button @click="closeModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">&times;</button>
         </div>
 
         <div class="p-4 overflow-y-auto">
           <div v-if="occurrence" class="mb-4">
-            <h3 class="text-md font-medium text-gray-700">{{ occurrence.name }}</h3>
-            <p class="text-sm text-gray-500">{{ occurrence.full_date_time }}</p>
+            <h3 class="text-md font-medium text-gray-700 dark:text-gray-300">{{ occurrence.name }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ occurrence.full_date_time }}</p>
           </div>
 
           <div v-if="occurrence && occurrence.tickets && occurrence.tickets.length > 0" class="space-y-3">
             <div
               v-for="ticket in occurrence.tickets"
               :key="ticket.id"
-              class="p-3 border rounded-md flex justify-between items-center"
+              class="p-3 border dark:border-gray-700 rounded-md flex justify-between items-center bg-gray-50 dark:bg-gray-700/50"
             >
               <div>
-                <h4 class="font-semibold text-gray-700">{{ ticket.name }}</h4>
-                <p v-if="ticket.description" class="text-xs text-gray-500">{{ ticket.description }}</p>
-                <p class="text-sm text-pink-500 font-medium">{{ formatTicketPrice(ticket.price, ticket.currency) }}</p>
+                <h4 class="font-semibold text-gray-700 dark:text-gray-200">{{ ticket.name }}</h4>
+                <p v-if="ticket.description" class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.description }}</p>
+                <p class="text-sm text-pink-500 dark:text-pink-400 font-medium">{{ formatTicketPrice(ticket.price, ticket.currency) }}</p>
               </div>
               <div class="flex items-center space-x-2">
                 <button
                   @click="decrementQuantity(ticket.id)"
-                  class="px-2 py-1 border rounded text-pink-500 hover:bg-pink-50 disabled:opacity-50"
+                  class="px-2 py-1 border dark:border-gray-600 rounded text-pink-500 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-700/30 disabled:opacity-50"
                   :disabled="(selectedTickets[ticket.id] || 0) === 0"
                 >
                   -
                 </button>
-                <span class="w-8 text-center">{{ selectedTickets[ticket.id] || 0 }}</span>
+                <span class="w-8 text-center text-gray-700 dark:text-gray-300">{{ selectedTickets[ticket.id] || 0 }}</span>
                 <button
                   @click="incrementQuantity(ticket.id)"
-                  class="px-2 py-1 border rounded text-pink-500 hover:bg-pink-50"
+                  class="px-2 py-1 border dark:border-gray-600 rounded text-pink-500 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-700/30"
                   :disabled="ticket.quantity_available !== undefined && (selectedTickets[ticket.id] || 0) >= ticket.quantity_available"
                 >
                   +
@@ -252,19 +252,19 @@ const confirmPurchase = async () => {
               </div>
             </div>
           </div>
-          <div v-else class="text-center text-gray-500 py-4">
+          <div v-else class="text-center text-gray-500 dark:text-gray-400 py-4">
             <p>No tickets available for this occurrence.</p>
           </div>
         </div>
 
-        <div class="p-4 border-t mt-auto">
+        <div class="p-4 border-t dark:border-gray-700 mt-auto">
           <div class="flex justify-between items-center mb-3">
-            <span class="text-gray-700">Total:</span>
-            <span class="text-xl font-bold text-pink-500">{{ formatTotalPrice(totalPrice) }}</span>
+            <span class="text-gray-700 dark:text-gray-300">Total:</span>
+            <span class="text-xl font-bold text-pink-500 dark:text-pink-400">{{ formatTotalPrice(totalPrice) }}</span>
           </div>
           <button
             @click="confirmPurchase"
-            class="w-full bg-pink-500 text-white py-2.5 rounded-md hover:bg-pink-600 font-semibold disabled:opacity-70"
+            class="w-full bg-pink-500 text-white py-2.5 rounded-md hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 font-semibold disabled:opacity-70"
             :disabled="isLoading || (totalPrice > 0 && !hasSelectedTickets)"
           >
             <span v-if="isLoading">Processing...</span>

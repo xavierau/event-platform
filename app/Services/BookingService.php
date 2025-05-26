@@ -175,7 +175,7 @@ class BookingService
                         $booking = Booking::create([
                             'user_id' => $user->id,
                             'transaction_id' => $orderId,
-                            'event_id' => $ticketDefinition->event->id,
+                            'event_id' => $occurrence->event->id,
                             'ticket_definition_id' => $itemData->ticket_id,
                             'quantity' => 1, // Each booking record represents one physical ticket
                             'price_per_unit' => $ticketDefinition->price, // Price from DB
@@ -206,7 +206,7 @@ class BookingService
                 Booking::create([
                     'user_id' => $user->id,
                     'transaction_id' => $orderId,
-                    'event_id' => $ticketDefinition->event->id,
+                    'event_id' => $occurrence->event->id,
                     'ticket_definition_id' => null, // No specific ticket
                     'quantity' => 1, // Or based on some logic for general admission
                     'price_per_unit' => 0,

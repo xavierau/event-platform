@@ -163,7 +163,7 @@ function refreshBookings() {
         <div class="space-y-6">
           <div v-for="(bookings, eventKey) in groupedBookings" :key="eventKey" class="bg-white dark:bg-gray-800 rounded-lg shadow">
             <!-- Event Header -->
-            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{{ eventKey }}</h3>
 
               <!-- Show all event occurrences for this booking -->
@@ -203,21 +203,21 @@ function refreshBookings() {
 
       <!-- Empty State -->
       <section v-else class="text-center py-12">
-        <div class="bg-white rounded-lg shadow p-8">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
           <div class="text-6xl mb-4">🎫</div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-2">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
             <span v-if="activeFilter === 'upcoming'">No upcoming bookings</span>
             <span v-else-if="activeFilter === 'past'">No past bookings</span>
             <span v-else>No bookings found</span>
           </h3>
-          <p class="text-gray-600 mb-6">
+          <p class="text-gray-600 dark:text-gray-300 mb-6">
             <span v-if="activeFilter === 'upcoming'">You don't have any upcoming events. Discover amazing events to attend!</span>
             <span v-else-if="activeFilter === 'past'">You haven't attended any events yet.</span>
             <span v-else>You haven't made any bookings yet. Start exploring events!</span>
           </p>
           <Link
             href="/"
-            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
           >
             Browse Events
           </Link>
@@ -227,23 +227,23 @@ function refreshBookings() {
     </main>
 
     <!-- Fixed Footer/Bottom Bar -->
-    <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-top-lg z-50">
+    <footer class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 shadow-top-lg z-50">
       <div class="container mx-auto flex justify-between items-center">
         <div class="flex space-x-4 text-center">
-          <Link href="/" class="text-xs text-gray-600 hover:text-indigo-600">
+          <Link href="/" class="text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300">
             <span class="block text-xl">🏠</span>
             <span>Home</span>
           </Link>
         </div>
         <div class="flex space-x-2">
              <Link href="/my-wishlist"
-            class="px-4 py-2 text-sm border border-pink-500 text-pink-500 rounded-full hover:bg-pink-50"
+            class="px-4 py-2 text-sm border border-pink-500 dark:border-pink-700 text-pink-500 dark:text-pink-400 rounded-full hover:bg-pink-50 dark:hover:bg-pink-700/30"
           >
             <!-- Placeholder for Heart Icon --> ❤️ My Wishlist
           </Link>
           <Link
             href="/"
-            class="px-6 py-2 text-sm bg-indigo-500 text-white rounded-full hover:bg-indigo-600 font-semibold"
+            class="px-6 py-2 text-sm bg-indigo-500 dark:bg-indigo-600 text-white rounded-full hover:bg-indigo-600 dark:hover:bg-indigo-700 font-semibold"
           >
             Browse Events
           </Link>
