@@ -13,23 +13,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 
-interface TicketDefinition {
-    id: number;
-    name: Record<string, string> | string;
-    price: number | null;
-    quantity: number | null; // Corresponds to total_quantity, DTO also uses totalQuantity
-    status: string | null;
-    availabilityWindowStart?: string | null;
-    availabilityWindowEnd?: string | null;
-}
-
-interface TicketDefinitionsPaginated {
-    data: TicketDefinition[];
-    links: { url: string | null; label: string; active: boolean }[];
-    from: number;
-    to: number;
-    total: number;
-}
+import type { TicketDefinition, TicketDefinitionsPaginated } from '@/types/ticket';
 
 const props = defineProps<{
     ticketDefinitions: TicketDefinitionsPaginated;
@@ -128,7 +112,7 @@ const formatDate = (dateString: string | null | undefined): string => {
                                                         {{ definition.price !== null ? (definition.price / 100).toFixed(2) : 'N/A' }}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                        {{ definition.quantity !== null ? definition.quantity : 'Unlimited' }}
+                                                        {{ definition.total_quantity !== null ? definition.total_quantity : 'Unlimited' }}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                          <span

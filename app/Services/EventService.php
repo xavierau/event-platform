@@ -41,7 +41,7 @@ class EventService
         $withSubQuery = [
             'ticketDefinitions' => function ($subQuery) {
                 return $subQuery->whereNull('availability_window_start_utc')
-                    ->orWhere('availability_window_start_utc', '<=', now());
+                    ->orWhere('availability_window_start_utc', '<=', now()->utc());
             }
         ];
 
@@ -114,59 +114,126 @@ class EventService
     }
 
     /**
+     * Get published events with future occurrences.
+     *
+     * @param int $limit
+     * @param array $excludeIds
+     * @param ?\Carbon\Carbon $startDate
+     * @param ?\Carbon\Carbon $endDate
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function getPublishedEventsWithFutureOccurrences(int $limit = null, array $excludeIds = [], ?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null)
+    {
+        // Ensure all dates are in UTC for consistent comparison with start_at_utc fields
+        $startDate = $startDate ? $startDate->utc() : now()->utc();
+        $endDate = $endDate ? $endDate->utc() : now()->addMonths(6)->utc();
+
+        $query = Event::query()
+            ->where('event_status', 'published')
+            ->with([
+                'category',
+                'media',
+                'eventOccurrences' => function ($query) use ($startDate, $endDate) {
+                    $query->where('start_at_utc', '>=', $startDate)
+                        ->where('start_at_utc', '<=', $endDate)
+                        ->where('status', 'scheduled')
+                        ->orderBy('start_at_utc', 'asc');
+                },
+                'eventOccurrences.venue',
+                'eventOccurrences.ticketDefinitions' => function ($query) {
+                    $query->whereNull('availability_window_start_utc')
+                        ->orWhere('availability_window_start_utc', '<=', now()->utc());
+                }
+            ])
+            // Only include events that have at least one future occurrence
+            ->whereHas('eventOccurrences', function ($query) use ($startDate, $endDate) {
+                $query->where('start_at_utc', '>=', $startDate)
+                    ->where('start_at_utc', '<=', $endDate)
+                    ->where('status', 'scheduled');
+            })
+            // Exclude specific event IDs if provided
+            ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
+                return $query->whereNotIn('id', $excludeIds);
+            })
+            // Order by the earliest upcoming occurrence
+            ->orderBy(function ($query) use ($startDate) {
+                return $query->select('start_at_utc')
+                    ->from('event_occurrences')
+                    ->whereColumn('event_id', 'events.id')
+                    ->where('start_at_utc', '>=', $startDate)
+                    ->where('status', 'scheduled')
+                    ->orderBy('start_at_utc')
+                    ->limit(1);
+            });
+
+        if ($limit) {
+            $query->take($limit);
+        }
+
+        return $query;
+    }
+
+    /**
      * Get upcoming events for the homepage.
      *
      * @param int $limit Number of events to return.
+     * @param ?\Carbon\Carbon $startDate Start date for filtering (defaults to now)
+     * @param ?\Carbon\Carbon $endDate End date for filtering (defaults to 30 days from now)
      * @return array
      */
     public function getUpcomingEventsForHomepage(int $limit = 5, ?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null)
     {
-        // Default date range is today if not specified
-        $startDate = $startDate ?? now()->startOfDay();
-        $endDate = $endDate ?? now()->endOfDay();
+        // Ensure all dates are in UTC for consistent comparison with start_at_utc fields
+        $startDate = $startDate ? $startDate->utc() : now()->utc();
+        $endDate = $endDate ? $endDate->utc() : now()->addDays(30)->utc();
 
         return Event::query()
             ->where('event_status', 'published')
             ->with([
                 'category',
                 'media',
-                'eventOccurrences' => function ($query) {
-                    $query->orderBy('start_at_utc', 'asc'); // Get occurrences in order
+                'eventOccurrences' => function ($query) use ($startDate, $endDate) {
+                    // Only load future scheduled occurrences within the date range
+                    $query->where('start_at_utc', '>=', $startDate)
+                        ->where('start_at_utc', '<=', $endDate)
+                        ->where('status', 'scheduled')
+                        ->orderBy('start_at_utc', 'asc');
                 },
                 'eventOccurrences.ticketDefinitions' => function ($query) {
                     $query->whereNull('availability_window_start_utc')
-                        ->orWhere('availability_window_start_utc', '<=', now());
+                        ->orWhere('availability_window_start_utc', '<=', now()->utc());
                 }
             ])
-            // Filter events that have at least one occurrence today
+            // Filter events that have at least one future occurrence within the date range
             ->whereHas('eventOccurrences', function ($query) use ($startDate, $endDate) {
-                $query->whereDate('start_at_utc', '>=', $startDate)
-                    ->whereDate('start_at_utc', '<=', $endDate)
+                $query->where('start_at_utc', '>=', $startDate)
+                    ->where('start_at_utc', '<=', $endDate)
                     ->where('status', 'scheduled');
             })
-            ->orderBy(function ($query) {
-                return $query->select('start_at')
+            // Order by the earliest upcoming occurrence start date
+            ->orderBy(function ($query) use ($startDate) {
+                return $query->select('start_at_utc') // Fixed: use start_at_utc consistently
                     ->from('event_occurrences')
                     ->whereColumn('event_id', 'events.id')
-                    ->where('start_at_utc', '>=', now())
+                    ->where('start_at_utc', '>=', $startDate)
+                    ->where('status', 'scheduled')
                     ->orderBy('start_at_utc')
                     ->limit(1);
             })
             ->take($limit)
             ->get()
             ->map(function (Event $event) {
-                // Transform event for frontend needs, e.g., getting the first image URL
-                // and soonest occurrence details.
+                // Transform event for frontend needs
                 $firstOccurrence = $event->eventOccurrences->first();
                 return [
                     'id' => $event->id,
                     'name' => $event->name, // Translatable
-                    'href' => route('events.show', $event->id), // Assuming route exists
-                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event', // Placeholder image
+                    'href' => route('events.show', $event->id),
+                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
                     'price_from' => $event->eventOccurrences->flatMap(function ($occurrence) {
                         return $occurrence->ticketDefinitions->pluck('price');
                     })->min() / 100 ?? null,
-                    'date_short' => $firstOccurrence ? $this->formatDateShort($firstOccurrence->start_at) : null,
+                    'date_short' => $firstOccurrence ? $this->formatDateShort($firstOccurrence->start_at_utc) : null,
                     'category_name' => $event->category ? $event->category->name : null, // Translatable
                 ];
             });
@@ -193,36 +260,43 @@ class EventService
      */
     public function getMoreEventsForHomepage(int $limit = 4, array $excludeIds = [])
     {
+        $nowUtc = now()->utc(); // Ensure UTC for consistent comparison
+
         return Event::query()
             ->where('event_status', 'published')
             ->with([
                 'category',
                 'media',
-                'eventOccurrences' => function ($query) {
-                    $query->orderBy('start_at_utc', 'asc');
+                'eventOccurrences' => function ($query) use ($nowUtc) {
+                    // Only load future scheduled occurrences
+                    $query->where('start_at_utc', '>=', $nowUtc)
+                        ->where('status', 'scheduled')
+                        ->orderBy('start_at_utc', 'asc');
                 },
-                'eventOccurrences.ticketDefinitions' => function ($query) {
+                'eventOccurrences.ticketDefinitions' => function ($query) use ($nowUtc) {
                     $query->whereNull('availability_window_start_utc')
-                        ->orWhere('availability_window_start_utc', '<=', now());
+                        ->orWhere('availability_window_start_utc', '<=', $nowUtc);
                 }
             ])
-            ->whereHas('eventOccurrences', function ($query) {
-                $query->where('start_at_utc', '>=', now())
+            ->whereHas('eventOccurrences', function ($query) use ($nowUtc) {
+                $query->where('start_at_utc', '>=', $nowUtc)
                     ->where('status', 'scheduled');
             })
-            // ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
-            //     return $query->whereNotIn('id', $excludeIds);
-            //     return  $query->whereIn('id', $excludeIds ?? []);
-            // })
-            ->orderBy(function ($query) {
-                return $query->select('start_at')
+            // Exclude events that are already shown in upcoming section
+            ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
+                return $query->whereNotIn('id', $excludeIds);
+            })
+            // Order by the earliest upcoming occurrence start date
+            ->orderBy(function ($query) use ($nowUtc) {
+                return $query->select('start_at_utc') // Fixed: use start_at_utc consistently
                     ->from('event_occurrences')
                     ->whereColumn('event_id', 'events.id')
-                    ->where('start_at_utc', '>=', now())
+                    ->where('start_at_utc', '>=', $nowUtc)
+                    ->where('status', 'scheduled')
                     ->orderBy('start_at_utc')
                     ->limit(1);
-            }) // Order by the earliest upcoming occurrence start date
-            // ->take($limit)
+            })
+            ->take($limit) // Fixed: Apply the limit
             ->get()
             ->map(function (Event $event) {
                 $firstOccurrence = $event->eventOccurrences->first();
@@ -232,12 +306,18 @@ class EventService
                     'id' => $event->id,
                     'name' => $event->name,
                     'href' => route('events.show', $event->id),
-                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: $event->getFirstMediaUrl('event_thumbnail') ?: 'https://via.placeholder.com/300x400.png?text=Event', // Try poster, then thumbnail
+                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: $event->getFirstMediaUrl('event_thumbnail') ?: 'https://via.placeholder.com/300x400.png?text=Event',
                     'price_from' => $event->eventOccurrences->flatMap(function ($occurrence) {
                         return $occurrence->ticketDefinitions->pluck('price');
                     })->min() / 100 ?? null,
-                    'date_range' => $this->formatDateRange($firstOccurrence ? $firstOccurrence->start_at : null, $lastOccurrence ? $lastOccurrence->start_at : null, $event->eventOccurrences->count()),
-                    'venue_name' => $firstOccurrence && $firstOccurrence->venue ? $firstOccurrence->venue->name : ($event->primaryVenue ? $event->primaryVenue->name : null), // Assuming occurrences have a venue, or event has a primaryVenue relationship/attribute
+                    'date_range' => $this->formatDateRange(
+                        $firstOccurrence ? $firstOccurrence->start_at_utc : null,
+                        $lastOccurrence ? $lastOccurrence->start_at_utc : null,
+                        $event->eventOccurrences->count()
+                    ),
+                    'venue_name' => $firstOccurrence && $firstOccurrence->venue
+                        ? $firstOccurrence->venue->name
+                        : ($event->getPrimaryVenue() ? $event->getPrimaryVenue()->name : null),
                     'category_name' => $event->category ? $event->category->name : null,
                 ];
             });
@@ -265,6 +345,75 @@ class EventService
         }
         return $start->translatedFormat('Y.m.d') . '-' . $end->translatedFormat('Y.m.d'); // e.g., 2025.06.13-2025.07.15
     }
+
+    /**
+     * Get events happening today.
+     *
+     * @param int $limit
+     * @return array
+     */
+    public function getEventsToday(int $limit = 10): array
+    {
+        $today = now()->utc(); // Ensure UTC for consistent comparison
+
+        return $this->getPublishedEventsWithFutureOccurrences(
+            $limit,
+            [],
+            $today->startOfDay(),
+            $today->endOfDay()
+        )
+            ->get()
+            ->map(function (Event $event) {
+                $firstOccurrence = $event->eventOccurrences->first();
+                return [
+                    'id' => $event->id,
+                    'name' => $event->name,
+                    'href' => route('events.show', $event->id),
+                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
+                    'start_time' => $firstOccurrence ? $firstOccurrence->start_at_utc->format('H:i') : null,
+                    'venue_name' => $firstOccurrence && $firstOccurrence->venue ? $firstOccurrence->venue->name : null,
+                    'category_name' => $event->category ? $event->category->name : null,
+                ];
+            })->toArray();
+    }
+
+    /**
+     * Get events by category with future occurrences.
+     *
+     * @param int $categoryId
+     * @param int $limit
+     * @param array $excludeIds
+     * @return array
+     */
+    public function getEventsByCategory(int $categoryId, int $limit = 20, array $excludeIds = []): array
+    {
+        return $this->getPublishedEventsWithFutureOccurrences($limit, $excludeIds)
+            ->where('category_id', $categoryId)
+            ->get()
+            ->map(function (Event $event) {
+                $firstOccurrence = $event->eventOccurrences->first();
+                $lastOccurrence = $event->eventOccurrences->last();
+
+                return [
+                    'id' => $event->id,
+                    'name' => $event->name,
+                    'href' => route('events.show', $event->id),
+                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
+                    'price_from' => $event->eventOccurrences->flatMap(function ($occurrence) {
+                        return $occurrence->ticketDefinitions->pluck('price');
+                    })->min() / 100 ?? null,
+                    'date_range' => $this->formatDateRange(
+                        $firstOccurrence ? $firstOccurrence->start_at_utc : null,
+                        $lastOccurrence ? $lastOccurrence->start_at_utc : null,
+                        $event->eventOccurrences->count()
+                    ),
+                    'venue_name' => $firstOccurrence && $firstOccurrence->venue
+                        ? $firstOccurrence->venue->name
+                        : ($event->getPrimaryVenue() ? $event->getPrimaryVenue()->name : null),
+                    'category_name' => $event->category ? $event->category->name : null,
+                ];
+            })->toArray();
+    }
 }
 
 // Helper function for safe Carbon parsing (add to a helper file or base service class if used widely)
@@ -278,7 +427,7 @@ if (!function_exists('carbonSafeParse')) {
             return \Carbon\Carbon::parse($date, $timezone);
         } catch (\Exception $e) {
             // Log error or handle appropriately
-            return now(); // Fallback or throw error
+            return now()->utc(); // Fallback to UTC for consistency
         }
     }
 }

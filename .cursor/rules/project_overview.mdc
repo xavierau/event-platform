@@ -65,6 +65,49 @@ Testing code should only be modified when:
 3. Fixing broken tests due to intentional API changes
 4. Refactoring tests as part of a specific testing improvement task
 
+### PHPUnit Modern Testing Conventions:
+
+This project uses **modern PHPUnit practices** with PHP 8 attributes instead of deprecated doc-comment annotations:
+
+**✅ Modern (Recommended):**
+```php
+use PHPUnit\Framework\Attributes\Test;
+
+#[Test]
+public function it_calculates_price_range_correctly()
+{
+    // test implementation
+}
+```
+
+**❌ Deprecated (Avoid):**
+```php
+/** @test */
+public function it_calculates_price_range_correctly()
+{
+    // test implementation
+}
+```
+
+**Key Benefits:**
+- **Type Safety**: PHP attributes are parsed natively by PHP, not by PHPUnit's custom parser
+- **IDE Support**: Better autocomplete, refactoring, and navigation support
+- **Performance**: Slightly faster as PHP handles parsing natively
+- **Future-Proof**: PHPUnit 12+ will remove support for doc-comment annotations entirely
+
+**Common PHPUnit Attributes:**
+- `#[Test]` - Marks a test method
+- `#[DataProvider('methodName')]` - Provides test data from a method
+- `#[Depends('testMethod')]` - Declares test dependencies
+- `#[Group('integration')]` - Assigns tests to groups
+- `#[TestDox('Custom description')]` - Provides custom test descriptions
+
+**Migration Guidelines:**
+- Always import the attribute: `use PHPUnit\Framework\Attributes\Test;`
+- Replace `/** @test */` with `#[Test]`
+- Update other annotations to their corresponding attributes
+- Ensure PHP 8.0+ compatibility for attribute syntax
+
 ## Coding Standards:
 The application aims to adhere to **SOLID principles** and the principles of **Clean Code** to ensure maintainable, scalable, and robust code. Key principles include:
 

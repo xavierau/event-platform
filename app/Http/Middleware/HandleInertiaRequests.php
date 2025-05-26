@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
 use App\Enums\RoleNameEnum;
+use App\Helpers\CurrencyHelper;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -55,6 +56,7 @@ class HandleInertiaRequests extends Middleware
             'app_enums' => [
                 'roles' => collect(RoleNameEnum::cases())->mapWithKeys(fn($case) => [$case->name => $case->value])->all(),
             ],
+            'currencySymbols' => CurrencyHelper::getAllSymbols(),
         ];
     }
 }

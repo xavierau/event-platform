@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 
 import CategoryLink from '@/components/LandingPage/CategoryLink.vue';
 import EventPreviewCard from '@/components/Shared/EventPreviewCard.vue';
@@ -20,7 +20,7 @@ interface Category {
   icon?: string; // Icon will be added by the mapping logic
 }
 
-interface Event {
+interface EventItem {
   id: number;
   name: string;
   href: string;
@@ -34,9 +34,10 @@ interface Event {
 
 const props = defineProps({
     initialCategories: Array as () => Category[],
-    featuredEvent: Object as () => Event | null,
-    upcomingEvents: Array as () => Event[],
-    moreEvents: Array as () => Event[],
+    featuredEvent: Object as () => EventItem | null,
+    todayEvents: Array as () => EventItem[], // Today's events specifically
+    upcomingEvents: Array as () => EventItem[], // Broader upcoming events
+    moreEvents: Array as () => EventItem[],
 });
 
 // Helper for icons, derived from original placeholder data
@@ -62,16 +63,35 @@ const categories = computed(() => {
   ];
 });
 
-// Placeholder data for upcoming events - this will also come from props eventually
-const upcomingEventsData = ref(props.upcomingEvents);
+// State for managing which events to show
+const activeFilter = ref('today'); // 'today', 'upcoming'
+const displayedEvents = computed(() => {
+  switch (activeFilter.value) {
+    case 'today':
+      return props.todayEvents || [];
+    case 'upcoming':
+      return props.upcomingEvents || [];
+    default:
+      return props.todayEvents || [];
+  }
+});
 
 // Placeholder data for more events - this would also come from props eventually
 const moreEventsData = ref(props.moreEvents);
 
 onMounted(() => {
-    console.log(upcomingEventsData.value);
-    console.log(moreEventsData.value);
+    console.log('Today events:', props.todayEvents);
+    console.log('Upcoming events:', props.upcomingEvents);
+    console.log('More events:', moreEventsData.value);
 });
+
+function showTodayEvents() {
+  activeFilter.value = 'today';
+}
+
+function showUpcomingEvents() {
+  activeFilter.value = 'upcoming';
+}
 
 function goToTomorrow() {
   const tomorrow = dayjs().utc().add(1, 'day').format('YYYY-MM-DD')
@@ -90,14 +110,14 @@ const selectedRange = ref([today, today])
 const minDate = dayjs().utc().startOf('day').toDate()
 const maxDate = dayjs().utc().add(90, 'day').endOf('day').toDate()
 
-function openCalendar(e) {
+function openCalendar(e: MouseEvent) {
   e.preventDefault()
   console.log('Calendar button clicked')
   showCalendar.value = true
   console.log('showCalendar set to', showCalendar.value)
 }
 
-function onDateRangeSelected([start, end]) {
+function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
   console.log('Date range selected:', start, end)
   if (start && end) {
     const startUTC = dayjs(start).utc().format('YYYY-MM-DD')
@@ -139,7 +159,28 @@ function onDateRangeSelected([start, end]) {
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <h2 class="text-2xl font-semibold text-gray-800 mb-3 sm:mb-0">Upcoming Events</h2>
             <div class="flex space-x-2 text-sm flex-wrap">
-              <button class="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 font-medium">Today</button>
+              <button
+                @click="showTodayEvents"
+                :class="[
+                  'px-3 py-1 rounded-full font-medium',
+                  activeFilter === 'today'
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'hover:bg-gray-200'
+                ]"
+              >
+                Today
+              </button>
+              <button
+                @click="showUpcomingEvents"
+                :class="[
+                  'px-3 py-1 rounded-full font-medium',
+                  activeFilter === 'upcoming'
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'hover:bg-gray-200'
+                ]"
+              >
+                Upcoming
+              </button>
               <button class="px-3 py-1 rounded-full hover:bg-gray-200" @click="goToTomorrow">Tomorrow</button>
               <button class="px-3 py-1 rounded-full hover:bg-gray-200" @click="goToThisWeek">This Week</button>
               <button class="px-3 py-1 rounded-full hover:bg-gray-200 flex items-center" @click="openCalendar">
@@ -148,10 +189,11 @@ function onDateRangeSelected([start, end]) {
             </div>
           </div>
           <div class="flex overflow-x-auto pb-4 -mb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 scrollbar-thumb-rounded-full">
-            <EventPreviewCard v-for="event in upcomingEventsData" :key="event.id" :event="event" />
+            <EventPreviewCard v-for="event in displayedEvents" :key="event.id" :event="event" />
             <!-- Add a few more for scrolling demonstration if needed -->
-             <div v-if="!upcomingEventsData || upcomingEventsData.length === 0" class="w-full p-4 border border-dashed border-gray-300 rounded-md min-h-[200px] text-center text-gray-500 flex items-center justify-center">
-                No upcoming events at the moment.
+             <div v-if="!displayedEvents || displayedEvents.length === 0" class="w-full p-4 border border-dashed border-gray-300 rounded-md min-h-[200px] text-center text-gray-500 flex items-center justify-center">
+                <span v-if="activeFilter === 'today'">No events happening today.</span>
+                <span v-else>No upcoming events at the moment.</span>
             </div>
           </div>
       </section>

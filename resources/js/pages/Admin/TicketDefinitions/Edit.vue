@@ -19,35 +19,7 @@ interface AvailableLocales {
 }
 
 // For the incoming prop
-interface TicketDefinitionProp {
-    id: number;
-    name: Record<string, string> | string;
-    description?: Record<string, string> | string | null;
-    price: number | null;
-    quantity?: number | null;
-    status: string;
-    availabilityWindowStart?: string | null;
-    availabilityWindowEnd?: string | null;
-    min_per_order?: number | null;
-    max_per_order?: number | null;
-    metadata?: Record<string, any> | null;
-}
-
-// FormData for the form, price is in display format (e.g., 10.50)
-interface TicketDefinitionEditFormData {
-    _method: 'PUT';
-    name: Record<string, string>;
-    description: Record<string, string>;
-    price: number | undefined;
-    quantity: number | undefined;
-    status: string;
-    availability_window_start: string;
-    availability_window_end: string;
-    min_per_order: number | undefined;
-    max_per_order: number | undefined;
-    metadata: Record<string, any> | undefined;
-    [key: string]: any;
-}
+import type { TicketDefinitionProp, TicketDefinitionEditFormData } from '@/types/ticket';
 
 const props = defineProps<{
     ticketDefinition: TicketDefinitionProp;
@@ -66,7 +38,7 @@ const form = useForm<TicketDefinitionEditFormData>({
     price: typeof props.ticketDefinition?.price === 'number' && props.ticketDefinition.price !== null
         ? props.ticketDefinition.price / 100
         : undefined,
-    quantity: props.ticketDefinition?.quantity ?? undefined,
+    total_quantity: props.ticketDefinition?.total_quantity ?? undefined,
     status: props.ticketDefinition?.status ?? (props.statuses?.[0]?.value || 'draft'),
     availability_window_start: props.ticketDefinition?.availabilityWindowStart || '',
     availability_window_end: props.ticketDefinition?.availabilityWindowEnd || '',
@@ -143,9 +115,9 @@ const submit = () => {
                                     </div>
 
                                     <div>
-                                        <Label for="quantity">Quantity Available (leave blank for unlimited)</Label>
-                                        <Input id="quantity" type="number" v-model.number="form.quantity" placeholder="e.g., 100" />
-                                        <InputError :message="form.errors.quantity" class="mt-1" />
+                                        <Label for="total_quantity">Quantity Available (leave blank for unlimited)</Label>
+                                        <Input id="total_quantity" type="number" v-model.number="form.total_quantity" placeholder="e.g., 100" />
+                                        <InputError :message="form.errors.total_quantity" class="mt-1" />
                                     </div>
 
                                     <div>

@@ -18,19 +18,7 @@ interface AvailableLocales {
     [key: string]: string;
 }
 
-interface TicketDefinitionCreateFormData {
-    name: Record<string, string>;
-    description: Record<string, string>;
-    price: number | undefined;
-    total_quantity: number | undefined;
-    status: string;
-    availability_window_start: string;
-    availability_window_end: string;
-    min_per_order: number;
-    max_per_order: number | undefined;
-    metadata: Record<string, any> | undefined;
-    [key: string]: any; // Index signature for form.errors flexibility
-}
+import type { TicketDefinitionCreateFormData } from '@/types/ticket';
 
 const props = defineProps<{
     statuses: StatusOption[];

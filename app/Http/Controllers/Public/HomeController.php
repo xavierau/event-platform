@@ -7,6 +7,7 @@ use App\Services\CategoryService;
 use App\Services\EventService;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Route;
 
 class HomeController extends Controller
 {
@@ -38,25 +39,30 @@ class HomeController extends Controller
             ];
         });
 
-        // Fetch upcoming events
-        $upcomingEvents = $this->eventService->getUpcomingEventsForHomepage(5); // Fetch 5 upcoming events
+        // Fetch today's events specifically for the "Today" section
+        $todayEvents = $this->eventService->getEventsToday(5);
 
-        // Fetch more events, excluding IDs from upcoming events to avoid duplicates
-        $upcomingEventIds = collect($upcomingEvents)->pluck('id')->all();
-        $moreEvents = $this->eventService->getMoreEventsForHomepage(15, $upcomingEventIds); // Fetch 4 more events
+        // Fetch upcoming events (next 30 days) for the broader upcoming section
+        $upcomingEvents = $this->eventService->getUpcomingEventsForHomepage(15);
 
+        // Fetch more events, excluding IDs from both today and upcoming events to avoid duplicates
+        $excludeIds = array_merge(
+            collect($todayEvents)->pluck('id')->all(),
+            collect($upcomingEvents)->pluck('id')->all()
+        );
+        $moreEvents = $this->eventService->getMoreEventsForHomepage(15, $excludeIds);
 
         // Placeholder for other data to be passed to the landing page
         $featuredEvent = null; // Or fetch actual featured event
 
-
         return Inertia::render('Public/Home', [
             'initialCategories' => $formattedCategories,
             'featuredEvent' => $featuredEvent,
-            'upcomingEvents' => $upcomingEvents,
+            'todayEvents' => $todayEvents, // Today's events specifically
+            'upcomingEvents' => $upcomingEvents, // Broader upcoming events
             'moreEvents' => $moreEvents,
-            // 'canLogin' => Route::has('login'), // Example from original route
-            // 'canRegister' => Route::has('register'), // Example from original route
+            'canLogin' => Route::has('login'), // Example from original route
+            'canRegister' => Route::has('register'), // Example from original route
         ]);
     }
 }

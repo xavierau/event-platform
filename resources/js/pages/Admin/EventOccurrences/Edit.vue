@@ -13,18 +13,11 @@ import { currentLocale } from '@/Utils/i18n';
 // Ticket Management Components & Types
 import TicketDefinitionMiniForm from '@/pages/Admin/Events/Partials/TicketDefinitionMiniForm.vue';
 import TicketDefinitionSelector from '@/pages/Admin/Events/Partials/TicketDefinitionSelector.vue';
-import type { TicketDefinitionOption as SelectorTicketDefinitionOption } from '@/pages/Admin/Events/Partials/TicketDefinitionSelector.vue';
+// TicketDefinitionOption now imported from centralized types
 import type { StatusOption as TicketStatusOption } from '@/pages/Admin/Events/Partials/TicketDefinitionMiniForm.vue';
 
-// For ticket assignments within this occurrence
-interface OccurrenceTicketAssignment {
-    ticket_definition_id: number;
-    name?: string; // For display convenience, fetched from main TicketDefinition
-    original_price?: number; // For display convenience
-    original_currency_code?: string; // For display convenience
-    quantity_for_occurrence: number | undefined;
-    price_override: number | undefined; // In cents
-}
+// Import centralized types
+import type { OccurrenceTicketAssignment, TicketDefinitionOption } from '@/types/ticket';
 
 // Define interfaces for props
 interface EventProp {
@@ -75,7 +68,7 @@ interface PageProps {
     pageTitle?: string;
     breadcrumbs?: BreadcrumbItem[];
     // Props for ticket management
-    allAvailableTicketDefinitions: SelectorTicketDefinitionOption[];
+    allAvailableTicketDefinitions: TicketDefinitionOption[];
     ticketDefinitionStatuses: TicketStatusOption[];
     assignedTickets: OccurrenceTicketAssignment[]; // Added as a top-level required prop
 }

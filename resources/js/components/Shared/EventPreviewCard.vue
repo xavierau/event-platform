@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { useCurrency } from '@/composables/useCurrency';
 
 defineProps({
   event: {
@@ -17,9 +18,12 @@ defineProps({
   }
 });
 
+const { formatPrice: formatCurrency } = useCurrency();
+
 const formatPrice = (price: number) => {
   if (price === 0) return 'Free';
-  return `¥${price}起`; // Or use a more sophisticated currency formatter
+  // Assuming price is already in currency units, convert to cents and format with CNY
+  return `${formatCurrency(price * 100, 'CNY')}起`;
 };
 
 </script>

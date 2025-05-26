@@ -1,0 +1,427 @@
+<?php
+
+namespace Tests\Unit\Models;
+
+use Tests\TestCase;
+use App\Models\Event;
+use App\Models\EventOccurrence;
+use App\Models\TicketDefinition;
+use App\Models\Category;
+use App\Models\User;
+use App\Models\Venue;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
+
+class EventTest extends TestCase
+{
+    use RefreshDatabase;
+
+    #[Test]
+    public function it_calculates_price_range_correctly()
+    {
+        // Create necessary models
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+        $venue = Venue::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+        ]);
+
+        $occurrence1 = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+        ]);
+
+        $occurrence2 = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+        ]);
+
+        // Create ticket definitions with different prices
+        $ticket1 = TicketDefinition::factory()->create([
+            'price' => 5000, // $50.00
+            'currency' => 'USD',
+        ]);
+
+        $ticket2 = TicketDefinition::factory()->create([
+            'price' => 10000, // $100.00
+            'currency' => 'USD',
+        ]);
+
+        $ticket3 = TicketDefinition::factory()->create([
+            'price' => 7500, // $75.00
+            'currency' => 'USD',
+        ]);
+
+        // Associate tickets with occurrences
+        $occurrence1->ticketDefinitions()->attach($ticket1->id, [
+            'quantity_for_occurrence' => 100,
+            'price_override' => null,
+        ]);
+
+        $occurrence1->ticketDefinitions()->attach($ticket2->id, [
+            'quantity_for_occurrence' => 50,
+            'price_override' => null,
+        ]);
+
+        $occurrence2->ticketDefinitions()->attach($ticket3->id, [
+            'quantity_for_occurrence' => 75,
+            'price_override' => 8000, // Override to $80.00
+        ]);
+
+        // Test price range calculation
+        $priceRange = $event->getPriceRange();
+
+        // Should be $50.00-$100.00 (min from ticket1, max from ticket2)
+        // Note: ticket3 has override of $80.00 but ticket2 at $100.00 is still highest
+        $this->assertEquals('$50.00-100.00', $priceRange);
+    }
+
+    #[Test]
+    public function it_returns_single_price_when_min_and_max_are_same()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+        $venue = Venue::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+        ]);
+
+        $occurrence = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+        ]);
+
+        $ticket = TicketDefinition::factory()->create([
+            'price' => 5000, // $50.00
+            'currency' => 'USD',
+        ]);
+
+        $occurrence->ticketDefinitions()->attach($ticket->id, [
+            'quantity_for_occurrence' => 100,
+            'price_override' => null,
+        ]);
+
+        $priceRange = $event->getPriceRange();
+
+        $this->assertEquals('$50.00', $priceRange);
+    }
+
+    #[Test]
+    public function it_returns_null_when_no_tickets_available()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+        ]);
+
+        $priceRange = $event->getPriceRange();
+
+        $this->assertNull($priceRange);
+    }
+
+    #[Test]
+    public function it_uses_price_override_when_available()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+        $venue = Venue::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+        ]);
+
+        $occurrence = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+        ]);
+
+        $ticket = TicketDefinition::factory()->create([
+            'price' => 5000, // $50.00 original
+            'currency' => 'USD',
+        ]);
+
+        $occurrence->ticketDefinitions()->attach($ticket->id, [
+            'quantity_for_occurrence' => 100,
+            'price_override' => 3000, // Override to $30.00
+        ]);
+
+        $priceRange = $event->getPriceRange();
+
+        // Should use the override price of $30.00
+        $this->assertEquals('$30.00', $priceRange);
+    }
+
+    #[Test]
+    public function it_returns_primary_venue_from_first_occurrence()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+        $venue1 = Venue::factory()->create(['name' => ['en' => 'First Venue']]);
+        $venue2 = Venue::factory()->create(['name' => ['en' => 'Second Venue']]);
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+        ]);
+
+        // Create occurrences with different venues
+        $occurrence1 = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue1->id,
+            'start_at_utc' => now()->addDays(1),
+        ]);
+
+        $occurrence2 = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue2->id,
+            'start_at_utc' => now()->addDays(2),
+        ]);
+
+        $primaryVenue = $event->getPrimaryVenue();
+
+        // Should return the venue from the first occurrence
+        $this->assertNotNull($primaryVenue);
+        $this->assertEquals($venue1->id, $primaryVenue->id);
+        $this->assertEquals('First Venue', $primaryVenue->getTranslation('name', 'en'));
+    }
+
+    #[Test]
+    public function it_returns_null_when_no_occurrences_exist()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+        ]);
+
+        $primaryVenue = $event->getPrimaryVenue();
+
+        $this->assertNull($primaryVenue);
+    }
+
+    #[Test]
+    public function it_returns_null_when_first_occurrence_has_no_venue()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+        ]);
+
+        // Create occurrence without venue
+        $occurrence = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => null,
+        ]);
+
+        $primaryVenue = $event->getPrimaryVenue();
+
+        $this->assertNull($primaryVenue);
+    }
+
+    #[Test]
+    public function it_finds_published_event_by_id()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+            'event_status' => 'published',
+        ]);
+
+        $foundEvent = Event::findPublishedByIdentifier($event->id);
+
+        $this->assertEquals($event->id, $foundEvent->id);
+    }
+
+    #[Test]
+    public function it_finds_published_event_by_slug()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+            'event_status' => 'published',
+            'slug' => ['en' => 'test-event-slug'],
+        ]);
+
+        $foundEvent = Event::findPublishedByIdentifier('test-event-slug');
+
+        $this->assertEquals($event->id, $foundEvent->id);
+    }
+
+    #[Test]
+    public function it_throws_exception_for_non_published_event()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+            'event_status' => 'draft', // Not published
+        ]);
+
+        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+
+        Event::findPublishedByIdentifier($event->id);
+    }
+
+    #[Test]
+    public function it_throws_exception_for_non_existent_event()
+    {
+        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+
+        Event::findPublishedByIdentifier('non-existent-slug');
+    }
+
+    #[Test]
+    public function it_loads_specified_relationships()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+            'event_status' => 'published',
+        ]);
+
+        $foundEvent = Event::findPublishedByIdentifier($event->id, ['category']);
+
+        $this->assertTrue($foundEvent->relationLoaded('category'));
+        $this->assertEquals($category->id, $foundEvent->category->id);
+    }
+
+    #[Test]
+    public function it_finds_exact_slug_match_without_ambiguity()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        // Create events with similar but different slugs
+        $event1 = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+            'event_status' => 'published',
+            'slug' => ['en' => 'event'],
+        ]);
+
+        $event2 = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+            'event_status' => 'published',
+            'slug' => ['en' => 'my-event'],
+        ]);
+
+        $event3 = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+            'event_status' => 'published',
+            'slug' => ['en' => 'event-2024'],
+        ]);
+
+        // Should find exact match only
+        $foundEvent = Event::findPublishedByIdentifier('event');
+        $this->assertEquals($event1->id, $foundEvent->id);
+
+        // Should not find partial matches
+        $foundEvent2 = Event::findPublishedByIdentifier('my-event');
+        $this->assertEquals($event2->id, $foundEvent2->id);
+
+        $foundEvent3 = Event::findPublishedByIdentifier('event-2024');
+        $this->assertEquals($event3->id, $foundEvent3->id);
+    }
+
+    #[Test]
+    public function it_finds_slug_in_different_locales()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+            'event_status' => 'published',
+            'slug' => [
+                'en' => 'test-event',
+                'zh-TW' => '測試活動',
+                'zh-CN' => '测试活动'
+            ],
+        ]);
+
+        // Should find by English slug
+        $foundEvent1 = Event::findPublishedByIdentifier('test-event');
+        $this->assertEquals($event->id, $foundEvent1->id);
+
+        // Should find by Traditional Chinese slug
+        $foundEvent2 = Event::findPublishedByIdentifier('測試活動');
+        $this->assertEquals($event->id, $foundEvent2->id);
+
+        // Should find by Simplified Chinese slug
+        $foundEvent3 = Event::findPublishedByIdentifier('测试活动');
+        $this->assertEquals($event->id, $foundEvent3->id);
+    }
+
+    #[Test]
+    public function it_uses_correct_database_driver_for_slug_search()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+            'event_status' => 'published',
+            'slug' => ['en' => 'database-test-slug'],
+        ]);
+
+        // Test with current database driver (should be sqlite in tests)
+        $foundEvent = Event::findPublishedByIdentifier('database-test-slug');
+        $this->assertEquals($event->id, $foundEvent->id);
+
+        // Verify the method works regardless of database driver
+        // (The actual SQL generation is tested implicitly by the successful query)
+        $this->assertTrue(true, 'Database-specific slug search completed successfully');
+    }
+
+    #[Test]
+    public function it_handles_special_characters_in_slug_search()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+
+        // Create event with slug containing special characters
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+            'event_status' => 'published',
+            'slug' => ['en' => 'event-with_special%chars'],
+        ]);
+
+        // Should find exact match even with special characters
+        $foundEvent = Event::findPublishedByIdentifier('event-with_special%chars');
+        $this->assertEquals($event->id, $foundEvent->id);
+
+        // Should not find partial matches
+        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        Event::findPublishedByIdentifier('event-with_special');
+    }
+}

@@ -18,7 +18,7 @@ if (!function_exists('carbonSafeParse')) {
         try {
             return \Carbon\Carbon::parse($date, $timezone);
         } catch (\Exception $e) {
-            return now();
+            return now()->utc(); // Fallback to UTC for consistency
         }
     }
 }
@@ -65,7 +65,7 @@ class EventController extends Controller
                 ['events' => function ($query) {
                     $query->where('event_status', 'published')
                         ->whereHas('eventOccurrences', function ($q) {
-                            $q->where('start_at_utc', '>', now());
+                            $q->where('start_at_utc', '>', now()->utc());
                         });
                 }]
             )->first();
@@ -120,50 +120,66 @@ class EventController extends Controller
         return $start->translatedFormat('Y.m.d') . '-' . $end->translatedFormat('Y.m.d');
     }
 
-    public function show($eventId)
+    public function show($eventIdentifier)
     {
-        $service = new \App\Services\EventService(new \App\Actions\Event\UpsertEventAction());
-        $placeholderEvent = $service->findEventById($eventId);
+        // Load the published event with all necessary relationships
+        $event = \App\Models\Event::findPublishedByIdentifier($eventIdentifier, [
+            'category',
+            'eventOccurrences' => function ($query) {
+                $query->orderBy('start_at_utc', 'asc');
+            },
+            'eventOccurrences.venue',
+            'eventOccurrences.ticketDefinitions'
+        ]);
 
-        if (!$placeholderEvent) {
-            abort(404);
-        }
+        // Calculate price range using model method
+        $priceRange = $event->getPriceRange();
+
+        // Get primary venue using model method
+        $primaryVenue = $event->getPrimaryVenue();
 
         // Transform the event data to match the expected format
-        $placeholderEvent = [
-            'id' => $placeholderEvent->id,
-            'name' => $placeholderEvent->name,
-            'category_tag' => $placeholderEvent->category?->name,
-            'duration_info' => $placeholderEvent->duration_info,
-            'price_range' => $placeholderEvent->eventOccurrences->map(function ($occurrence) {
-                return $occurrence->ticketDefinitions->first()->currency . $occurrence->ticketDefinitions->min('price') / 100 . '-' . $occurrence->ticketDefinitions->max('price') / 100;
-            })->first(),
-            'discount_info' => $placeholderEvent->discount_info,
-            'main_poster_url' => $placeholderEvent->getFirstMediaUrl('portrait_poster'),
-            'thumbnail_url' => $placeholderEvent->getFirstMediaUrl('portrait_poster', 'thumb'),
-            'landscape_poster_url' => $placeholderEvent->getFirstMediaUrl('landscape_poster'),
-            'description_html' => $placeholderEvent->description,
-            'venue_name' => $placeholderEvent->venue?->name,
-            'venue_address' => $placeholderEvent->venue?->address,
-            'occurrences' => $placeholderEvent->eventOccurrences->map(function ($occurrence) {
+        $eventData = [
+            'id' => $event->id,
+            'name' => $event->getTranslation('name', app()->getLocale()),
+            'category_tag' => $event->category?->getTranslation('name', app()->getLocale()),
+            'duration_info' => $event->duration_info,
+            'price_range' => $priceRange,
+            'discount_info' => $event->discount_info,
+            'main_poster_url' => $event->getFirstMediaUrl('portrait_poster'),
+            'thumbnail_url' => $event->getFirstMediaUrl('portrait_poster', 'thumb'),
+            'landscape_poster_url' => $event->getFirstMediaUrl('landscape_poster'),
+            'description_html' => $event->getTranslation('description', app()->getLocale()),
+            'venue_name' => $primaryVenue?->getTranslation('name', app()->getLocale()),
+            'venue_address' => $primaryVenue?->address,
+            'occurrences' => $event->eventOccurrences->map(function ($occurrence) {
                 return [
                     'id' => $occurrence->id,
-                    'name' => $occurrence->name,
+                    'name' => $occurrence->getTranslation('name', app()->getLocale()) ?: 'Event Occurrence',
                     'date_short' => $occurrence->start_at_utc?->format('m.d'),
-                    'full_date_time' => $occurrence->start_at_utc?->format('Y.m.d') . ' ' . $occurrence->start_at_utc?->locale(app()->getLocale())->isoFormat('dddd') . ' ' . $occurrence->start_at_utc?->format('H:i'),
+                    'full_date_time' => $occurrence->start_at_utc?->format('Y.m.d') . ' ' .
+                        $occurrence->start_at_utc?->locale(app()->getLocale())->isoFormat('dddd') . ' ' .
+                        $occurrence->start_at_utc?->format('H:i'),
                     'status_tag' => $occurrence->status,
-                    'venue_name' => $occurrence->venue?->name,
+                    'venue_name' => $occurrence->venue?->getTranslation('name', app()->getLocale()),
                     'venue_address' => $occurrence->venue?->address,
                     'tickets' => $occurrence->ticketDefinitions->map(function ($ticket) {
+                        // Calculate effective price (use override if available)
+                        $effectivePrice = $ticket->pivot->price_override ?? $ticket->price;
+
+                        // Calculate available quantity for this occurrence
+                        $quantityForOccurrence = $ticket->pivot->quantity_for_occurrence;
+                        $availableQuantity = $quantityForOccurrence ?? $ticket->quantity_available;
+
                         return [
                             'id' => $ticket->id,
-                            'name' => $ticket->name,
-                            'description' => $ticket->description,
+                            'name' => $ticket->getTranslation('name', app()->getLocale()),
+                            'description' => $ticket->getTranslation('description', app()->getLocale()),
                             'currency' => $ticket->currency,
-                            'price' => $ticket->price / 100,
+                            'price' => $effectivePrice / 100, // Convert from cents to currency units
                             'max_per_order' => $ticket->max_per_order,
                             'min_per_order' => $ticket->min_per_order,
-                            'quantity_available' => $ticket->quantity_available
+                            'quantity_available' => $availableQuantity
                         ];
                     })->toArray()
                 ];
@@ -171,7 +187,7 @@ class EventController extends Controller
         ];
 
         return \Inertia\Inertia::render('Public/EventDetail', [
-            'event' => $placeholderEvent
+            'event' => $eventData,
         ]);
     }
 }

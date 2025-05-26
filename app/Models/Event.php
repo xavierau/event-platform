@@ -9,6 +9,7 @@ use Spatie\Translatable\HasTranslations;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Helpers\CurrencyHelper;
 
 class Event extends Model implements HasMedia
 {
@@ -141,5 +142,111 @@ class Event extends Model implements HasMedia
             ->height(600)
             ->sharpen(10)
             ->performOnCollections('portrait_poster', 'landscape_poster', 'gallery');
+    }
+
+    /**
+     * Calculate the price range for this event across all occurrences and tickets
+     *
+     * @return string|null Formatted price range or null if no tickets available
+     */
+    public function getPriceRange(): ?string
+    {
+        // Ensure eventOccurrences and their ticketDefinitions are loaded
+        if (!$this->relationLoaded('eventOccurrences')) {
+            $this->load('eventOccurrences.ticketDefinitions');
+        }
+
+        // Calculate price range across all occurrences and tickets
+        $allPrices = $this->eventOccurrences->flatMap(function ($occurrence) {
+            return $occurrence->ticketDefinitions->map(function ($ticket) {
+                // Use price_override if available, otherwise use original price
+                return $ticket->pivot->price_override ?? $ticket->price;
+            });
+        })->filter()->values();
+
+        if ($allPrices->isEmpty()) {
+            return null;
+        }
+
+        $minPrice = $allPrices->min();
+        $maxPrice = $allPrices->max();
+
+        // Get currency from first available ticket
+        $firstTicket = $this->eventOccurrences->flatMap->ticketDefinitions->first();
+        $currencyCode = $firstTicket ? $firstTicket->currency : CurrencyHelper::getDefault();
+
+        // Format price range using helper
+        return CurrencyHelper::formatRange($minPrice, $maxPrice, $currencyCode);
+    }
+
+    /**
+     * Get the primary venue for this event
+     *
+     * @return \App\Models\Venue|null The primary venue (from first occurrence) or null if no occurrences
+     */
+    public function getPrimaryVenue(): ?\App\Models\Venue
+    {
+        // Ensure eventOccurrences and their venues are loaded
+        if (!$this->relationLoaded('eventOccurrences')) {
+            $this->load('eventOccurrences.venue');
+        }
+
+        return $this->eventOccurrences->first()?->venue;
+    }
+
+    /**
+     * Find a published event by ID or slug
+     *
+     * Uses database-specific JSON functions for optimal performance:
+     * - MySQL: JSON_SEARCH for exact value matching
+     * - PostgreSQL: JSONB operators for exact value matching
+     * - SQLite: LIKE patterns with proper escaping
+     *
+     * @param string|int $identifier Event ID or slug
+     * @param array $with Relationships to eager load
+     * @return static
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public static function findPublishedByIdentifier($identifier, array $with = [])
+    {
+        return static::with($with)
+            ->where('event_status', 'published')
+            ->where(function ($query) use ($identifier) {
+                // Try to find by ID first (if numeric), then by slug
+                if (is_numeric($identifier)) {
+                    $query->where('id', $identifier);
+                } else {
+                    // Search in translatable slug field (JSON) - find exact match in any locale
+                    // Use database-specific JSON functions for optimal performance
+                    $databaseDriver = config('database.default');
+                    $connectionConfig = config("database.connections.{$databaseDriver}");
+                    $driver = $connectionConfig['driver'] ?? $databaseDriver;
+
+                    $query->where(function ($subQuery) use ($identifier, $driver) {
+                        switch ($driver) {
+                            case 'mysql':
+                                // MySQL: Use JSON_SEARCH for exact value matching
+                                $subQuery->whereRaw("JSON_SEARCH(slug, 'one', ?) IS NOT NULL", [$identifier]);
+                                break;
+
+                            case 'pgsql':
+                                // PostgreSQL: Use JSON operators for exact value matching
+                                $subQuery->whereRaw("slug::jsonb ? ?", [$identifier])
+                                    ->orWhereRaw("EXISTS (SELECT 1 FROM jsonb_each_text(slug::jsonb) WHERE value = ?)", [$identifier]);
+                                break;
+
+                            case 'sqlite':
+                            default:
+                                // SQLite and fallback: Use LIKE with precise patterns
+                                // Use addslashes for proper escaping in LIKE queries
+                                $escapedIdentifier = addslashes($identifier);
+                                $subQuery->where('slug', 'LIKE', '%:"' . $escapedIdentifier . '"%')  // After colon
+                                    ->orWhere('slug', 'LIKE', '%{"' . $escapedIdentifier . '"%'); // At start of object
+                                break;
+                        }
+                    });
+                }
+            })
+            ->firstOrFail();
     }
 }

@@ -14,13 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox'; // Assuming path for Checkbox
 import { Label } from '@/components/ui/label';
 
-export interface TicketDefinitionOption {
-    id: number;
-    name: string; // Name (preferably translated for current UI locale)
-    price: number; // Price in smallest currency unit (e.g., cents)
-    currency_code: string; // e.g., 'USD', 'EUR', etc.
-    // Add other fields if needed for display, e.g., status
-}
+import type { TicketDefinitionOption } from '@/types/ticket';
 
 const props = defineProps<{
     show: boolean;
@@ -121,7 +115,7 @@ const canConfirm = computed(() => {
                              <Checkbox
                                 :id="`td-select-${ticketDef.id}`"
                                 :model-value="internalSelectedIds.has(ticketDef.id)"
-                                @update:model-value="(isChecked) => handleSelectionChange(ticketDef.id, isChecked)"
+                                @update:modelValue="(isChecked) => handleSelectionChange(ticketDef.id, isChecked)"
                             />
                             <Label :for="`td-select-${ticketDef.id}`" class="cursor-pointer">
                                 <span class="font-medium">{{ ticketDef.name }}</span>

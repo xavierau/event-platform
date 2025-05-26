@@ -4,15 +4,7 @@ import { ref, computed } from 'vue';
 import TicketPurchaseModal from '@/components/Modals/TicketPurchaseModal.vue';
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
 
-interface TicketType {
-  id: string | number;
-  name: string;
-  description?: string;
-  price: number;
-  quantity_available?: number;
-  max_per_order?: number;
-  min_per_order?: number;
-}
+import type { PublicTicketType } from '@/types/ticket';
 
 interface EventOccurrence {
   id: string | number;
@@ -22,14 +14,13 @@ interface EventOccurrence {
   status_tag?: string; // e.g., "预约"
   venue_name?: string; // Venue specific to this occurrence
   venue_address?: string; // Address specific to this occurrence
-  tickets?: TicketType[]; // Added tickets array
+  tickets?: PublicTicketType[]; // Added tickets array
 }
 
 interface EventDetails {
   id: string | number;
   name: string;
   category_tag: string;
-  // date_range: string; // This might be derived or less relevant if occurrences are present
   duration_info: string;
   price_range: string;
   discount_info?: string;
@@ -79,9 +70,14 @@ const formatPrice = (priceRange: string | null) => {
     return { currency: '', amount: 'Free', suffix: '' };
   }
 
-  const parts = priceRange.match(/([¥€$]?)([0-9]+(?:\.[0-9]+)?)(.*)/);
+  // Try to extract currency symbol and amount from the formatted price range
+  const parts = priceRange.match(/([¥€$£₩฿RM₱₫Rp₹]|HK\$|NT\$|S\$|A\$|C\$)?([0-9]+(?:\.[0-9]+)?)(.*)/);
   if (parts) {
-    return { currency: parts[1], amount: parts[2], suffix: parts[3] };
+    return {
+      currency: parts[1] || '',
+      amount: parts[2],
+      suffix: parts[3] || ''
+    };
   }
   return { currency: '', amount: priceRange, suffix: '' };
 };

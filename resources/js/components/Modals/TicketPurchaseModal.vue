@@ -1,23 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import axios from 'axios'; // Import axios
-// import { router } from '@inertiajs/vue3'; // Removed unused import
+import { useCurrency } from '@/composables/useCurrency';
 
-interface TicketType {
-  id: string | number;
-  name: string;
-  description?: string;
-  price: number;
-  quantity_available?: number;
-  max_per_order?: number;
-  min_per_order?: number;
-}
+import type { PublicTicketType } from '@/types/ticket';
 
 interface EventOccurrence {
   id: string | number;
   name: string;
   full_date_time: string;
-  tickets?: TicketType[];
+  tickets?: PublicTicketType[];
 }
 
 const props = defineProps({
@@ -30,6 +22,9 @@ const props = defineProps({
     required: false,
   },
 });
+
+// Use currency composable
+const { formatPrice } = useCurrency();
 
 const emit = defineEmits(['close']);
 
@@ -123,6 +118,18 @@ const hasSelectedTickets = computed(() => {
   return Object.values(selectedTickets.value).some(quantity => quantity > 0);
 });
 
+// Currency formatting functions
+const formatTicketPrice = (price: number, currency: string): string => {
+  return formatPrice(price * 100, currency); // Convert to cents for the composable
+};
+
+const formatTotalPrice = (total: number): string => {
+  // Get currency from first available ticket
+  const firstTicket = props.occurrence?.tickets?.[0];
+  const currency = firstTicket?.currency || 'USD';
+  return formatPrice(total * 100, currency); // Convert to cents for the composable
+};
+
 const confirmPurchase = async () => {
   isLoading.value = true;
 
@@ -205,7 +212,7 @@ const confirmPurchase = async () => {
     >
       <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
         <div class="flex justify-between items-center p-4 border-b">
-          <h2 class="text-lg font-semibold text-gray-800">选择票档</h2>
+          <h2 class="text-lg font-semibold text-gray-800">Choose Tickets</h2>
           <button @click="closeModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
         </div>
 
@@ -224,7 +231,7 @@ const confirmPurchase = async () => {
               <div>
                 <h4 class="font-semibold text-gray-700">{{ ticket.name }}</h4>
                 <p v-if="ticket.description" class="text-xs text-gray-500">{{ ticket.description }}</p>
-                <p class="text-sm text-pink-500 font-medium">¥{{ ticket.price.toFixed(2) }}</p>
+                <p class="text-sm text-pink-500 font-medium">{{ formatTicketPrice(ticket.price, ticket.currency) }}</p>
               </div>
               <div class="flex items-center space-x-2">
                 <button
@@ -246,14 +253,14 @@ const confirmPurchase = async () => {
             </div>
           </div>
           <div v-else class="text-center text-gray-500 py-4">
-            <p>当前场次暂无可售票品。</p>
+            <p>No tickets available for this occurrence.</p>
           </div>
         </div>
 
         <div class="p-4 border-t mt-auto">
           <div class="flex justify-between items-center mb-3">
-            <span class="text-gray-700">总计:</span>
-            <span class="text-xl font-bold text-pink-500">¥{{ totalPrice.toFixed(2) }}</span>
+            <span class="text-gray-700">Total:</span>
+            <span class="text-xl font-bold text-pink-500">{{ formatTotalPrice(totalPrice) }}</span>
           </div>
           <button
             @click="confirmPurchase"
@@ -261,7 +268,7 @@ const confirmPurchase = async () => {
             :disabled="isLoading || (totalPrice > 0 && !hasSelectedTickets)"
           >
             <span v-if="isLoading">Processing...</span>
-            <span v-else>确认购买</span>
+            <span v-else>Purchase</span>
           </button>
         </div>
       </div>

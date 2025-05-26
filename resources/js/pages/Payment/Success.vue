@@ -124,26 +124,15 @@ interface Transaction {
   updated_at: string
 }
 
-interface TicketDefinition {
-  name: string
-}
-
-interface Event {
-  name: string
-}
-
-interface EventOccurrence {
-  name?: string
-  event?: Event
-}
+import type { TicketEventOccurrenceInfo, BookingTicketInfo } from '@/types/ticket';
 
 interface Booking {
   id: number
   quantity: number
   total_price: number
   currency: string
-  ticket_definition?: TicketDefinition
-  event_occurrence?: EventOccurrence
+  ticket_definition?: BookingTicketInfo
+  event_occurrence?: TicketEventOccurrenceInfo
 }
 
 defineProps<{
