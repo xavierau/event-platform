@@ -2,8 +2,8 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/layouts/AuthLayout.vue';
-import PrimaryButton from '@/Components/ui/button/PrimaryButton.vue';
-import SecondaryButton from '@/Components/ui/button/SecondaryButton.vue';
+import PrimaryButton from '@/components/ui/button/Button.vue';
+import SecondaryButton from '@/components/ui/button/Button.vue';
 import { QrcodeStream } from 'vue-qrcode-reader';
 import type { DetectedBarcode } from 'vue-qrcode-reader';
 import { decodeQRCodeData, isQRCodeDataValid } from '@/Utils/qrcode';
