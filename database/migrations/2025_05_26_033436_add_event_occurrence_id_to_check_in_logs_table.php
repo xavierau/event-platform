@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // check the column exists
+        if (!Schema::hasColumn('check_in_logs', 'event_occurrence_id')) {
+            return;
+        }
+
         Schema::table('check_in_logs', function (Blueprint $table) {
             // Add event_occurrence_id to track which specific occurrence was checked into
             $table->foreignId('event_occurrence_id')->after('booking_id')->index();
