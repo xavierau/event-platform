@@ -260,13 +260,13 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
             class="px-4 py-2 text-sm border border-pink-500 text-pink-500 rounded-full hover:bg-pink-50"
             @click="addToWishlist"
           >
-            <!-- Placeholder for Heart Icon --> ❤️ 想看
+            <!-- Placeholder for Heart Icon --> ❤️ Add to Wishlist
           </button>
           <button
             class="px-6 py-2 text-sm bg-pink-500 text-white rounded-full hover:bg-pink-600 font-semibold"
             @click="openPurchaseModal"
           >
-            购票
+            Purchase
           </button>
         </div>
       </div>
