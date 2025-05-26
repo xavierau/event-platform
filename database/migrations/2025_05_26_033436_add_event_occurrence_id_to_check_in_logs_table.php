@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::table('check_in_logs', function (Blueprint $table) {
             // Add event_occurrence_id to track which specific occurrence was checked into
-            $table->foreignId('event_occurrence_id')->after('booking_id')->constrained('event_occurrences')->cascadeOnDelete()->index();
+            $table->foreignId('event_occurrence_id')->after('booking_id')->index();
+            $table->foreign('event_occurrence_id', 'fk_check_in_logs_event_occurrence_id')
+                ->references('id')->on('event_occurrences')->cascadeOnDelete();
         });
     }
 
@@ -24,7 +26,7 @@ return new class extends Migration
     {
         Schema::table('check_in_logs', function (Blueprint $table) {
             // Drop the foreign key constraint first
-            $table->dropForeign(['event_occurrence_id']);
+            $table->dropForeign('fk_check_in_logs_event_occurrence_id');
 
             // Drop the column
             $table->dropColumn('event_occurrence_id');
