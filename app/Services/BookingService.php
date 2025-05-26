@@ -61,11 +61,11 @@ class BookingService
             } else {
                 // Keeping the detailed dd() for now, but commenting it out if the workaround works.
                 /* dd(
-                    'DEBUG: $data->items class is: ' . get_class($data->items),
-                    'DEBUG: method_exists($data->items, \'isEmpty\'): ' . (method_exists($data->items, 'isEmpty') ? 'true' : 'false'),
-                    'DEBUG: method_exists($data->items, \'first\'): ' . (method_exists($data->items, 'first') ? 'true' : 'false'),
-                    'DEBUG: method_exists($data->items, \'getDataClass\'): ' . (method_exists($data->items, 'getDataClass') ? 'true' : 'false'),
-                    $data->items
+                'DEBUG: $data->items class is: ' . get_class($data->items),
+                'DEBUG: method_exists($data->items, \'isEmpty\'): ' . (method_exists($data->items, 'isEmpty') ? 'true' : 'false'),
+                'DEBUG: method_exists($data->items, \'first\'): ' . (method_exists($data->items, 'first') ? 'true' : 'false'),
+                'DEBUG: method_exists($data->items, \'getDataClass\'): ' . (method_exists($data->items, 'getDataClass') ? 'true' : 'false'),
+                $data->items
                 ); */
             }
             // --- END DEBUGGING ---
@@ -175,7 +175,7 @@ class BookingService
                         $booking = Booking::create([
                             'user_id' => $user->id,
                             'transaction_id' => $orderId,
-                            'event_occurrence_id' => $data->occurrence_id,
+                            'event_id' => $ticketDefinition->event->id,
                             'ticket_definition_id' => $itemData->ticket_id,
                             'quantity' => 1, // Each booking record represents one physical ticket
                             'price_per_unit' => $ticketDefinition->price, // Price from DB
@@ -206,7 +206,7 @@ class BookingService
                 Booking::create([
                     'user_id' => $user->id,
                     'transaction_id' => $orderId,
-                    'event_occurrence_id' => $data->occurrence_id,
+                    'event_id' => $ticketDefinition->event->id,
                     'ticket_definition_id' => null, // No specific ticket
                     'quantity' => 1, // Or based on some logic for general admission
                     'price_per_unit' => 0,
@@ -248,12 +248,13 @@ class BookingService
 
                 $checkoutSession = $user->checkout($lineItemsForStripe, $params);
 
-                // Associate the Stripe session ID with the transaction
-                if ($checkoutSession && isset($checkoutSession->id)) {
-                    $transaction->payment_gateway = 'stripe';
-                    $transaction->payment_gateway_transaction_id = $checkoutSession->id;
-                    $transaction->save();
+                if (!$checkoutSession || !$checkoutSession->id) {
+                    throw new \RuntimeException('Failed to create Stripe checkout session: Invalid session response');
                 }
+
+                $transaction->payment_gateway = 'stripe';
+                $transaction->payment_gateway_transaction_id = $checkoutSession->id;
+                $transaction->save();
 
                 return [
                     'requires_payment' => true,
@@ -286,8 +287,14 @@ class BookingService
      */
     public function getBookingsForUser(User $user): Collection
     {
-        // Assuming Booking model has a 'user_id' column
-        return Booking::where('user_id', $user->id)->with(['event'])->get();
+        // Get bookings through the transaction relationship
+        return Booking::whereHas('transaction', function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->with([
+            'ticketDefinition.eventOccurrences.event',
+            'ticketDefinition.eventOccurrences.venue',
+            'transaction'
+        ])->orderBy('created_at', 'desc')->get();
     }
 
     /**

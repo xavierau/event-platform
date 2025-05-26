@@ -163,11 +163,13 @@ class PaymentController extends Controller
                 return $this->renderPaymentSuccessPage($transaction, $bookings, $dbStripeSessionId);
             }
 
+            Log::info('[PaymentController] Transaction status and payment status.', ['transaction_status' => $transaction->status, 'checkout_session_payment_status' => $checkoutSession->payment_status, 'transaction_status_is_same' => $transaction->status === TransactionStatusEnum::PENDING_PAYMENT, 'checkout_session_payment_status_is_paid' => $checkoutSession->payment_status === 'paid']);
             if ($transaction->status === TransactionStatusEnum::PENDING_PAYMENT && $checkoutSession->payment_status === 'paid') {
                 Log::info("[PaymentController] Transaction PENDING_PAYMENT but Stripe session 'paid' on success page. Webhook might be delayed. Rendering success page with pending flag.", [
                     'transaction_id' => $transaction->id,
                     'stripe_session_id' => $dbStripeSessionId
                 ]);
+
                 return $this->renderPaymentSuccessPage($transaction, $bookings, $dbStripeSessionId, true);
             }
 

@@ -16,7 +16,6 @@ return new class extends Migration
             $table->uuid('booking_number')->unique();
             $table->foreignId('transaction_id')->constrained()->onDelete('cascade');
             $table->foreignId('ticket_definition_id')->constrained()->onDelete('cascade');
-            $table->foreignId('event_occurrence_id')->constrained()->onDelete('cascade');
             $table->integer('quantity')->default(1);
             $table->integer('price_at_booking'); // Price per ticket at the time of booking, in cents
             $table->string('currency_at_booking', 3);

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Support\Str;
+use App\Enums\BookingStatusEnum;
 
 class Booking extends Model
 {
@@ -17,7 +18,6 @@ class Booking extends Model
     protected $fillable = [
         'transaction_id',
         'ticket_definition_id',
-        'event_id',
         'booking_number',
         'quantity',
         'price_at_booking', // Price per ticket at the time of booking, in cents
@@ -33,6 +33,7 @@ class Booking extends Model
         'price_at_booking' => 'integer',
         'metadata' => 'json',
         'max_allowed_check_ins' => 'integer',
+        'status' => BookingStatusEnum::class,
     ];
 
     /**
@@ -66,11 +67,21 @@ class Booking extends Model
     }
 
     /**
-     * Get the event for this booking.
+     * Get the event occurrences for this booking through the ticket definition.
+     * Note: A ticket definition can be valid for multiple event occurrences.
      */
-    public function event(): BelongsTo
+    public function eventOccurrences()
     {
-        return $this->belongsTo(Event::class);
+        return $this->ticketDefinition->eventOccurrences();
+    }
+
+    /**
+     * Get the event for this booking through the ticket definition and event occurrences.
+     * Note: This assumes all event occurrences for a ticket belong to the same event.
+     */
+    public function event()
+    {
+        return $this->ticketDefinition->eventOccurrences()->first()?->event;
     }
 
     /**
@@ -136,5 +147,20 @@ class Booking extends Model
     public function scopeByQrCode($query, string $qrCode)
     {
         return $query->where('qr_code_identifier', $qrCode);
+    }
+
+    /**
+     * Check if the ticket definition is valid for a specific event occurrence.
+     * This validates the many-to-many relationship between tickets and occurrences.
+     */
+    public function isTicketValidForOccurrence(int $eventOccurrenceId): bool
+    {
+        if (!$this->ticketDefinition) {
+            return false;
+        }
+
+        return $this->ticketDefinition->eventOccurrences()
+            ->where('event_occurrence_id', $eventOccurrenceId)
+            ->exists();
     }
 }

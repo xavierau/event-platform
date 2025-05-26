@@ -226,7 +226,13 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
                 <h2 class="text-md font-semibold mb-1">{{ currentVenueName }}</h2>
                 <p class="text-sm text-gray-600 mb-2">{{ currentVenueAddress }}</p>
             </div>
-          <Link href="#" class="text-sm text-indigo-600 hover:underline w-1/5 text-right">查看地图 ></Link>
+          <a
+            :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentVenueAddress)}`"
+            target="_blank"
+            class="text-sm text-indigo-600 hover:underline w-1/5 text-right"
+          >
+            View Map >
+          </a>
         </div>
       </div>
     </section>
@@ -234,7 +240,7 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
     <!-- Content Section ("演出介绍") -->
     <section class="bg-white p-4 mt-1 shadow-sm">
       <div class="container mx-auto">
-        <h2 class="text-md font-semibold mb-3">演出介绍</h2>
+        <h2 class="text-md font-semibold mb-3">Event Description</h2>
         <div class="prose max-w-none" v-html="event.description_html"></div>
         <!-- Placeholder for more images/media -->
       </div>
@@ -247,12 +253,12 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
           <Link href="/" class="text-xs text-gray-600 hover:text-indigo-600">
             <!-- Placeholder for Home Icon -->
             <span class="block text-xl">🏠</span>
-            <span>首页</span>
+            <span>Home</span>
           </Link>
-          <Link href="#" class="text-xs text-gray-600 hover:text-indigo-600">
+          <Link href="/my-bookings" class="text-xs text-gray-600 hover:text-indigo-600">
             <!-- Placeholder for My Orders Icon -->
             <span class="block text-xl">🎫</span>
-            <span>我的订单</span>
+            <span>My Bookings</span>
           </Link>
         </div>
         <div class="flex space-x-2">

@@ -22,6 +22,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 
 use App\Http\Controllers\Public\EventController as PublicEventController;
+use App\Http\Controllers\Public\MyBookingsController;
 
 Route::get('/', HomeController::class)->name('home');
 // Route::get('/', function () {
@@ -36,6 +37,11 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/events/{event}', [\App\Http\Controllers\Public\EventController::class, 'show'])->name('events.show');
 
 Route::get('/events', [PublicEventController::class, 'index'])->name('events.index');
+
+// My Bookings route (requires authentication)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/my-bookings', [MyBookingsController::class, 'index'])->name('my-bookings');
+});
 
 // Admin Routes for Site Settings
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {

@@ -63,10 +63,6 @@
                       {{ booking.ticket_definition?.name || 'General Admission' }}
                     </p>
                     <p class="text-sm text-gray-600">
-                      <span class="font-medium">Quantity:</span>
-                      {{ booking.quantity }}
-                    </p>
-                    <p class="text-sm text-gray-600">
                       <span class="font-medium">Price:</span>
                       {{ formatCurrency(booking.total_price, booking.currency) }}
                     </p>
@@ -103,7 +99,7 @@
           Back to Home
         </Link>
         <Link
-          :href="route('dashboard')"
+          :href="route('my-bookings')"
           class="inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           View My Bookings
