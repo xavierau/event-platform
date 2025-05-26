@@ -36,18 +36,23 @@ class CategoryService
         return Category::with($with)->find($id);
     }
 
+    public function getCategoryBySlug(string $slug, array $with = []): ?Category
+    {
+        return Category::with($with)->where('slug', $slug)->first();
+    }
+
     public function getAllCategories(array $filters = [], array $with = [], string $orderBy = 'name', string $direction = 'asc')
     {
         // Basic retrieval. Add pagination or specific filtering as needed.
         // Example for hierarchical data: get root categories, or categories with children counts.
         $query = Category::with($with);
-
         // Add filtering based on $filters array
         if (isset($filters['parent_id']) && is_null($filters['parent_id'])) {
             $query->whereNull('parent_id');
         } elseif (isset($filters['parent_id'])) {
             $query->where('parent_id', $filters['parent_id']);
         }
+
         // Add more filters here as needed
 
         return $query->orderBy($orderBy, $direction)

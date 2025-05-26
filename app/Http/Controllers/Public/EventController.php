@@ -44,14 +44,12 @@ class EventController extends Controller
         $categoryName = __('全部活动');
         $posterUrl = null;
         $events = collect();
-
         // Date range filtering
         $start = $request->query('start');
         $end = $request->query('end');
         $startDate = $start ? \Carbon\Carbon::parse($start, 'UTC')->startOfDay() : null;
         $endDate = $end ? \Carbon\Carbon::parse($end, 'UTC')->endOfDay() : null;
 
-        $eventFilters = ['event_status' => 'published'];
         if ($startDate) {
             $eventFilters['start_date_utc'] = $startDate;
         }
@@ -60,15 +58,17 @@ class EventController extends Controller
         }
 
         if ($categorySlug) {
-            $category = $this->categoryService->getAllCategories(
-                ['slug' => $categorySlug],
+            $category = $this->categoryService->getCategoryBySlug(
+                $categorySlug,
                 ['events' => function ($query) {
                     $query->where('event_status', 'published')
                         ->whereHas('eventOccurrences', function ($q) {
                             $q->where('start_at_utc', '>', now()->utc());
                         });
                 }]
-            )->first();
+            );
+
+
             if ($category) {
                 $categoryName = $category->name;
                 $posterUrl = $category->getFirstMediaUrl('category_landscape_poster') ?: null;
