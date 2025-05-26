@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('status')->default('pending'); // e.g., pending, completed, failed, refunded
             $table->string('payment_gateway')->nullable();
             $table->string('payment_gateway_transaction_id')->nullable()->unique(); // This will store the Stripe Session ID or other gateway's transaction ID
-            $table->string('payment_intent_id')->nullable()->after('payment_gateway_transaction_id')->index(); // This can remain for Stripe specific payment intent, or be generalized if other gateways have a similar concept
+            $table->string('payment_intent_id')->nullable()->index(); // This can remain for Stripe specific payment intent, or be generalized if other gateways have a similar concept
             $table->text('notes')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();
