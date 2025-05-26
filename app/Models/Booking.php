@@ -19,6 +19,7 @@ class Booking extends Model
         'transaction_id',
         'ticket_definition_id',
         'booking_number',
+        'event_id',
         'quantity',
         'price_at_booking', // Price per ticket at the time of booking, in cents
         'currency_at_booking',
