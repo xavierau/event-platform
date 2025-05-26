@@ -156,32 +156,32 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
 <template>
 
     <CustomContainer :title="event.name" :poster_url="event.landscape_poster_url" >
-        <div class="min-h-screen bg-gray-100 pb-20"> <!-- padding-bottom for fixed footer -->
+        <div class="min-h-screen bg-gray-100 dark:bg-gray-900 pb-20"> <!-- padding-bottom for fixed footer -->
 
     <!-- Hero/Header Section -->
-    <section class="bg-white p-4 shadow-sm">
+    <section class="bg-white dark:bg-gray-800 p-4 shadow-sm">
       <div class="container mx-auto flex">
         <div class="w-1/4 md:w-1/5 flex-shrink-0">
           <img :src="event.thumbnail_url || 'https://via.placeholder.com/150x200.png?text=Event'" :alt="event.name" class="w-full h-auto object-cover rounded" />
         </div>
         <div class="w-3/4 md:w-4/5 pl-4">
-          <span class="inline-block bg-gray-200 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded mb-1">{{ event.category_tag }}</span>
-          <h1 class="text-lg md:text-xl font-bold text-gray-900 leading-tight mb-1">{{ event.name }}</h1>
-          <p class="text-sm text-gray-600 mb-1">{{ heroDateRange }}</p>
-          <p class="text-xs text-gray-500">{{ event.duration_info }}</p>
+          <span class="inline-block bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-semibold px-2 py-0.5 rounded mb-1">{{ event.category_tag }}</span>
+          <h1 class="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-1">{{ event.name }}</h1>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">{{ heroDateRange }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">{{ event.duration_info }}</p>
         </div>
       </div>
     </section>
 
     <!-- Price Section -->
-    <section class="bg-white p-4 mt-3 shadow-sm">
+    <section class="bg-white dark:bg-gray-800 p-4 mt-3 shadow-sm">
       <div class="container mx-auto flex justify-between items-center">
         <div>
-          <span class="text-2xl font-bold text-red-500">
+          <span class="text-2xl font-bold text-red-500 dark:text-red-400">
             <span class="text-base">{{ eventPrice.currency }}</span>{{ eventPrice.amount }}
           </span>
-          <span class="text-2xl font-bold text-red-500">{{ eventPrice.suffix }}</span>
-          <span v-if="event.discount_info" class="ml-2 bg-red-100 text-red-600 text-xs font-semibold px-2 py-0.5 rounded">
+          <span class="text-2xl font-bold text-red-500 dark:text-red-400">{{ eventPrice.suffix }}</span>
+          <span v-if="event.discount_info" class="ml-2 bg-red-100 dark:bg-red-700 text-red-600 dark:text-red-300 text-xs font-semibold px-2 py-0.5 rounded">
             {{ event.discount_info }}
           </span>
         </div>
@@ -189,9 +189,9 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
     </section>
 
     <!-- Occurrences Section -->
-    <section v-if="event.occurrences && event.occurrences.length > 1" class="bg-white pt-4 pb-2 mt-3 shadow-sm">
+    <section v-if="event.occurrences && event.occurrences.length > 1" class="bg-white dark:bg-gray-800 pt-4 pb-2 mt-3 shadow-sm">
       <div class="container mx-auto">
-        <div class="flex overflow-x-auto whitespace-nowrap pb-2 -mb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 scrollbar-thumb-rounded">
+        <div class="flex overflow-x-auto whitespace-nowrap pb-2 -mb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-700 scrollbar-thumb-rounded">
           <button
             v-for="occurrence in event.occurrences"
             :key="occurrence.id"
@@ -200,7 +200,7 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
               'flex-shrink-0 text-center px-4 py-2 rounded-t-md mr-1 focus:outline-none relative',
               selectedOccurrence?.id === occurrence.id
                 ? 'bg-pink-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             ]"
           >
             <span class="block text-sm font-medium">{{ occurrence.name }}</span>
@@ -211,25 +211,25 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
     </section>
 
     <!-- Selected Occurrence Date/Time and Duration -->
-    <section v-if="selectedOccurrence" class="bg-white p-3 pb-4 shadow-sm" :class="{'mt-0': event.occurrences && event.occurrences.length > 0, 'mt-3': !event.occurrences || event.occurrences.length === 0 }">
+    <section v-if="selectedOccurrence" class="bg-white dark:bg-gray-800 p-3 pb-4 shadow-sm" :class="{'mt-0': event.occurrences && event.occurrences.length > 0, 'mt-3': !event.occurrences || event.occurrences.length === 0 }">
       <div class="container mx-auto">
-        <p class="text-base font-semibold text-gray-900">{{ selectedOccurrence.full_date_time }}</p>
-        <p class="text-xs text-gray-500 mt-1">{{ event.duration_info }}</p>
+        <p class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ selectedOccurrence.full_date_time }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ event.duration_info }}</p>
       </div>
     </section>
 
     <!-- Venue Information Section -->
-    <section class="bg-white p-4 mt-3 shadow-sm" :class="{'mt-3': selectedOccurrence}">
+    <section class="bg-white dark:bg-gray-800 p-4 mt-3 shadow-sm" :class="{'mt-3': selectedOccurrence}">
       <div class="container mx-auto">
         <div class="flex justify-between items-center">
             <div>
-                <h2 class="text-md font-semibold mb-1">{{ currentVenueName }}</h2>
-                <p class="text-sm text-gray-600 mb-2">{{ currentVenueAddress }}</p>
+                <h2 class="text-md font-semibold mb-1 text-gray-900 dark:text-gray-100">{{ currentVenueName }}</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ currentVenueAddress }}</p>
             </div>
           <a
             :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentVenueAddress)}`"
             target="_blank"
-            class="text-sm text-indigo-600 hover:underline w-1/5 text-right"
+            class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline w-1/5 text-right"
           >
             View Map >
           </a>
@@ -238,24 +238,24 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
     </section>
 
     <!-- Content Section ("演出介绍") -->
-    <section class="bg-white p-4 mt-1 shadow-sm">
+    <section class="bg-white dark:bg-gray-800 p-4 mt-1 shadow-sm">
       <div class="container mx-auto">
-        <h2 class="text-md font-semibold mb-3">Event Description</h2>
-        <div class="prose max-w-none" v-html="event.description_html"></div>
+        <h2 class="text-md font-semibold mb-3 text-gray-900 dark:text-gray-100">Event Description</h2>
+        <div class="prose dark:prose-invert max-w-none" v-html="event.description_html"></div>
         <!-- Placeholder for more images/media -->
       </div>
     </section>
 
     <!-- Fixed Footer/Bottom Bar -->
-    <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-top-lg z-50">
+    <footer class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 shadow-top-lg z-50">
       <div class="container mx-auto flex justify-between items-center">
         <div class="flex space-x-4 text-center">
-          <Link href="/" class="text-xs text-gray-600 hover:text-indigo-600">
+          <Link href="/" class="text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
             <!-- Placeholder for Home Icon -->
             <span class="block text-xl">🏠</span>
             <span>Home</span>
           </Link>
-          <Link href="/my-bookings" class="text-xs text-gray-600 hover:text-indigo-600">
+          <Link href="/my-bookings" class="text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
             <!-- Placeholder for My Orders Icon -->
             <span class="block text-xl">🎫</span>
             <span>My Bookings</span>
@@ -263,13 +263,13 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
         </div>
         <div class="flex space-x-2">
           <button
-            class="px-4 py-2 text-sm border border-pink-500 text-pink-500 rounded-full hover:bg-pink-50"
+            class="px-4 py-2 text-sm border border-pink-500 text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-700 dark:text-pink-400 dark:border-pink-400 rounded-full"
             @click="addToWishlist"
           >
             <!-- Placeholder for Heart Icon --> ❤️ Add to Wishlist
           </button>
           <button
-            class="px-6 py-2 text-sm bg-pink-500 text-white rounded-full hover:bg-pink-600 font-semibold"
+            class="px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold"
             @click="openPurchaseModal"
           >
             Purchase
@@ -306,8 +306,13 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
   scrollbar-color: #cbd5e1 #e2e8f0; /* gray-300 gray-100 */
 }
 
+.dark .scrollbar-thin { /* Target for dark mode */
+  scrollbar-color: #4b5563 #374151; /* dark:gray-600 dark:gray-700 */
+}
+
 .scrollbar-thin::-webkit-scrollbar {
   height: 6px;
+  width: 6px; /* Added for vertical scrollbars if any */
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
@@ -315,12 +320,24 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
   border-radius: 3px;
 }
 
+.dark .scrollbar-thin::-webkit-scrollbar-track {
+  background: #374151; /* dark:gray-700 */
+}
+
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background-color: #cbd5e1; /* gray-300 */
   border-radius: 3px;
 }
 
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #4b5563; /* dark:gray-600 */
+}
+
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8; /* gray-400 */
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280; /* dark:gray-500 */
 }
 </style>

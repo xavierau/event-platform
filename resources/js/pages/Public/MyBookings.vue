@@ -104,14 +104,14 @@ function refreshBookings() {
 <template>
   <Head title="My Bookings" />
 
-  <div class="min-h-screen bg-gray-100">
+  <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
     <!-- Header Section -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
+    <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b dark:border-gray-700">
       <div class="container mx-auto flex items-center p-4 relative">
-        <Link href="/" class="text-indigo-600 hover:text-indigo-800 absolute left-4">
+        <Link href="/" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 absolute left-4">
           ← Back
         </Link>
-        <h1 class="text-xl font-semibold text-gray-900 flex-1 text-center">My Bookings</h1>
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex-1 text-center">My Bookings</h1>
       </div>
     </header>
 
@@ -119,15 +119,15 @@ function refreshBookings() {
       <!-- Filter Section -->
       <section class="mb-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <h2 class="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">Your Tickets</h2>
+          <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4 sm:mb-0">Your Tickets</h2>
           <div class="flex space-x-2 text-sm flex-wrap">
             <button
               @click="setFilter('upcoming')"
               :class="[
                 'px-3 py-1 rounded-full font-medium',
                 activeFilter === 'upcoming'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'hover:bg-gray-200'
+                  ? 'bg-indigo-100 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               ]"
             >
               Upcoming
@@ -137,8 +137,8 @@ function refreshBookings() {
               :class="[
                 'px-3 py-1 rounded-full font-medium',
                 activeFilter === 'past'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'hover:bg-gray-200'
+                  ? 'bg-indigo-100 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               ]"
             >
               Past Events
@@ -148,8 +148,8 @@ function refreshBookings() {
               :class="[
                 'px-3 py-1 rounded-full font-medium',
                 activeFilter === 'all'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'hover:bg-gray-200'
+                  ? 'bg-indigo-100 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               ]"
             >
               All Bookings
@@ -161,25 +161,25 @@ function refreshBookings() {
       <!-- Bookings Section -->
       <section v-if="Object.keys(groupedBookings).length > 0">
         <div class="space-y-6">
-          <div v-for="(bookings, eventKey) in groupedBookings" :key="eventKey" class="bg-white rounded-lg shadow">
+          <div v-for="(bookings, eventKey) in groupedBookings" :key="eventKey" class="bg-white dark:bg-gray-800 rounded-lg shadow">
             <!-- Event Header -->
-            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
-              <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ eventKey }}</h3>
+            <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{{ eventKey }}</h3>
 
               <!-- Show all event occurrences for this booking -->
               <div v-if="bookings[0]?.event_occurrences?.length" class="mt-4">
-                <div class="text-sm font-medium text-gray-700 mb-3">Valid for the following dates:</div>
+                <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Valid for the following dates:</div>
                 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <div
                     v-for="occurrence in bookings[0].event_occurrences"
                     :key="occurrence.id"
-                    class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm"
+                    class="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 shadow-sm"
                   >
-                    <div class="font-medium text-gray-900 text-sm">{{ occurrence.name || 'Event Date' }}</div>
-                    <div class="text-sm text-gray-600 mt-1">
+                    <div class="font-medium text-gray-900 dark:text-gray-100 text-sm">{{ occurrence.name || 'Event Date' }}</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">
                       {{ formatEventDate(occurrence.start_at, occurrence.end_at) }}
                     </div>
-                    <div v-if="occurrence.venue_name" class="text-xs text-gray-500 mt-2 flex items-center">
+                    <div v-if="occurrence.venue_name" class="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center">
                       <span class="mr-1">📍</span>
                       <span class="truncate">{{ occurrence.venue_name }}</span>
                     </div>
@@ -189,7 +189,7 @@ function refreshBookings() {
             </div>
 
             <!-- Booking Items -->
-            <div class="divide-y divide-gray-200">
+            <div class="divide-y divide-gray-200 dark:divide-gray-700">
               <BookingItemComponent
                 v-for="booking in bookings"
                 :key="booking.id"
@@ -234,12 +234,13 @@ function refreshBookings() {
             <span class="block text-xl">🏠</span>
             <span>Home</span>
           </Link>
-          <Link href="/my-bookings" class="text-xs text-indigo-600">
-            <span class="block text-xl">🎫</span>
-            <span>My Bookings</span>
-          </Link>
         </div>
         <div class="flex space-x-2">
+             <Link href="/my-wishlist"
+            class="px-4 py-2 text-sm border border-pink-500 text-pink-500 rounded-full hover:bg-pink-50"
+          >
+            <!-- Placeholder for Heart Icon --> ❤️ My Wishlist
+          </Link>
           <Link
             href="/"
             class="px-6 py-2 text-sm bg-indigo-500 text-white rounded-full hover:bg-indigo-600 font-semibold"

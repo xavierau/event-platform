@@ -196,7 +196,7 @@ class EventService
                     // Only load future scheduled occurrences within the date range
                     $query->where('start_at_utc', '>=', $startDate)
                         ->where('start_at_utc', '<=', $endDate)
-                        ->where('status', 'scheduled')
+                        ->whereIn('status', ['active', 'scheduled'])
                         ->orderBy('start_at_utc', 'asc');
                 },
                 'eventOccurrences.ticketDefinitions' => function ($query) {
@@ -205,10 +205,9 @@ class EventService
                 }
             ])
             // Filter events that have at least one future occurrence within the date range
-            ->whereHas('eventOccurrences', function ($query) use ($startDate, $endDate) {
+            ->whereHas('eventOccurrences', function ($query) use ($startDate) {
                 $query->where('start_at_utc', '>=', $startDate)
-                    ->where('start_at_utc', '<=', $endDate)
-                    ->where('status', 'scheduled');
+                    ->whereIn('status', ['active', 'scheduled']);
             })
             // Order by the earliest upcoming occurrence start date
             ->orderBy(function ($query) use ($startDate) {
@@ -216,7 +215,7 @@ class EventService
                     ->from('event_occurrences')
                     ->whereColumn('event_id', 'events.id')
                     ->where('start_at_utc', '>=', $startDate)
-                    ->where('status', 'scheduled')
+                    ->whereIn('status', ['active', 'scheduled'])
                     ->orderBy('start_at_utc')
                     ->limit(1);
             })
@@ -235,7 +234,7 @@ class EventService
                 });
 
                 $prices = $ticketData->pluck('price');
-                $currency = $ticketData->first()['currency'] ?? 'USD'; // Use first ticket's currency or default to USD
+                $currency = $ticketData->first()['currency'] ?? 'HKD'; // Use first ticket's currency or default to USD
 
                 return [
                     'id' => $event->id,
@@ -282,7 +281,7 @@ class EventService
                 'eventOccurrences' => function ($query) use ($nowUtc) {
                     // Only load future scheduled occurrences
                     $query->where('start_at_utc', '>=', $nowUtc)
-                        ->where('status', 'scheduled')
+                        ->whereIn('status', ['active', 'scheduled'])
                         ->orderBy('start_at_utc', 'asc');
                 },
                 'eventOccurrences.ticketDefinitions' => function ($query) use ($nowUtc) {
@@ -292,12 +291,13 @@ class EventService
             ])
             ->whereHas('eventOccurrences', function ($query) use ($nowUtc) {
                 $query->where('start_at_utc', '>=', $nowUtc)
-                    ->where('status', 'scheduled');
+                    ->whereIn('status', ['active', 'scheduled']);
             })
+            // TODO: Uncomment this when we have a way to exclude events that are already shown in upcoming section
             // Exclude events that are already shown in upcoming section
-            ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
-                return $query->whereNotIn('id', $excludeIds);
-            })
+            // ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
+            //     return $query->whereNotIn('id', $excludeIds);
+            // })
             // Order by the earliest upcoming occurrence start date
             ->orderBy(function ($query) use ($nowUtc) {
                 return $query->select('start_at_utc') // Fixed: use start_at_utc consistently

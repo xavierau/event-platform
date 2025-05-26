@@ -40,11 +40,11 @@ const formatPrice = (priceFrom: number, priceTo?: number, currency: string = 'US
 </script>
 
 <template>
-  <Link :href="event.href || '#'" class="block bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 ease-in-out mb-4 overflow-hidden">
+  <Link :href="event.href || '#'" class="block bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg dark:hover:shadow-gray-700/50 transition-shadow duration-200 ease-in-out mb-4 overflow-hidden">
     <div class="flex">
       <!-- Image Section -->
       <div class="w-1/4 md:w-1/5 flex-shrink-0">
-        <div class="aspect-[9/16] bg-gray-200">
+        <div class="aspect-[9/16] bg-gray-200 dark:bg-gray-700">
           <img
             :src="event.image_url"
             :alt="`Image for ${event.name}`"
@@ -57,19 +57,19 @@ const formatPrice = (priceFrom: number, priceTo?: number, currency: string = 'US
       <!-- Details Section -->
       <div class="w-3/4 md:w-4/5 p-4 flex flex-col justify-between">
         <div>
-          <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full mb-1">
+          <span class="inline-block bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-2 py-0.5 rounded-full mb-1">
             {{ event.category_name }}
           </span>
-          <h4 class="text-base md:text-lg font-semibold text-gray-900 mb-1 leading-tight line-clamp-2" :title="event.name">
+          <h4 class="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1 leading-tight line-clamp-2" :title="event.name">
             {{ event.name }}
           </h4>
-          <p class="text-xs md:text-sm text-gray-600 mb-1">{{ event.date_range }}</p>
-          <p class="text-xs md:text-sm text-gray-600 truncate" :title="event.venue_name">
+          <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-1">{{ event.date_range }}</p>
+          <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate" :title="event.venue_name">
             {{ event.venue_name }}
           </p>
         </div>
         <div class="text-right mt-2">
-          <span class="text-base md:text-lg font-bold text-red-500">{{ formatPrice(event.price_from, event.price_to, event.currency) }}</span>
+          <span class="text-base md:text-lg font-bold text-red-500 dark:text-red-400">{{ formatPrice(event.price_from, event.price_to, event.currency) }}</span>
         </div>
       </div>
     </div>
