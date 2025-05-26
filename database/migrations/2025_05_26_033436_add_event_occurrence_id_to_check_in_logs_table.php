@@ -11,10 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // check the column exists
-        if (!Schema::hasColumn('check_in_logs', 'event_occurrence_id')) {
-            return;
-        }
+
+        // fix following error
+        //           SQLSTATE[42S21]: Column already exists: 1060 Duplicate column name 'event_o
+        //   ccurrence_id' (Connection: mysql, SQL: alter table `check_in_logs` add `eve
+        //   nt_occurrence_id` bigint unsigned not null after `booking_id`)
+
+        Schema::table('check_in_logs', function (Blueprint $table) {
+            $table->dropColumn('event_occurrence_id');
+        });
+
 
         Schema::table('check_in_logs', function (Blueprint $table) {
             // Add event_occurrence_id to track which specific occurrence was checked into
