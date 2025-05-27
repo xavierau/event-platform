@@ -139,22 +139,39 @@ expect($collection)
 ```
 
 **Test Execution Commands:**
+
+**⚠️ IMPORTANT: Always use `--parallel` flag for optimal performance (60%+ faster execution)**
+
 ```bash
-# Run all tests (parallel by default)
+# ✅ RECOMMENDED: Run all tests in parallel (fastest, ~1.7s)
+./vendor/bin/pest --parallel
+
+# ✅ Run specific test file in parallel
+./vendor/bin/pest tests/Feature/EventServiceTest.php --parallel
+
+# ✅ Run with coverage in parallel
+./vendor/bin/pest --parallel --coverage
+
+# ✅ Run specific test pattern in parallel
+./vendor/bin/pest --filter="can create event" --parallel
+
+# ⚠️ SLOW: Run tests sequentially (only for debugging, ~4.7s)
 ./vendor/bin/pest
 
-# Run tests sequentially
-./vendor/bin/pest --no-parallel
-
-# Run specific test file
-./vendor/bin/pest tests/Feature/EventServiceTest.php
-
-# Run with coverage
-./vendor/bin/pest --coverage
-
-# Performance comparison
+# Performance comparison script
 ./test-performance.sh
 ```
+
+**Performance Comparison:**
+- **Parallel execution**: ~1.7 seconds (8 processes)
+- **Sequential execution**: ~4.7 seconds (single process)
+- **Performance gain**: ~60% faster with parallel execution
+
+**Key Points:**
+- The `--parallel` flag **must be explicitly specified** to enable parallel execution
+- [Pest.json](mdc:Pest.json) configures parallel capabilities but doesn't activate them by default
+- Always use `--parallel` during development for fast feedback loops
+- Only run sequentially when debugging specific test issues
 
 ## Coding Standards:
 The application aims to adhere to **SOLID principles** and the principles of **Clean Code** to ensure maintainable, scalable, and robust code. Key principles include:
@@ -226,14 +243,14 @@ This project follows an **aggressive testing approach** to catch errors as early
 
 **Fast Feedback Loop Commands:**
 ```bash
-# Quick test run (parallel, fastest feedback)
+# ✅ Quick test run (parallel, fastest feedback - ALWAYS USE THIS)
 ./vendor/bin/pest --parallel
 
-# Test specific functionality you're working on
-./vendor/bin/pest tests/Feature/EventServiceTest.php
+# ✅ Test specific functionality you're working on (parallel)
+./vendor/bin/pest tests/Feature/EventServiceTest.php --parallel
 
-# Test specific test method/pattern
-./vendor/bin/pest --filter="can create event"
+# ✅ Test specific test method/pattern (parallel)
+./vendor/bin/pest --filter="can create event" --parallel
 
 # Watch mode for continuous testing (if available)
 ./vendor/bin/pest --watch

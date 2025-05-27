@@ -128,4 +128,15 @@ return [
         'zh-TW' => '繁',
         'zh-CN' => '简'
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Event Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration options for event-related functionality.
+    |
+    */
+
+    'upcoming_events_window_days' => (int) env('UPCOMING_EVENTS_WINDOW_DAYS', 30),
 ];

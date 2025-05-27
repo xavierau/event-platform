@@ -1,6 +1,6 @@
 {
     "parallel": {
-        "processes": "auto",
+        "processes": 8,
         "runner": "WrapperRunner"
     },
     "coverage": {

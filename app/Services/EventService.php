@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Auth; // For setting created_by/updated_by if not
 
 class EventService
 {
+    /**
+     * Default number of days for upcoming events window
+     */
+    public const DEFAULT_UPCOMING_EVENTS_WINDOW_DAYS = 30;
+
     public function __construct(
         protected UpsertEventAction $upsertEventAction
     ) {}
@@ -187,7 +192,10 @@ class EventService
         // Ensure all dates are in UTC for consistent comparison with start_at_utc fields
         // Default startDate to the beginning of today for broader inclusion
         $queryStartDate = $startDate ? $startDate->utc()->startOfDay() : now()->utc()->startOfDay();
-        $queryEndDate = $endDate ? $endDate->utc() : now()->addDays(30)->utc()->endOfDay(); // Default to end of 30th day
+
+        // Get the upcoming events window from environment variable with fallback to constant
+        $upcomingWindowDays = config('app.upcoming_events_window_days', self::DEFAULT_UPCOMING_EVENTS_WINDOW_DAYS);
+        $queryEndDate = $endDate ? $endDate->utc() : now()->addDays($upcomingWindowDays)->utc()->endOfDay();
 
         return Event::query()
             ->where('event_status', 'published')

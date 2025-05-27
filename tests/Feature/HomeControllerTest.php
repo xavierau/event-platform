@@ -10,6 +10,7 @@ use App\Models\Venue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Tests\TestCase;
+use Carbon\Carbon;
 
 class HomeControllerTest extends TestCase
 {
@@ -24,7 +25,7 @@ class HomeControllerTest extends TestCase
         Config::set('app.locale', 'en');
     }
 
-    private function createTestEvent(array $occurrenceData = []): Event
+    private function createTestEvent(array $eventData = [], array $occurrenceData = []): Event
     {
         $user = User::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
@@ -32,7 +33,7 @@ class HomeControllerTest extends TestCase
         // Use existing venue or create one with existing country to avoid constraint violations
         $venue = Venue::first() ?: Venue::factory()->create();
 
-        $event = Event::factory()->create([
+        $defaultEventData = [
             'organizer_id' => $user->id,
             'category_id' => $category->id,
             'name' => ['en' => 'Test Event'],
@@ -46,7 +47,9 @@ class HomeControllerTest extends TestCase
             'meta_title' => ['en' => 'Meta Title'],
             'meta_description' => ['en' => 'Meta Description'],
             'meta_keywords' => ['en' => 'keywords, test'],
-        ]);
+        ];
+
+        $event = Event::factory()->create(array_merge($defaultEventData, $eventData));
 
         $defaultOccurrenceData = [
             'event_id' => $event->id,
@@ -75,13 +78,13 @@ class HomeControllerTest extends TestCase
         $tomorrow = now()->utc()->addDay();
 
         // Create event happening today
-        $this->createTestEvent([
+        $this->createTestEvent([], [
             'start_at_utc' => $todayStart->copy()->addHours(10),
             'end_at_utc' => $todayStart->copy()->addHours(12),
         ]);
 
         // Create event happening tomorrow (upcoming)
-        $this->createTestEvent([
+        $this->createTestEvent([], [
             'start_at_utc' => $tomorrow->copy()->addHours(10),
             'end_at_utc' => $tomorrow->copy()->addHours(12),
         ]);
@@ -104,7 +107,7 @@ class HomeControllerTest extends TestCase
         // Create only future events (not today)
         $nextWeek = now()->utc()->addWeek();
 
-        $this->createTestEvent([
+        $this->createTestEvent([], [
             'start_at_utc' => $nextWeek->copy()->addHours(10),
             'end_at_utc' => $nextWeek->copy()->addHours(12),
         ]);
@@ -126,20 +129,20 @@ class HomeControllerTest extends TestCase
         $nextWeek = now()->utc()->addWeek();
 
         // Create event happening today (will appear in both today and upcoming)
-        $this->createTestEvent([
+        $this->createTestEvent([], [
             'start_at_utc' => $todayStart->copy()->addHours(10),
             'end_at_utc' => $todayStart->copy()->addHours(12),
         ]);
 
         // Create event happening next week (will appear in upcoming)
-        $this->createTestEvent([
+        $this->createTestEvent([], [
             'start_at_utc' => $nextWeek->copy()->addHours(10),
             'end_at_utc' => $nextWeek->copy()->addHours(12),
         ]);
 
         // Create event happening far in the future (should appear in more events)
         $farFuture = now()->utc()->addMonths(2);
-        $this->createTestEvent([
+        $this->createTestEvent([], [
             'start_at_utc' => $farFuture->copy()->addHours(10),
             'end_at_utc' => $farFuture->copy()->addHours(12),
         ]);
@@ -274,7 +277,7 @@ class HomeControllerTest extends TestCase
     {
         $todayStart = now()->utc()->startOfDay();
 
-        $this->createTestEvent([
+        $this->createTestEvent([], [
             'start_at_utc' => $todayStart->copy()->addHours(10),
             'end_at_utc' => $todayStart->copy()->addHours(12),
         ]);
@@ -323,13 +326,13 @@ class HomeControllerTest extends TestCase
         // Create more events than the limits
         for ($i = 0; $i < 10; $i++) {
             // Today events
-            $this->createTestEvent([
+            $this->createTestEvent([], [
                 'start_at_utc' => $todayStart->copy()->addHours(9 + $i),
                 'end_at_utc' => $todayStart->copy()->addHours(10 + $i),
             ]);
 
             // Upcoming events
-            $this->createTestEvent([
+            $this->createTestEvent([], [
                 'start_at_utc' => $tomorrow->copy()->addHours(9 + $i),
                 'end_at_utc' => $tomorrow->copy()->addHours(10 + $i),
             ]);
@@ -359,5 +362,172 @@ class HomeControllerTest extends TestCase
                 ->has('upcomingEvents', 0)
                 ->has('moreEvents', 0)
         );
+    }
+
+    public function test_events_with_similar_dates_should_appear_together(): void
+    {
+        // Create events with dates close to each other (both in May 2025)
+        $mayDate1 = Carbon::parse('2025-05-28 06:00:00', 'UTC');
+        $mayDate2 = Carbon::parse('2025-05-31 10:00:00', 'UTC');
+
+        $event1 = $this->createTestEvent([
+            'name' => ['en' => 'Event 1 - May 28'],
+        ], [
+            'start_at_utc' => $mayDate1,
+            'end_at_utc' => $mayDate1->copy()->addHours(2),
+        ]);
+
+        $event2 = $this->createTestEvent([
+            'name' => ['en' => 'Event 2 - May 31'],
+        ], [
+            'start_at_utc' => $mayDate2,
+            'end_at_utc' => $mayDate2->copy()->addHours(2),
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+
+        // Both events should appear in the same section (upcoming events)
+        // since they're both in the future and close in date
+        $response->assertInertia(function ($page) {
+            $upcomingEvents = $page->toArray()['props']['upcomingEvents'];
+            $moreEvents = $page->toArray()['props']['moreEvents'];
+
+            // Both events should be in upcoming events, not split between sections
+            $this->assertCount(2, $upcomingEvents, 'Both events should appear in upcoming events');
+
+            // Check that the events are not duplicated in more events
+            $upcomingEventIds = collect($upcomingEvents)->pluck('id')->toArray();
+            $moreEventIds = collect($moreEvents)->pluck('id')->toArray();
+
+            $this->assertEmpty(
+                array_intersect($upcomingEventIds, $moreEventIds),
+                'Events should not appear in both upcoming and more events sections'
+            );
+
+            return $page->component('Public/Home');
+        });
+    }
+
+    public function test_events_separated_by_30_day_window_issue(): void
+    {
+        // Clear any existing events to ensure clean test state
+        Event::query()->delete();
+        EventOccurrence::query()->delete();
+
+        // This test demonstrates the actual production issue
+        // Event 1: Within 30 days (goes to "Upcoming Events")
+        $withinThirtyDays = now()->utc()->addDays(25); // 25 days from now
+
+        // Event 2: Beyond 30 days (goes to "More Events")
+        $beyondThirtyDays = now()->utc()->addDays(35); // 35 days from now
+
+        $event1 = $this->createTestEvent([
+            'name' => ['en' => 'Event Within 30 Days'],
+        ], [
+            'start_at_utc' => $withinThirtyDays,
+            'end_at_utc' => $withinThirtyDays->copy()->addHours(2),
+        ]);
+
+        $event2 = $this->createTestEvent([
+            'name' => ['en' => 'Event Beyond 30 Days'],
+        ], [
+            'start_at_utc' => $beyondThirtyDays,
+            'end_at_utc' => $beyondThirtyDays->copy()->addHours(2),
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+
+        $response->assertInertia(function ($page) {
+            $upcomingEvents = $page->toArray()['props']['upcomingEvents'];
+            $moreEvents = $page->toArray()['props']['moreEvents'];
+
+            // Debug output
+            echo "Upcoming Events: " . json_encode(collect($upcomingEvents)->pluck('name')) . PHP_EOL;
+            echo "More Events: " . json_encode(collect($moreEvents)->pluck('name')) . PHP_EOL;
+
+            // This demonstrates the issue: events are separated by the 30-day window
+            // Event 1 should be in upcoming events
+            $upcomingEventNames = collect($upcomingEvents)->pluck('name')->toArray();
+            $this->assertContains('Event Within 30 Days', $upcomingEventNames);
+
+            // Event 2 should be in more events (this is the problematic behavior)
+            $moreEventNames = collect($moreEvents)->pluck('name')->toArray();
+            $this->assertContains('Event Beyond 30 Days', $moreEventNames);
+
+            // This separation might not be ideal from a UX perspective
+            // as both events are "upcoming" but get separated arbitrarily
+
+            return $page->component('Public/Home');
+        });
+    }
+
+    public function test_upcoming_events_window_can_be_configured(): void
+    {
+        // Clear any existing events to ensure clean test state
+        Event::query()->delete();
+        EventOccurrence::query()->delete();
+
+        // Temporarily change the configuration to 45 days
+        Config::set('app.upcoming_events_window_days', 45);
+
+        // Event 1: Within 30 days (should be in upcoming events)
+        $withinThirtyDays = now()->utc()->addDays(25);
+
+        // Event 2: Within 45 days but beyond 30 days (should now also be in upcoming events)
+        $withinFortyFiveDays = now()->utc()->addDays(35);
+
+        // Event 3: Beyond 45 days (should be in more events)
+        $beyondFortyFiveDays = now()->utc()->addDays(50);
+
+        $event1 = $this->createTestEvent([
+            'name' => ['en' => 'Event Within 30 Days'],
+        ], [
+            'start_at_utc' => $withinThirtyDays,
+            'end_at_utc' => $withinThirtyDays->copy()->addHours(2),
+        ]);
+
+        $event2 = $this->createTestEvent([
+            'name' => ['en' => 'Event Within 45 Days'],
+        ], [
+            'start_at_utc' => $withinFortyFiveDays,
+            'end_at_utc' => $withinFortyFiveDays->copy()->addHours(2),
+        ]);
+
+        $event3 = $this->createTestEvent([
+            'name' => ['en' => 'Event Beyond 45 Days'],
+        ], [
+            'start_at_utc' => $beyondFortyFiveDays,
+            'end_at_utc' => $beyondFortyFiveDays->copy()->addHours(2),
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+
+        $response->assertInertia(function ($page) {
+            $upcomingEvents = $page->toArray()['props']['upcomingEvents'];
+            $moreEvents = $page->toArray()['props']['moreEvents'];
+
+            $upcomingEventNames = collect($upcomingEvents)->pluck('name')->toArray();
+            $moreEventNames = collect($moreEvents)->pluck('name')->toArray();
+
+            // With 45-day window, both events within 45 days should be in upcoming events
+            $this->assertContains('Event Within 30 Days', $upcomingEventNames);
+            $this->assertContains('Event Within 45 Days', $upcomingEventNames);
+
+            // Only the event beyond 45 days should be in more events
+            $this->assertContains('Event Beyond 45 Days', $moreEventNames);
+
+            // Verify the events are not duplicated
+            $this->assertNotContains('Event Within 30 Days', $moreEventNames);
+            $this->assertNotContains('Event Within 45 Days', $moreEventNames);
+            $this->assertNotContains('Event Beyond 45 Days', $upcomingEventNames);
+
+            return $page->component('Public/Home');
+        });
     }
 }
