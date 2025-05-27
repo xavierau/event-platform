@@ -33,19 +33,19 @@ class CategoryService
 
     public function findById(int $id, array $with = []): ?Category
     {
-        return Category::with($with)->find($id);
+        return Category::with(array_merge($with, ['media']))->find($id);
     }
 
     public function getCategoryBySlug(string $slug, array $with = []): ?Category
     {
-        return Category::with($with)->where('slug', $slug)->first();
+        return Category::with(array_merge($with, ['media']))->where('slug', $slug)->first();
     }
 
     public function getAllCategories(array $filters = [], array $with = [], string $orderBy = 'name', string $direction = 'asc')
     {
         // Basic retrieval. Add pagination or specific filtering as needed.
         // Example for hierarchical data: get root categories, or categories with children counts.
-        $query = Category::with($with);
+        $query = Category::with(array_merge($with, ['media']));
         // Add filtering based on $filters array
         if (isset($filters['parent_id']) && is_null($filters['parent_id'])) {
             $query->whereNull('parent_id');
@@ -72,7 +72,7 @@ class CategoryService
         // For now, we assume 'name' is a translatable field and ordering by it directly
         // might need specific locale ordering in a more complex setup.
         // spatie/laravel-translatable handles ordering by translated attribute if model is configured.
-        return Category::with($with)
+        return Category::with(array_merge($with, ['media']))
             ->whereNull('parent_id')
             ->where('is_active', true)
             ->orderBy($orderBy, $direction) // Orders by the 'name' json column's current locale.
@@ -84,7 +84,7 @@ class CategoryService
      */
     public function getCategoriesForParentSelect(Category $category = null): Collection
     {
-        $query = Category::orderBy('name->' . app()->getLocale()); // Order by current locale's name
+        $query = Category::with('media')->orderBy('name->' . app()->getLocale()); // Order by current locale's name
 
         if ($category && $category->id) {
             // Exclude the category itself and its descendants to prevent circular dependencies

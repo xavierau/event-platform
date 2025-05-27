@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/layouts/AppLayout.vue';
-import { Category } from '@/types'; // Assuming Category type
+
+interface Category {
+    id: number;
+    name: any; // Translatable field (object with locale keys)
+    slug: string;
+    parent_id?: number | null;
+    is_active: boolean;
+}
 
 interface Props {
     categoriesForSelect: Pick<Category, 'id' | 'name'>[]; // Categories for parent dropdown
@@ -14,7 +21,15 @@ const form = useForm({
     slug: '',
     parent_id: null as number | null,
     is_active: true,
+    uploaded_icon: null as File | null,
 });
+
+const handleIconUpload = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+        form.uploaded_icon = target.files[0];
+    }
+};
 
 const submit = () => {
     form.post(route('admin.categories.store'), {
@@ -77,6 +92,12 @@ const getTranslation = (translations: any, locale: string, fallbackLocale: strin
                                         </option>
                                     </select>
                                     <div v-if="form.errors.parent_id" class="text-sm text-red-600 dark:text-red-400">{{ form.errors.parent_id }}</div>
+                                </div>
+
+                                <div>
+                                    <label for="uploaded_icon" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category Icon</label>
+                                    <input type="file" @change="handleIconUpload" id="uploaded_icon" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-300 dark:hover:file:bg-indigo-800" />
+                                    <div v-if="form.errors.uploaded_icon" class="text-sm text-red-600 dark:text-red-400">{{ form.errors.uploaded_icon }}</div>
                                 </div>
 
                                 <div class="flex items-center">

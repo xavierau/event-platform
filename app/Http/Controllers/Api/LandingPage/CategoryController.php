@@ -31,7 +31,7 @@ class CategoryController extends Controller
                 'name' => $category->name, // Accessor handles translation
                 'slug' => $category->slug,
                 'href' => route('events.index', ['category' => $category->slug]), // Assumes a named route for event listings by category
-                // 'icon' is handled by the frontend as per Home.vue
+                'icon_url' => $category->getFirstMediaUrl('icon') ?: null, // Category icon URL
             ];
         });
 

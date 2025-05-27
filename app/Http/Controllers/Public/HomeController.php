@@ -30,12 +30,12 @@ class HomeController extends Controller
         $categories = $this->categoryService->getPublicCategories();
 
         $formattedCategories = $categories->map(function ($category) {
-            // The frontend (Home.vue) will handle icon mapping based on slug.
             return [
                 'id' => $category->id,
                 'name' => $category->name, // Accessor handles translation
                 'slug' => $category->slug,
                 'href' => route('events.index', ['category' => $category->slug]), // Assumes a named route
+                'icon_url' => $category->getFirstMediaUrl('icon') ?: null, // Category icon URL from media library
             ];
         });
 

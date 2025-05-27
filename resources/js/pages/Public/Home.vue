@@ -17,9 +17,10 @@ dayjs.extend(utc)
 interface Category {
   id: number | string;
   name: string;
-  slug: string; // slug is needed for icon mapping
+  slug: string;
   href: string;
-  icon?: string; // Icon will be added by the mapping logic
+  icon?: string; // Legacy icon field (emoji/text) - will be added by mapping logic as fallback
+  icon_url?: string | null; // Media library icon URL from backend
 }
 
 import type { EventItem } from '@/types';
@@ -45,7 +46,8 @@ const categoryIconMap: { [key: string]: string } = {
 const categories = computed(() => {
   const mappedCategories = props.initialCategories ? props.initialCategories.map(category => ({
     ...category,
-    icon: categoryIconMap[category.slug] || '🎶', // Default icon if slug not in map
+    // Keep the icon_url from backend, but add fallback emoji icon for legacy support
+    icon: categoryIconMap[category.slug] || '🎶', // Fallback emoji icon if no media icon
   })).slice(0, 7) : []; // Take only first 7 categories
 
   // Add the "All Events" category manually
@@ -141,8 +143,9 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
           <CategoryLink v-for="category in categories" :key="category.id" :category="category" />
         </div>
       </section>
+
       <!-- Promotion Carousel Section -->
-      <PromotionCarousel :events="featuredEvents" title="Featured Events" />
+      <PromotionCarousel v-if="false" :events="featuredEvents" title="Featured Events" />
 
       <!-- Upcoming Events Section (FE-LP-005) -->
       <section id="upcoming-events" class="mb-12">

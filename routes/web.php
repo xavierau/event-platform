@@ -83,6 +83,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // Tags
     Route::resource('tags', TagController::class);
 
+    // Promotions
+    Route::resource('promotions', \App\Http\Controllers\Admin\PromotionController::class);
+
     // Editor Image Upload
     Route::post('editor/image-upload', [EditorUploadController::class, 'uploadImage'])->name('editor.image.upload');
 

@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\DataTransferObjects\CategoryData;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
 use App\Services\CategoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Illuminate\Http\RedirectResponse;
@@ -54,8 +56,20 @@ class CategoryController extends Controller
 
     public function edit(Category $category): InertiaResponse
     {
-        // Explicitly convert model to array to ensure accessors and casts are applied
+        // Load media relationship and convert model to array to ensure accessors and casts are applied
+        $category->load('media');
         $categoryArray = $category->toArray();
+
+        // Create CategoryData manually to ensure proper data structure
+        $categoryData = new CategoryData(
+            name: $categoryArray['name'],
+            slug: $categoryArray['slug'],
+            parent_id: $categoryArray['parent_id'],
+            is_active: $categoryArray['is_active'],
+            id: $categoryArray['id'],
+            uploaded_icon: null, // This is only for uploads
+            media: $categoryArray['media'] ?? null
+        );
 
         return Inertia::render('Admin/Categories/Edit', [
             'pageTitle' => 'Edit Category',
@@ -64,13 +78,20 @@ class CategoryController extends Controller
                 ['text' => 'Categories', 'href' => route('admin.categories.index')],
                 ['text' => 'Edit Category']
             ],
-            'category' => CategoryData::from($categoryArray), // Pass the array to from()
+            'category' => $categoryData,
             'categoriesForSelect' => $this->categoryService->getCategoriesForParentSelect($category),
         ]);
     }
 
-    public function update(CategoryData $categoryData, Category $category): RedirectResponse
+    public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
     {
+        // Debug: Log the validated request data
+        Log::info('Category update validated data:', $request->validated());
+
+        // Create CategoryData from validated request data
+        $categoryData = CategoryData::from($request->validated());
+        Log::info('CategoryData object:', $categoryData->toArray());
+
         $this->categoryService->updateCategory($category->id, $categoryData);
         return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully.');
     }
