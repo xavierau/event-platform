@@ -12,6 +12,7 @@ use App\Services\EventService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class EventServiceTest extends TestCase
@@ -63,7 +64,9 @@ class EventServiceTest extends TestCase
             'timezone' => 'UTC',
         ];
 
-        EventOccurrence::factory()->create(array_merge($defaultOccurrenceData, $occurrenceData));
+        $mergedData = array_merge($defaultOccurrenceData, $occurrenceData);
+
+        EventOccurrence::factory()->create($mergedData);
 
         return $event;
     }
@@ -73,8 +76,8 @@ class EventServiceTest extends TestCase
         // Create events for different dates
         $todayStart = now()->utc()->startOfDay();
         $todayEnd = now()->utc()->endOfDay();
-        $tomorrow = now()->utc()->addDay();
-        $yesterday = now()->utc()->subDay();
+        $tomorrow = now()->utc()->addDay()->startOfDay();
+        $yesterday = now()->utc()->subDay()->startOfDay();
 
         // Event happening today (morning)
         $this->createTestEvent([
@@ -137,8 +140,8 @@ class EventServiceTest extends TestCase
     public function test_getEventsToday_returns_empty_array_when_no_events_today(): void
     {
         // Create events for tomorrow and yesterday, but none for today
-        $tomorrow = now()->utc()->addDay();
-        $yesterday = now()->utc()->subDay();
+        $tomorrow = now()->utc()->addDay()->startOfDay();
+        $yesterday = now()->utc()->subDay()->startOfDay();
 
         $this->createTestEvent([
             'start_at_utc' => $tomorrow->copy()->addHours(10),
@@ -231,7 +234,7 @@ class EventServiceTest extends TestCase
 
     public function test_getUpcomingEventsForHomepage_returns_events_in_date_range(): void
     {
-        $now = now()->utc();
+        $now = now()->utc()->startOfDay();
         $inRange = $now->copy()->addDays(15); // Within 30 days
         $outOfRange = $now->copy()->addDays(35); // Beyond 30 days
         $past = $now->copy()->subDay(); // In the past
@@ -342,7 +345,7 @@ class EventServiceTest extends TestCase
     public function test_getUpcomingEventsForHomepage_returns_empty_array_when_no_upcoming_events(): void
     {
         // Create only past events
-        $yesterday = now()->utc()->subDay();
+        $yesterday = now()->utc()->subDay()->startOfDay();
 
         $this->createTestEvent([
             'start_at_utc' => $yesterday->copy()->addHours(10),

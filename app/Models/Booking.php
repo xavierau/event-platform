@@ -80,9 +80,9 @@ class Booking extends Model
      * Get the event for this booking through the ticket definition and event occurrences.
      * Note: This assumes all event occurrences for a ticket belong to the same event.
      */
-    public function event()
+    public function event(): BelongsTo
     {
-        return $this->ticketDefinition->eventOccurrences()->first()?->event;
+        return $this->belongsTo(Event::class);
     }
 
     /**

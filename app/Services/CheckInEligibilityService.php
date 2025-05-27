@@ -41,8 +41,8 @@ class CheckInEligibilityService
         }
 
         // 2. Check booking status
-        if (!in_array($booking->status, self::VALID_BOOKING_STATUSES)) {
-            $errors[] = "Booking is not confirmed (current status: {$booking->status})";
+        if (!in_array($booking->status->value, self::VALID_BOOKING_STATUSES)) {
+            $errors[] = "Booking is not confirmed (current status: {$booking->status->value})";
         }
 
         // 3. Check event timing (removed window constraints - operators can check in anytime)
@@ -161,7 +161,7 @@ class CheckInEligibilityService
     {
         $logData = [
             'booking_id' => $booking->id,
-            'booking_status' => $booking->status,
+            'booking_status' => $booking->status->value,
             'is_eligible' => $isEligible,
             'successful_check_ins' => $booking->successful_check_ins_count,
             'max_allowed_check_ins' => $booking->max_allowed_check_ins,
@@ -219,8 +219,8 @@ class CheckInEligibilityService
         }
 
         // 4. Check booking status
-        if (!in_array($booking->status, self::VALID_BOOKING_STATUSES)) {
-            $errors[] = "Booking is not confirmed (current status: {$booking->status})";
+        if (!in_array($booking->status->value, self::VALID_BOOKING_STATUSES)) {
+            $errors[] = "Booking is not confirmed (current status: {$booking->status->value})";
         }
 
         // 5. Check max allowed check-ins
@@ -276,7 +276,7 @@ class CheckInEligibilityService
             'booking_id' => $booking->id,
             'event_id' => $booking->event_id,
             'event_occurrence_id' => $eventOccurrence?->id,
-            'booking_status' => $booking->status,
+            'booking_status' => $booking->status->value,
             'is_eligible' => $isEligible,
             'successful_check_ins' => $booking->successful_check_ins_count,
             'max_allowed_check_ins' => $booking->max_allowed_check_ins,

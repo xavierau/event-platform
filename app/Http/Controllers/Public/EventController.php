@@ -58,6 +58,9 @@ class EventController extends Controller
             $eventFilters['end_date_utc'] = $endDate;
         }
 
+        // Always filter for published events in public listing
+        $eventFilters['event_status'] = 'published';
+
         if ($categorySlug) {
             $category = $this->categoryService->getCategoryBySlug(
                 $categorySlug,
@@ -74,12 +77,19 @@ class EventController extends Controller
                 $categoryName = $category->name;
                 $posterUrl = $category->getFirstMediaUrl('category_landscape_poster') ?: null;
                 $eventFilters['category_id'] = $category->id;
-                $events = $this->eventService->getAllEvents($eventFilters, 20);
+
+                // Use the method that properly filters for published events with future occurrences
+                $eventsQuery = $this->eventService->getPublishedEventsWithFutureOccurrences(20, [], $startDate, $endDate);
+                if (isset($eventFilters['category_id'])) {
+                    $eventsQuery->where('category_id', $eventFilters['category_id']);
+                }
+                $events = $eventsQuery->get();
             }
         }
         if (!$category) {
-            // No category filter or not found, show all events
-            $events = $this->eventService->getAllEvents($eventFilters, 20);
+            // No category filter or not found, show all events with future occurrences
+            $eventsQuery = $this->eventService->getPublishedEventsWithFutureOccurrences(20, [], $startDate, $endDate);
+            $events = $eventsQuery->get();
         }
 
         // Map events to the structure expected by EventListItem
@@ -154,13 +164,16 @@ class EventController extends Controller
             'venue_name' => $primaryVenue?->getTranslation('name', app()->getLocale()),
             'venue_address' => $primaryVenue?->address,
             'occurrences' => $event->eventOccurrences->map(function ($occurrence) {
+                // Convert UTC time to the occurrence's timezone
+                $localStartTime = $occurrence->start_at_utc?->setTimezone($occurrence->timezone ?? 'UTC');
+
                 return [
                     'id' => $occurrence->id,
                     'name' => $occurrence->getTranslation('name', app()->getLocale()) ?: 'Event Occurrence',
-                    'date_short' => $occurrence->start_at_utc?->format('m.d'),
-                    'full_date_time' => $occurrence->start_at_utc?->format('Y.m.d') . ' ' .
-                        $occurrence->start_at_utc?->locale(app()->getLocale())->isoFormat('dddd') . ' ' .
-                        $occurrence->start_at_utc?->format('H:i'),
+                    'date_short' => $localStartTime?->format('m.d'),
+                    'full_date_time' => $localStartTime?->format('Y.m.d') . ' ' .
+                        $localStartTime?->locale(app()->getLocale())->isoFormat('dddd') . ' ' .
+                        $localStartTime?->format('H:i'),
                     'status_tag' => $occurrence->status,
                     'venue_name' => $occurrence->venue?->getTranslation('name', app()->getLocale()),
                     'venue_address' => $occurrence->venue?->address,

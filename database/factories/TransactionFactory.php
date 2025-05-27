@@ -21,7 +21,12 @@ class TransactionFactory extends Factory
             'user_id' => User::factory(),
             'total_amount' => $this->faker->numberBetween(1000, 50000), // Amount in cents (10.00 to 500.00)
             'currency' => $this->faker->randomElement(['USD', 'EUR', 'GBP', 'CAD']),
-            'status' => $this->faker->randomElement(['pending', 'completed', 'failed', 'refunded']),
+            'status' => $this->faker->randomElement([
+                \App\Enums\TransactionStatusEnum::PENDING_PAYMENT->value,
+                \App\Enums\TransactionStatusEnum::CONFIRMED->value,
+                \App\Enums\TransactionStatusEnum::FAILED_PAYMENT->value,
+                \App\Enums\TransactionStatusEnum::REFUNDED->value
+            ]),
             'payment_gateway' => $this->faker->randomElement(['stripe', 'paypal']),
             'payment_gateway_transaction_id' => $this->faker->optional(0.8)->regexify('[A-Z0-9]{20}'),
             'payment_intent_id' => $this->faker->optional(0.8)->regexify('pi_[A-Za-z0-9]{24}'),
@@ -41,7 +46,7 @@ class TransactionFactory extends Factory
     public function completed(): static
     {
         return $this->state(fn(array $attributes) => [
-            'status' => 'completed',
+            'status' => \App\Enums\TransactionStatusEnum::CONFIRMED->value,
             'payment_gateway_transaction_id' => $this->faker->regexify('[A-Z0-9]{20}'),
             'payment_intent_id' => $this->faker->regexify('pi_[A-Za-z0-9]{24}'),
         ]);
@@ -53,7 +58,7 @@ class TransactionFactory extends Factory
     public function pending(): static
     {
         return $this->state(fn(array $attributes) => [
-            'status' => 'pending',
+            'status' => \App\Enums\TransactionStatusEnum::PENDING_PAYMENT->value,
             'payment_gateway_transaction_id' => null,
             'payment_intent_id' => $this->faker->regexify('pi_[A-Za-z0-9]{24}'),
         ]);
@@ -65,7 +70,7 @@ class TransactionFactory extends Factory
     public function failed(): static
     {
         return $this->state(fn(array $attributes) => [
-            'status' => 'failed',
+            'status' => \App\Enums\TransactionStatusEnum::FAILED_PAYMENT->value,
             'payment_gateway_transaction_id' => null,
             'payment_intent_id' => $this->faker->regexify('pi_[A-Za-z0-9]{24}'),
         ]);

@@ -21,8 +21,8 @@ class CountryFactory extends Factory
     {
         return [
             'name' => ['en' => $this->faker->country],
-            'iso_code_2' => $this->faker->countryCode,
-            'iso_code_3' => $this->faker->countryISOAlpha3,
+            'iso_code_2' => $this->faker->unique()->countryCode,
+            'iso_code_3' => $this->faker->unique()->countryISOAlpha3,
             'phone_code' => $this->faker->numerify('+###'),
             'is_active' => true,
         ];

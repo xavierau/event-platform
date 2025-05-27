@@ -23,7 +23,7 @@ interface Category {
   icon_url?: string | null; // Media library icon URL from backend
 }
 
-import type { EventItem } from '@/types';
+import type { EventItem, Promotion } from '@/types';
 
 const props = defineProps({
     initialCategories: Array as () => Category[],
@@ -31,6 +31,7 @@ const props = defineProps({
     todayEvents: Array as () => EventItem[], // Today's events specifically
     upcomingEvents: Array as () => EventItem[], // Broader upcoming events
     moreEvents: Array as () => EventItem[],
+    activePromotions: Array as () => Promotion[],
 });
 
 // Helper for icons, derived from original placeholder data
@@ -145,7 +146,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
       </section>
 
       <!-- Promotion Carousel Section -->
-      <PromotionCarousel v-if="false" :events="featuredEvents" title="Featured Events" />
+      <PromotionCarousel :promotions="activePromotions" title="Featured Events" />
 
       <!-- Upcoming Events Section (FE-LP-005) -->
       <section id="upcoming-events" class="mb-12">

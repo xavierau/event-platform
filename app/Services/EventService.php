@@ -144,7 +144,7 @@ class EventService
                         ->orWhere('availability_window_start_utc', '<=', now()->utc());
                 }
             ])
-            // Only include events that have at least one future occurrence
+            // Only include events that have at least one future occurrence within the specified range
             ->whereHas('eventOccurrences', function ($query) use ($startDate, $endDate) {
                 $query->where('start_at_utc', '>=', $startDate)
                     ->where('start_at_utc', '<=', $endDate)
@@ -154,12 +154,14 @@ class EventService
             ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
                 return $query->whereNotIn('id', $excludeIds);
             })
-            // Order by the earliest upcoming occurrence
-            ->orderBy(function ($query) use ($startDate) {
+            // Order by the earliest upcoming occurrence within the specified range
+            // REVERTING TEMPORARY ORDERING
+            ->orderBy(function ($query) use ($startDate, $endDate) { // Pass and use $endDate here
                 return $query->select('start_at_utc')
                     ->from('event_occurrences')
                     ->whereColumn('event_id', 'events.id')
                     ->where('start_at_utc', '>=', $startDate)
+                    ->where('start_at_utc', '<=', $endDate) // Added this condition for strict ordering within range
                     ->where('status', 'scheduled')
                     ->orderBy('start_at_utc')
                     ->limit(1);
@@ -183,18 +185,19 @@ class EventService
     public function getUpcomingEventsForHomepage(int $limit = 5, ?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null)
     {
         // Ensure all dates are in UTC for consistent comparison with start_at_utc fields
-        $startDate = $startDate ? $startDate->utc() : now()->utc();
-        $endDate = $endDate ? $endDate->utc() : now()->addDays(30)->utc();
+        // Default startDate to the beginning of today for broader inclusion
+        $queryStartDate = $startDate ? $startDate->utc()->startOfDay() : now()->utc()->startOfDay();
+        $queryEndDate = $endDate ? $endDate->utc() : now()->addDays(30)->utc()->endOfDay(); // Default to end of 30th day
 
         return Event::query()
             ->where('event_status', 'published')
             ->with([
                 'category',
                 'media',
-                'eventOccurrences' => function ($query) use ($startDate, $endDate) {
+                'eventOccurrences' => function ($query) use ($queryStartDate, $queryEndDate) {
                     // Only load future scheduled occurrences within the date range
-                    $query->where('start_at_utc', '>=', $startDate)
-                        ->where('start_at_utc', '<=', $endDate)
+                    $query->where('start_at_utc', '>=', $queryStartDate)
+                        ->where('start_at_utc', '<=', $queryEndDate) // Ensure occurrences are within the end date
                         ->whereIn('status', ['active', 'scheduled'])
                         ->orderBy('start_at_utc', 'asc');
                 },
@@ -204,26 +207,34 @@ class EventService
                 }
             ])
             // Filter events that have at least one future occurrence within the date range
-            ->whereHas('eventOccurrences', function ($query) use ($startDate) {
-                $query->where('start_at_utc', '>=', $startDate)
+            ->whereHas('eventOccurrences', function ($query) use ($queryStartDate, $queryEndDate) { // Ensure endDate is used here
+                $query->where('start_at_utc', '>=', $queryStartDate)
+                    ->where('start_at_utc', '<=', $queryEndDate) // Added this condition
                     ->whereIn('status', ['active', 'scheduled']);
             })
             // Order by the earliest upcoming occurrence start date
-            ->orderBy(function ($query) use ($startDate) {
+            ->orderBy(function ($query) use ($queryStartDate, $queryEndDate) { // Ensure endDate is used here for ordering
                 return $query->select('start_at_utc') // Fixed: use start_at_utc consistently
                     ->from('event_occurrences')
                     ->whereColumn('event_id', 'events.id')
-                    ->where('start_at_utc', '>=', $startDate)
+                    ->where('start_at_utc', '>=', $queryStartDate)
+                    ->where('start_at_utc', '<=', $queryEndDate) // Added this condition
                     ->whereIn('status', ['active', 'scheduled'])
                     ->orderBy('start_at_utc')
                     ->limit(1);
             })
             ->take($limit)
             ->get()
-            ->map(function (Event $event) {
-                // Transform event for frontend needs
-                $firstOccurrence = $event->eventOccurrences->first();
-                $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
+            ->map(function (Event $event) use ($queryStartDate, $queryEndDate) { // Pass effective dates for filtering
+                // Re-filter occurrences specifically for this event within the map, to be absolutely sure
+                $relevantOccurrences = $event->eventOccurrences
+                    ->where('start_at_utc', '>=', $queryStartDate)
+                    ->where('start_at_utc', '<=', $queryEndDate)
+                    ->sortBy('start_at_utc');
+
+                // REVERTING: Conditional null return + filter + values. The whereHas should handle this.
+                $firstOccurrence = $relevantOccurrences->first();
+                $ticketData = $relevantOccurrences->flatMap(function ($occurrence) { // Use relevantOccurrences
                     return $occurrence->ticketDefinitions->map(function ($ticket) {
                         return [
                             'price' => $ticket->price,
@@ -292,11 +303,10 @@ class EventService
                 $query->where('start_at_utc', '>=', $nowUtc)
                     ->whereIn('status', ['active', 'scheduled']);
             })
-            // TODO: Uncomment this when we have a way to exclude events that are already shown in upcoming section
             // Exclude events that are already shown in upcoming section
-            // ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
-            //     return $query->whereNotIn('id', $excludeIds);
-            // })
+            ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
+                return $query->whereNotIn('id', $excludeIds);
+            })
             // Order by the earliest upcoming occurrence start date
             ->orderBy(function ($query) use ($nowUtc) {
                 return $query->select('start_at_utc') // Fixed: use start_at_utc consistently
@@ -378,18 +388,29 @@ class EventService
      */
     public function getEventsToday(int $limit = 10): array
     {
-        $today = now()->utc(); // Ensure UTC for consistent comparison
+        $todayStart = now()->utc()->startOfDay(); // Ensure UTC for consistent comparison
+        $todayEnd = now()->utc()->endOfDay(); // Ensure UTC for consistent comparison
 
-        return $this->getPublishedEventsWithFutureOccurrences(
+        // Call getPublishedEventsWithFutureOccurrences with a strict today window
+        // No changes needed here if getPublishedEventsWithFutureOccurrences correctly respects its $endDate
+        $events = $this->getPublishedEventsWithFutureOccurrences(
             $limit,
             [],
-            $today->copy()->startOfDay(),
-            $today->copy()->endOfDay()
+            $todayStart,
+            $todayEnd
         )
             ->get()
-            ->map(function (Event $event) {
-                $firstOccurrence = $event->eventOccurrences->first();
-                $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
+            ->map(function (Event $event) use ($todayStart, $todayEnd) { // Pass $todayStart and $todayEnd
+                // Re-filter occurrences to be absolutely sure only today's are considered for mapping
+                $todaysOccurrences = $event->eventOccurrences
+                    ->where('start_at_utc', '>=', $todayStart)
+                    ->where('start_at_utc', '<=', $todayEnd)
+                    ->sortBy('start_at_utc');
+
+                // REVERTING: Conditional null return + filter + values. The whereHas should handle this.
+                $firstOccurrence = $todaysOccurrences->first(); // Use the filtered and sorted collection
+
+                $ticketData = $todaysOccurrences->flatMap(function ($occurrence) { // Use todaysOccurrences
                     return $occurrence->ticketDefinitions->map(function ($ticket) {
                         return [
                             'price' => $ticket->price,
@@ -400,6 +421,10 @@ class EventService
 
                 $prices = $ticketData->pluck('price');
                 $currency = $ticketData->first()['currency'] ?? 'USD'; // Use first ticket's currency or default to USD
+
+                // If after filtering, there's no relevant firstOccurrence for today, this event shouldn't be in "today's events"
+                // However, the whereHas in getPublishedEventsWithFutureOccurrences should prevent such events from being returned at all.
+                // This mapping logic assumes the event is relevant.
 
                 return [
                     'id' => $event->id,
@@ -413,7 +438,10 @@ class EventService
                     'venue_name' => $firstOccurrence && $firstOccurrence->venue ? $firstOccurrence->venue->name : null,
                     'category_name' => $event->category ? $event->category->name : null,
                 ];
-            })->toArray();
+            })
+            ->toArray();
+
+        return $events;
     }
 
     /**

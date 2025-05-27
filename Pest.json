@@ -1,0 +1,17 @@
+{
+    "parallel": {
+        "processes": "auto",
+        "runner": "WrapperRunner"
+    },
+    "coverage": {
+        "include": [
+            "app"
+        ],
+        "exclude": [
+            "app/Console/Kernel.php",
+            "app/Http/Kernel.php"
+        ]
+    },
+    "bail": false,
+    "verbose": true
+}

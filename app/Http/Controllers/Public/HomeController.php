@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Services\CategoryService;
 use App\Services\EventService;
+use App\Services\PromotionService;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\Route;
@@ -13,11 +14,13 @@ class HomeController extends Controller
 {
     protected CategoryService $categoryService;
     protected EventService $eventService;
+    protected PromotionService $promotionService;
 
-    public function __construct(CategoryService $categoryService, EventService $eventService)
+    public function __construct(CategoryService $categoryService, EventService $eventService, PromotionService $promotionService)
     {
         $this->categoryService = $categoryService;
         $this->eventService = $eventService;
+        $this->promotionService = $promotionService;
     }
 
     /**
@@ -52,6 +55,18 @@ class HomeController extends Controller
         );
         $moreEvents = $this->eventService->getMoreEventsForHomepage(15, $excludeIds);
 
+        // Fetch active promotions
+        $activePromotions = $this->promotionService->getActivePromotions()->map(function ($promotion) {
+            return [
+                'id' => $promotion->id,
+                'title' => $promotion->getTranslation('title', app()->getLocale()),
+                'subtitle' => $promotion->getTranslation('subtitle', app()->getLocale()),
+                'banner' => $promotion->getFirstMediaUrl('banner'),
+                'url' => $promotion->url,
+                // type is not needed for the backend model but used in PromotionCarousel.vue
+            ];
+        });
+
         // Placeholder for other data to be passed to the landing page
         $featuredEvent = null; // Or fetch actual featured event
 
@@ -61,6 +76,7 @@ class HomeController extends Controller
             'todayEvents' => $todayEvents, // Today's events specifically
             'upcomingEvents' => $upcomingEvents, // Broader upcoming events
             'moreEvents' => $moreEvents,
+            'activePromotions' => $activePromotions,
             'canLogin' => Route::has('login'), // Example from original route
             'canRegister' => Route::has('register'), // Example from original route
         ]);

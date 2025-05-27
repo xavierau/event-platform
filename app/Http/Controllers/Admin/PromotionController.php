@@ -70,13 +70,13 @@ class PromotionController extends Controller
         return Inertia::render('Admin/Promotion/Edit', [
             'promotion' => [
                 'id' => $promotion->id,
-                'title' => $promotion->title,
-                'subtitle' => $promotion->subtitle,
+                'title' => $promotion->getTranslations('title'),
+                'subtitle' => $promotion->getTranslations('subtitle'),
                 'url' => $promotion->url,
                 'banner' => $promotion->getFirstMediaUrl('banner'),
                 'is_active' => $promotion->is_active,
-                'starts_at' => $promotion->starts_at?->format('Y-m-d H:i:s'),
-                'ends_at' => $promotion->ends_at?->format('Y-m-d H:i:s'),
+                'starts_at' => $promotion->starts_at?->format('Y-m-d\TH:i'),
+                'ends_at' => $promotion->ends_at?->format('Y-m-d\TH:i'),
                 'sort_order' => $promotion->sort_order,
             ],
         ]);

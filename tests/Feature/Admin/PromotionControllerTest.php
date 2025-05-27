@@ -101,7 +101,10 @@ class PromotionControllerTest extends TestCase
     #[Test]
     public function it_displays_edit_promotion_page()
     {
-        $promotion = Promotion::factory()->create();
+        $promotion = Promotion::factory()->create([
+            'title' => ['en' => 'Test Title EN', 'zh-TW' => '測試標題'],
+            'subtitle' => ['en' => 'Test Subtitle EN', 'zh-TW' => '測試副標題'],
+        ]);
 
         $response = $this->actingAs($this->admin)
             ->get(route('admin.promotions.edit', $promotion));
@@ -110,8 +113,16 @@ class PromotionControllerTest extends TestCase
             ->assertInertia(
                 fn(Assert $page) => $page
                     ->component('Admin/Promotion/Edit')
-                    ->has('promotion')
-                    ->where('promotion.id', $promotion->id)
+                    ->has(
+                        'promotion',
+                        fn(Assert $prop) => $prop
+                            ->where('id', $promotion->id)
+                            ->where('title.en', 'Test Title EN')
+                            ->where('title.zh-TW', '測試標題')
+                            ->where('subtitle.en', 'Test Subtitle EN')
+                            ->where('subtitle.zh-TW', '測試副標題')
+                            ->etc()
+                    )
             );
     }
 
