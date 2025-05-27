@@ -1,5 +1,6 @@
 // Import ref from Vue
-import { ref } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 /**
  * Utility functions for internationalization
@@ -8,7 +9,14 @@ import { ref } from 'vue';
 /**
  * Get the current locale from the application
  */
-export const currentLocale = ref('en'); // Default to 'en', should be set from Laravel
+export const currentLocale = computed(() => {
+    try {
+        const page = usePage();
+        return (page.props.locale as string) || 'en';
+    } catch {
+        return 'en';
+    }
+});
 
 /**
  * Get translation from a translatable object
@@ -52,8 +60,10 @@ export function getTranslation(translatable: Record<string, string> | string | n
 
 /**
  * Set the current locale
- * @param locale - The locale to set
+ * @param _locale - The locale to set (unused)
+ * @deprecated Use the LocaleSwitcher component instead
  */
-export function setCurrentLocale(locale: string) {
-    currentLocale.value = locale;
+export function setCurrentLocale(_locale: string) {
+    console.warn('setCurrentLocale is deprecated. Use the LocaleSwitcher component instead.');
+    // This function is now deprecated since locale is managed by Laravel session
 }

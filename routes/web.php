@@ -23,6 +23,10 @@ use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 
 use App\Http\Controllers\Public\EventController as PublicEventController;
 use App\Http\Controllers\Public\MyBookingsController;
+use App\Http\Controllers\LocaleController;
+
+// Locale switching route
+Route::post('/locale/switch', [LocaleController::class, 'switch'])->name('locale.switch');
 
 Route::get('/', HomeController::class)->name('home');
 // Route::get('/', function () {
@@ -33,6 +37,11 @@ Route::get('/', HomeController::class)->name('home');
 //     dd($categories);
 // })->name('home');
 
+// Test route for wishlist authentication
+Route::get('/test/wishlist-auth', function () {
+    return Inertia::render('Test/WishlistAuth');
+})->name('test.wishlist-auth');
+
 // Route for Public Event Detail Page
 Route::get('/events/{event}', [\App\Http\Controllers\Public\EventController::class, 'show'])->name('events.show');
 
@@ -41,6 +50,17 @@ Route::get('/events', [PublicEventController::class, 'index'])->name('events.ind
 // My Bookings route (requires authentication)
 Route::middleware(['auth'])->group(function () {
     Route::get('/my-bookings', [MyBookingsController::class, 'index'])->name('my-bookings');
+    Route::get('/my-wishlist', [\App\Http\Controllers\Public\MyWishlistController::class, 'index'])->name('my-wishlist');
+
+    // Wishlist Routes - Session-based Authentication
+    Route::prefix('wishlist')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\WishlistController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\WishlistController::class, 'store']);
+        Route::delete('/', [\App\Http\Controllers\Api\WishlistController::class, 'clear']);
+        Route::delete('/{event}', [\App\Http\Controllers\Api\WishlistController::class, 'destroy']);
+        Route::put('/{event}/toggle', [\App\Http\Controllers\Api\WishlistController::class, 'toggle']);
+        Route::get('/{event}/check', [\App\Http\Controllers\Api\WishlistController::class, 'check']);
+    });
 });
 
 // Admin Routes for Site Settings

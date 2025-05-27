@@ -1,4 +1,4 @@
+<?php
 return [
-// ... existing translations ...
-'All Events' => 'All Events',
+    'All Events' => 'All Events',
 ];

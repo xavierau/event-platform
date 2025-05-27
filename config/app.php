@@ -123,8 +123,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
     'available_locales' => [
-        'en' => 'English',
-        'zh-TW' => '繁體',
-        'zh-CN' => '简体'
+        'en' => 'Eng',
+        'zh-TW' => '繁',
+        'zh-CN' => '简'
     ],
 ];

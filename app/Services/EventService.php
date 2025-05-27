@@ -53,8 +53,7 @@ class EventService
                 return $query->with($withSubQuery)->where('status', 'scheduled');
             }
         ];
-        return Event::with($with)
-            ->find($id);
+        return Event::with($with)->find($id);
     }
 
     public function getAllEvents(array $filters = [], int $perPage = 15, string $orderBy = 'created_at', string $direction = 'desc'): LengthAwarePaginator
@@ -329,7 +328,9 @@ class EventService
                     'id' => $event->id,
                     'name' => $event->name,
                     'href' => route('events.show', $event->id),
-                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: $event->getFirstMediaUrl('event_thumbnail') ?: 'https://via.placeholder.com/300x400.png?text=Event',
+                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?:
+                        $event->getFirstMediaUrl('event_thumbnail') ?:
+                        'https://via.placeholder.com/300x400.png?text=Event',
                     'price_from' => $prices->min() / 100 ?? null,
                     'price_to' => $prices->max() / 100 ?? null,
                     'currency' => $currency,
@@ -456,9 +457,8 @@ class EventService
                         $lastOccurrence ? $lastOccurrence->start_at_utc : null,
                         $event->eventOccurrences->count()
                     ),
-                    'venue_name' => $firstOccurrence && $firstOccurrence->venue
-                        ? $firstOccurrence->venue->name
-                        : ($event->getPrimaryVenue() ? $event->getPrimaryVenue()->name : null),
+                    'venue_name' => $firstOccurrence && $firstOccurrence->venue ?
+                        $firstOccurrence->venue->name : ($event->getPrimaryVenue() ? $event->getPrimaryVenue()->name : null),
                     'category_name' => $event->category ? $event->category->name : null,
                 ];
             })->toArray();

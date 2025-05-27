@@ -195,6 +195,33 @@ class Event extends Model implements HasMedia
     }
 
     /**
+     * Get the users who have wishlisted this event.
+     */
+    public function wishlistedByUsers()
+    {
+        return $this->belongsToMany(User::class, 'user_event_wishlists')
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if this event is wishlisted by a specific user.
+     */
+    public function isWishlistedBy($user): bool
+    {
+        $userId = $user instanceof User ? $user->id : $user;
+
+        return $this->wishlistedByUsers()->where('user_id', $userId)->exists();
+    }
+
+    /**
+     * Get the count of users who have wishlisted this event.
+     */
+    public function getWishlistCount(): int
+    {
+        return $this->wishlistedByUsers()->count();
+    }
+
+    /**
      * Find a published event by ID or slug
      *
      * Uses database-specific JSON functions for optimal performance:

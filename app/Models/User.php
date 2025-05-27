@@ -47,4 +47,39 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the events that this user has wishlisted.
+     */
+    public function wishlistedEvents()
+    {
+        return $this->belongsToMany(Event::class, 'user_event_wishlists')
+            ->withTimestamps();
+    }
+
+    /**
+     * Add an event to the user's wishlist.
+     */
+    public function addToWishlist(Event $event): void
+    {
+        if (!$this->hasInWishlist($event)) {
+            $this->wishlistedEvents()->attach($event->id);
+        }
+    }
+
+    /**
+     * Remove an event from the user's wishlist.
+     */
+    public function removeFromWishlist(Event $event): void
+    {
+        $this->wishlistedEvents()->detach($event->id);
+    }
+
+    /**
+     * Check if the user has the event in their wishlist.
+     */
+    public function hasInWishlist(Event $event): bool
+    {
+        return $this->wishlistedEvents()->where('event_id', $event->id)->exists();
+    }
 }

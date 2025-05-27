@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
 import EventListItem from '@/components/Shared/EventListItem.vue';
+import PublicHeader from '@/components/Shared/PublicHeader.vue';
 import { computed } from 'vue';
 
 interface EventItemType {
@@ -33,14 +34,17 @@ const hasEvents = computed(() => props.events && props.events.length > 0);
 </script>
 
 <template>
-  <CustomContainer :title="props.title" :poster_url="props.poster_url">
-    <div class="container mx-auto py-8 px-4">
-      <div v-if="hasEvents">
-        <EventListItem v-for="event in props.events" :key="event.id" :event="event" />
+  <div>
+    <PublicHeader />
+    <CustomContainer :title="props.title" :poster_url="props.poster_url">
+      <div class="container mx-auto py-8 px-4">
+        <div v-if="hasEvents">
+          <EventListItem v-for="event in props.events" :key="event.id" :event="event" />
+        </div>
+        <div v-else class="p-8 text-center text-gray-400 dark:text-gray-500 text-lg">
+          No related events at the moment
+        </div>
       </div>
-      <div v-else class="p-8 text-center text-gray-400 dark:text-gray-500 text-lg">
-        No related events at the moment
-      </div>
-    </div>
-  </CustomContainer>
+    </CustomContainer>
+  </div>
 </template>

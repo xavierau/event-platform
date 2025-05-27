@@ -41,9 +41,10 @@ class EventController extends Controller
     {
         $categorySlug = $request->query('category');
         $category = null;
-        $categoryName = __('全部活动');
+        $categoryName = __('messages.All Events');
         $posterUrl = null;
         $events = collect();
+        $eventFilters = [];
         // Date range filtering
         $start = $request->query('start');
         $end = $request->query('end');

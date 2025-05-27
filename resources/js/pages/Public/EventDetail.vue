@@ -3,6 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import TicketPurchaseModal from '@/components/Modals/TicketPurchaseModal.vue';
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
+import WishlistButton from '@/components/Shared/WishlistButton.vue';
 
 import type { PublicTicketType } from '@/types/ticket';
 
@@ -132,19 +133,16 @@ const closePurchaseModal = () => {
   showPurchaseModal.value = false;
 };
 
-const addToWishlist = () => {
-  // Check if user is logged in - similar to openPurchaseModal
-  if (!isAuthenticated.value) {
-    // If using Ziggy for named routes, route('login') is correct.
-    // If not, replace with the actual path e.g., '/login'.
-    router.visit(route('login'));
-    return;
-  }
-  // Placeholder for wishlist logic
-  // TODO: Implement actual wishlist functionality (e.g., API call)
-  // This will be tracked by a task in prd/tasks.md
-  console.log('Add to wishlist clicked for event:', props.event.id);
-  alert('想看功能待实现 (Wishlist feature pending implementation) Event ID: ' + props.event.id);
+// Wishlist functionality is now handled by the WishlistButton component
+const handleWishlistChanged = (inWishlist: boolean) => {
+  console.log(`Event ${props.event.id} wishlist status changed:`, inWishlist);
+  // You can add additional logic here if needed, such as showing a toast notification
+};
+
+const handleWishlistError = (message: string) => {
+  console.error('Wishlist error:', message);
+  // You can show a toast notification or handle the error as needed
+  alert(`Wishlist error: ${message}`);
 };
 
 if (props.event.occurrences && props.event.occurrences.length > 0) {
@@ -237,7 +235,7 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
       </div>
     </section>
 
-    <!-- Content Section ("演出介绍") -->
+    <!-- Event Description Section  -->
     <section class="bg-white dark:bg-gray-800 p-4 mt-1 shadow-sm">
       <div class="container mx-auto">
         <h2 class="text-md font-semibold mb-3 text-gray-900 dark:text-gray-100">Event Description</h2>
@@ -262,12 +260,14 @@ if (props.event.occurrences && props.event.occurrences.length > 0) {
           </Link>
         </div>
         <div class="flex space-x-2">
-          <button
-            class="px-4 py-2 text-sm border border-pink-500 text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-700 dark:text-pink-400 dark:border-pink-400 rounded-full"
-            @click="addToWishlist"
-          >
-            <!-- Placeholder for Heart Icon --> ❤️ Add to Wishlist
-          </button>
+          <WishlistButton
+            :event-id="Number(event.id)"
+            variant="button"
+            size="sm"
+            :show-text="true"
+            @wishlist-changed="handleWishlistChanged"
+            @error="handleWishlistError"
+          />
           <button
             class="px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold"
             @click="openPurchaseModal"

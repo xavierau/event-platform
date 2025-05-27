@@ -4,6 +4,8 @@ import { Head } from '@inertiajs/vue3';
 import CategoryLink from '@/components/LandingPage/CategoryLink.vue';
 import EventPreviewCard from '@/components/Shared/EventPreviewCard.vue';
 import EventListItem from '@/components/Shared/EventListItem.vue';
+import PublicHeader from '@/components/Shared/PublicHeader.vue';
+import PromotionCarousel from '@/components/Shared/PromotionCarousel.vue';
 import { ref, computed, onMounted } from 'vue';
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -20,19 +22,7 @@ interface Category {
   icon?: string; // Icon will be added by the mapping logic
 }
 
-interface EventItem {
-  id: number;
-  name: string;
-  href: string;
-  image_url: string;
-  price_from: number;
-  price_to?: number;
-  currency: string;
-  date_short?: string; // For upcoming events
-  date_range?: string; // For more events
-  venue_name?: string; // For more events
-  category_name: string;
-}
+import type { EventItem } from '@/types';
 
 const props = defineProps({
     initialCategories: Array as () => Category[],
@@ -80,6 +70,11 @@ const displayedEvents = computed(() => {
 
 // Placeholder data for more events - this would also come from props eventually
 const moreEventsData = ref(props.moreEvents);
+
+// Convert single featured event to array for carousel component
+const featuredEvents = computed(() => {
+  return props.featuredEvent ? [props.featuredEvent] : [];
+});
 
 onMounted(() => {
     console.log('Today events:', props.todayEvents);
@@ -137,16 +132,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
 
   <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
     <!-- Header Section (FE-LP-002) -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b dark:border-gray-700">
-      <div class="container mx-auto flex justify-between items-center p-4">
-        <div class="flex items-center space-x-4">
-          <div class="text-sm text-gray-600 dark:text-gray-300 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400">
-            <span class="font-semibold">Nationwide</span> ▼
-          </div>
-          <input type="search" placeholder="Search events, artists, venues..." class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:ring-indigo-500 focus:border-indigo-500 w-64 md:w-96 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400" />
-        </div>
-      </div>
-    </header>
+    <PublicHeader />
 
     <main class="container mx-auto py-8 px-4">
       <!-- Event Category Quick Links Section (FE-LP-003) -->
@@ -155,6 +141,8 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
           <CategoryLink v-for="category in categories" :key="category.id" :category="category" />
         </div>
       </section>
+      <!-- Promotion Carousel Section -->
+      <PromotionCarousel :events="featuredEvents" title="Featured Events" />
 
       <!-- Upcoming Events Section (FE-LP-005) -->
       <section id="upcoming-events" class="mb-12">
@@ -221,8 +209,8 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
       </section>
     </main>
 
-    <footer class="bg-gray-800 dark:bg-gray-950 text-white dark:text-gray-300 p-8 text-center mt-12 border-t dark:border-gray-700">
-      <p>&copy; {{ new Date().getFullYear() }} EventPlatform. All rights reserved. Made with ❤️</p>
+    <footer class="bg-gray-800 dark:bg-gray-950 text-white dark:text-gray-300 p-6 text-center mt-12 border-t dark:border-gray-700">
+      <p>&copy; {{ new Date().getFullYear() }} Showeasy. All rights reserved. Made with ❤️</p>
     </footer>
   </div>
 

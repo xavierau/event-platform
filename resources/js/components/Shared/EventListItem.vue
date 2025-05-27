@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency';
+import WishlistButton from '@/components/Shared/WishlistButton.vue';
 
-defineProps({
+const props = defineProps({
   event: {
     type: Object,
     required: true,
@@ -17,8 +18,14 @@ defineProps({
       venue_name: 'Some Venue Hall - City Center Complex',
       category_name: 'Category'
     })
+  },
+  showWishlistButton: {
+    type: Boolean,
+    default: true
   }
 });
+
+const emit = defineEmits(['wishlistChanged', 'error']);
 
 const { formatPrice: formatCurrency, formatPriceRange } = useCurrency();
 
@@ -57,9 +64,19 @@ const formatPrice = (priceFrom: number, priceTo?: number, currency: string = 'US
       <!-- Details Section -->
       <div class="w-3/4 md:w-4/5 p-4 flex flex-col justify-between">
         <div>
-          <span class="inline-block bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-2 py-0.5 rounded-full mb-1">
-            {{ event.category_name }}
-          </span>
+          <div class="flex justify-between items-start mb-1">
+            <span class="inline-block bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-2 py-0.5 rounded-full">
+              {{ event.category_name }}
+            </span>
+            <WishlistButton
+              v-if="props.showWishlistButton"
+              :event-id="event.id"
+              variant="icon"
+              size="sm"
+              @wishlistChanged="(inWishlist) => emit('wishlistChanged', inWishlist)"
+              @error="(error) => emit('error', error)"
+            />
+          </div>
           <h4 class="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1 leading-tight line-clamp-2" :title="event.name">
             {{ event.name }}
           </h4>
