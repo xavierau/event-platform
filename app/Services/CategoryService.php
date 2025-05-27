@@ -74,6 +74,7 @@ class CategoryService
         // spatie/laravel-translatable handles ordering by translated attribute if model is configured.
         return Category::with($with)
             ->whereNull('parent_id')
+            ->where('is_active', true)
             ->orderBy($orderBy, $direction) // Orders by the 'name' json column's current locale.
             ->get();
     }
