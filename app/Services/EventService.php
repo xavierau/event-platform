@@ -167,7 +167,7 @@ class EventService
                     ->whereColumn('event_id', 'events.id')
                     ->where('start_at_utc', '>=', $startDate)
                     ->where('start_at_utc', '<=', $endDate) // Added this condition for strict ordering within range
-                    ->where('status', 'scheduled')
+                    ->whereIn('status', ['active', 'scheduled', 'completed'])
                     ->orderBy('start_at_utc')
                     ->limit(1);
             });
