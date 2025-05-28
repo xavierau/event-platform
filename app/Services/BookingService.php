@@ -173,12 +173,14 @@ class BookingService
                     $ticketDefinition = TicketDefinition::findOrFail($itemData->ticket_id); // Fetch ticket definition once per item type
                     for ($i = 0; $i < $itemData->quantity; $i++) { // Loop for each unit of this ticket type
                         // This would ideally use a CreateBookingAction as per TRX-004
+                        $qrCodeIdentifier = QrCodeHelper::generate();
                         $booking = Booking::create([
                             'user_id' => $user->id,
                             'transaction_id' => $orderId,
                             'event_id' => $occurrence->event->id,
                             'ticket_definition_id' => $itemData->ticket_id,
-                            'qr_code_identifier' => QrCodeHelper::generate(), // Generate BK- format QR code
+                            'qr_code_identifier' => $qrCodeIdentifier, // Generate BK- format QR code
+                            'booking_number' => $qrCodeIdentifier, // Generate BK- format QR code
                             'quantity' => 1, // Each booking record represents one physical ticket
                             'price_per_unit' => $ticketDefinition->price, // Price from DB
                             'price_at_booking' => $ticketDefinition->price, // Adding the missing price_at_booking field
@@ -205,11 +207,14 @@ class BookingService
                 //        }
                 //    }
                 //}
+                $qrCodeIdentifier = QrCodeHelper::generate();
+
                 Booking::create([
                     'user_id' => $user->id,
                     'transaction_id' => $orderId,
                     'event_id' => $occurrence->event->id,
-                    'qr_code_identifier' => QrCodeHelper::generate(), // Generate BK- format QR code
+                    'qr_code_identifier' => $qrCodeIdentifier,
+                    'booking_number' => $qrCodeIdentifier, // Generate BK- format QR code
                     'ticket_definition_id' => null, // No specific ticket
                     'quantity' => 1, // Or based on some logic for general admission
                     'price_per_unit' => 0,
