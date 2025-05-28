@@ -49,6 +49,21 @@ class TicketDefinition extends Model
         'metadata' => 'json',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($ticketDefinition) {
+            if (empty($ticketDefinition->currency)) {
+                $ticketDefinition->currency = strtolower(config('cashier.currency'));
+            }
+        });
+
+        static::updating(function ($ticketDefinition) {
+            if (empty($ticketDefinition->currency)) {
+                $ticketDefinition->currency = strtolower(config('cashier.currency'));
+            }
+        });
+    }
+
     /**
      * T
      * e EventOccurrences that this TicketDefinition is available for.
@@ -83,6 +98,9 @@ class TicketDefinition extends Model
 
         return $initialStock - $bookedQuantity;
     }
+
+
+
 
     // Removed eventOccurrence() belongsTo relationship
     // Removed event() relationship
