@@ -30,6 +30,11 @@ interface InertiaSharedProps {
 
 interface CustomPageProps extends InertiaSharedProps {
   events: EventItem[];
+  roles: {
+    ADMIN: string;
+    ORGANIZER: string;
+    USER: string;
+  };
   user_role: string;
 }
 
@@ -244,6 +249,19 @@ const onScannerReady = () => {
 };
 
 const resetScannerState = () => {
+  console.group('🔄 Resetting Scanner State');
+  console.log('Reset initiated at:', new Date().toISOString());
+  console.log('Current state before reset:', {
+    isProcessing: isProcessing.value,
+    scannerReady: scannerReady.value,
+    cameraError: cameraError.value,
+    showDetailsModal: showDetailsModal.value,
+    showLoadingModal: showLoadingModal.value,
+    scanResult: scanResult.value,
+    bookingDetails: !!bookingDetails.value
+  });
+
+  // Reset all scan-related state
   scanResult.value = null;
   bookingDetails.value = null;
   eventOccurrences.value = [];
@@ -253,20 +271,41 @@ const resetScannerState = () => {
   isProcessing.value = false;
   showDetailsModal.value = false;
   showLoadingModal.value = false;
+
+  // Reset camera/scanner state to allow new scans
+  cameraError.value = null;
+  // Note: Don't reset scannerReady to false as it will disable the camera
+  // The camera should remain active and ready for the next scan
+
+  // Reset form
   checkInForm.reset();
   checkInForm.qr_code_identifier = '';
 
+  console.log('State after reset:', {
+    isProcessing: isProcessing.value,
+    scannerReady: scannerReady.value,
+    cameraError: cameraError.value,
+    showDetailsModal: showDetailsModal.value,
+    showLoadingModal: showLoadingModal.value,
+    shouldShowScanner: shouldShowScanner.value
+  });
+
   // For platform admins, don't require event selection
   if (isPlatformAdmin.value) {
-    // Platform admins can scan without event selection
+    console.log('Platform admin - scanner should be ready for next scan');
+    console.groupEnd();
     return;
   }
 
   if (isAdmin.value && props.events.length > 0 && !selectedEventId.value) {
     // Regular admin still needs to select event
+    console.log('Regular admin - needs event selection');
   } else if (!isAdmin.value) {
     selectedEventId.value = props.events.length === 1 ? props.events[0].id : null;
+    console.log('Organizer - auto-selected event:', selectedEventId.value);
   }
+
+  console.groupEnd();
 };
 
 const handleCheckIn = async () => {
