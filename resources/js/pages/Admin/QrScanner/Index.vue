@@ -56,6 +56,7 @@ const showLoadingModal = ref(false);
 const checkInStatus = ref<{ success: boolean; message: string } | null>(null);
 const scannerKey = ref(0); // Add key to force scanner re-render
 const lastScannedQr = ref<string | null>(null); // Track last scanned QR to allow re-scanning
+const paused = ref(false); // Add paused state for QR scanner
 
 // Browser API refs (reactive and SSR-safe)
 const isHttps = ref(false);
@@ -103,7 +104,24 @@ watch(selectedEventId, (newEventId, oldEventId) => {
 });
 
 const onDetect = async (detectedCodes: DetectedBarcode[]) => {
-  if (isProcessing.value || detectedCodes.length === 0) return;
+  console.group('🔍 QR Detection Attempt');
+  console.log('Detection time:', new Date().toISOString());
+  console.log('isProcessing:', isProcessing.value);
+  console.log('detectedCodes.length:', detectedCodes.length);
+  console.log('scannerReady:', scannerReady.value);
+  console.log('shouldShowScanner:', shouldShowScanner.value);
+
+  if (isProcessing.value) {
+    console.log('❌ Blocked: Already processing');
+    console.groupEnd();
+    return;
+  }
+
+  if (detectedCodes.length === 0) {
+    console.log('❌ Blocked: No codes detected');
+    console.groupEnd();
+    return;
+  }
 
   const rawValue = detectedCodes[0].rawValue;
 
@@ -111,6 +129,7 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
   console.log('QR detected:', rawValue);
   console.log('Last scanned QR:', lastScannedQr.value);
   console.log('Is same QR?', rawValue === lastScannedQr.value);
+  console.groupEnd();
 
   // Show loading modal immediately
   showLoadingModal.value = true;
@@ -122,17 +141,29 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
   checkInStatus.value = null;
 
   try {
-    const decodedData = decodeQRCodeData(rawValue);
+    let qrCodeToValidate = rawValue;
 
-    if (!isQRCodeDataValid(decodedData, 24 * 30)) {
-      scanResult.value = { error: 'QR code has expired or is invalid.' };
-      showLoadingModal.value = false;
-      isProcessing.value = false;
-      return;
+    // Try to decode as base64 JSON first (new format)
+    try {
+      const decodedData = decodeQRCodeData(rawValue);
+
+      if (!isQRCodeDataValid(decodedData, 24 * 30)) {
+        scanResult.value = { error: 'QR code has expired or is invalid.' };
+        showLoadingModal.value = false;
+        isProcessing.value = false;
+        return;
+      }
+
+      qrCodeToValidate = decodedData.bookingNumber;
+      console.log('Decoded QR data (JSON format):', decodedData);
+    } catch (decodeError) {
+      // If decoding fails, treat the raw value as the QR code identifier
+      // This handles both BK-format and UUID format QR codes
+      console.log('QR code is not base64 JSON format, using raw value:', rawValue);
+      qrCodeToValidate = rawValue;
     }
 
-    const qrCodeToValidate = decodedData.bookingNumber;
-    lastScannedQr.value = rawValue; // Store the scanned QR
+    lastScannedQr.value = rawValue; // Store the original scanned QR
 
     console.log('Validating QR code:', qrCodeToValidate);
     console.log('Selected event ID:', selectedEventId.value);
@@ -176,6 +207,7 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
     showLoadingModal.value = false;
   } finally {
     isProcessing.value = false;
+    console.log('🏁 Detection processing complete, isProcessing set to:', isProcessing.value);
   }
 };
 
@@ -261,7 +293,7 @@ const onScannerReady = () => {
   cameraError.value = null;
 };
 
-const resetScannerState = () => {
+const resetScannerState = async () => {
   console.group('🔄 Resetting Scanner State');
   console.log('Reset initiated at:', new Date().toISOString());
   console.log('Current state before reset:', {
@@ -272,7 +304,8 @@ const resetScannerState = () => {
     showLoadingModal: showLoadingModal.value,
     scanResult: scanResult.value,
     bookingDetails: !!bookingDetails.value,
-    lastScannedQr: lastScannedQr.value
+    lastScannedQr: lastScannedQr.value,
+    paused: paused.value
   });
 
   // Reset all scan-related state
@@ -289,8 +322,17 @@ const resetScannerState = () => {
 
   // Reset camera/scanner state to allow new scans
   cameraError.value = null;
-  // Note: Don't increment scannerKey to avoid camera re-initialization
-  // The camera should remain active and ready for the next scan
+
+  // Use the official vue-qrcode-reader approach: pause and unpause to clear internal cache
+  // This allows re-scanning of the same QR code without camera re-initialization
+  paused.value = true;
+  console.log('📸 Scanner paused to clear internal QR cache');
+
+  // Brief pause to ensure the scanner processes the pause state
+  await new Promise(resolve => setTimeout(resolve, 100));
+
+  paused.value = false;
+  console.log('▶️ Scanner unpaused - ready for next detection (including same QR code)');
 
   // Reset form
   checkInForm.reset();
@@ -304,12 +346,14 @@ const resetScannerState = () => {
     showLoadingModal: showLoadingModal.value,
     shouldShowScanner: shouldShowScanner.value,
     scannerKey: scannerKey.value,
-    lastScannedQr: lastScannedQr.value
+    lastScannedQr: lastScannedQr.value,
+    paused: paused.value
   });
 
   // For platform admins, don't require event selection
   if (isPlatformAdmin.value) {
     console.log('Platform admin - scanner should be ready for next scan');
+    console.log('✅ Reset complete - scanner ready for next detection');
     console.groupEnd();
     return;
   }
@@ -322,6 +366,7 @@ const resetScannerState = () => {
     console.log('Organizer - auto-selected event:', selectedEventId.value);
   }
 
+  console.log('✅ Reset complete - scanner ready for next detection');
   console.groupEnd();
 };
 
@@ -600,6 +645,17 @@ const getCheckInStatusText = (status: string): string => {
   }
 };
 
+const getBookingStatusClass = (status: string): string => {
+  return getBookingStatusColor(status);
+};
+
+const formatCurrency = (amount: number, currency: string): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'USD',
+  }).format(amount / 100); // Assuming amount is in cents
+};
+
 </script>
 
 <template>
@@ -652,10 +708,10 @@ const getCheckInStatusText = (status: string): string => {
               <qrcode-stream
                 v-if="!cameraError && shouldShowScanner"
                 :key="scannerKey"
+                :paused="paused"
                 @detect="onDetect"
                 @error="onCameraError"
                 @camera-on="onScannerReady"
-                :track="false"
                 :formats="['qr_code']"
                 class="w-full h-full"
               >
