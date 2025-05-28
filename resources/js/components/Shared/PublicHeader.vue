@@ -30,18 +30,22 @@ const isAuthenticated = computed(() => !!auth.value?.user);
       <!-- Left side: Logo, Location, Search -->
       <div class="flex items-center space-x-4 flex-1 min-w-0">
 
+        <Link :href="route('home')" class="flex items-center ">
+          <img src="/images/logo.png" alt="Showeasy Logo" class="h-8 w-auto" />
+        </Link>
+
         <!-- Location Selector -->
         <!-- <div v-if="showLocationSelector" class="text-sm text-gray-600 dark:text-gray-300 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400">
           <span class="font-semibold">Nationwide</span> ▼
         </div> -->
 
         <!-- Search Bar -->
-        <input
+        <!-- <input
           v-if="showSearch"
           type="search"
           placeholder="Search events, artists, venues..."
           class="p-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:ring-indigo-500 focus:border-indigo-500 w-full max-w-xs md:max-w-md lg:max-w-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
-        />
+        /> -->
       </div>
 
       <!-- Right side: Language Switcher & Authentication -->
