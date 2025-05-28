@@ -45,7 +45,7 @@ interface EventData {
     slug: Translatable;
     description: Translatable;
     short_summary: Translatable;
-    status: string;
+    event_status: string;
     visibility: string;
     is_featured: boolean;
     contact_email?: string;
@@ -179,7 +179,7 @@ watchEffect(() => {
             slug: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: eventData.slug?.[loc.code] || '' }), {} as Record<string, string>),
             description: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: eventData.description?.[loc.code] || '' }), {} as Record<string, string>),
             short_summary: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: eventData.short_summary?.[loc.code] || '' }), {} as Record<string, string>),
-            event_status: eventData.status || 'draft',
+            event_status: eventData.event_status || 'draft',
             visibility: eventData.visibility || 'private',
             is_featured: eventData.is_featured || false,
             contact_email: eventData.contact_email || '',
