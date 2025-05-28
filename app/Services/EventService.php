@@ -311,10 +311,11 @@ class EventService
                         ->whereIn('status', ['active', 'scheduled'])
                         ->orderBy('start_at_utc', 'asc');
                 },
-                'eventOccurrences.ticketDefinitions' => function ($query) use ($nowUtc) {
-                    $query->whereNull('availability_window_start_utc')
-                        ->orWhere('availability_window_start_utc', '<=', $nowUtc);
-                }
+                'eventOccurrences.ticketDefinitions'
+                // 'eventOccurrences.ticketDefinitions' => function ($query) use ($nowUtc) {
+                //     $query->whereNull('availability_window_start_utc')
+                //         ->orWhere('availability_window_start_utc', '<=', $nowUtc);
+                // }
             ])
             ->whereHas('eventOccurrences', function ($query) use ($nowUtc) {
                 $query->where('start_at_utc', '>=', $nowUtc)
@@ -340,12 +341,7 @@ class EventService
                 $firstOccurrence = $event->eventOccurrences->first();
                 $lastOccurrence = $event->eventOccurrences->last();
                 $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
-                    return $occurrence->ticketDefinitions->map(function ($ticket) {
-                        return [
-                            'price' => $ticket->price,
-                            'currency' => $ticket->currency
-                        ];
-                    });
+                    return $occurrence->ticketDefinitions->pluck('price');
                 });
 
                 $prices = $ticketData->pluck('price');
