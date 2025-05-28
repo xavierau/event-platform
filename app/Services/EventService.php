@@ -129,8 +129,8 @@ class EventService
     public function getPublishedEventsWithFutureOccurrences(int $limit = null, array $excludeIds = [], ?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null)
     {
         // Ensure all dates are in UTC for consistent comparison with start_at_utc fields
-        $startDate = $startDate ? $startDate->utc() : now()->utc();
-        $endDate = $endDate ? $endDate->utc() : now()->addMonths(6)->utc();
+        $startDate = $startDate ? $startDate->utc() : now()->addYears(-3)->utc();
+        $endDate = $endDate ? $endDate->utc() : now()->addYears(6)->utc();
 
         $query = Event::query()
             ->where('event_status', 'published')
@@ -140,7 +140,7 @@ class EventService
                 'eventOccurrences' => function ($query) use ($startDate, $endDate) {
                     $query->where('start_at_utc', '>=', $startDate)
                         ->where('start_at_utc', '<=', $endDate)
-                        ->where('status', 'scheduled')
+                        ->whereIn('status', ['active', 'scheduled', 'completed'])
                         ->orderBy('start_at_utc', 'asc');
                 },
                 'eventOccurrences.venue',
@@ -152,8 +152,8 @@ class EventService
             // Only include events that have at least one future occurrence within the specified range
             ->whereHas('eventOccurrences', function ($query) use ($startDate, $endDate) {
                 $query->where('start_at_utc', '>=', $startDate)
-                    ->where('start_at_utc', '<=', $endDate)
-                    ->where('status', 'scheduled');
+                    ->where('start_at_utc', '<=', $endDate);
+                // ->where('status', 'scheduled');
             })
             // Exclude specific event IDs if provided
             ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
