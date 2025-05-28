@@ -52,7 +52,7 @@ const iconDisplay = computed(() => {
           v-if="iconDisplay.type === 'image'"
           :src="iconDisplay.src"
           :alt="iconDisplay.alt"
-          class="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-md"
+          class="w-12 h-12 sm:w-12 sm:h-12 object-cover rounded-md"
         />
         <!-- Emoji/Text Icon (legacy or fallback) -->
         <div
