@@ -104,7 +104,7 @@ class EventController extends Controller
                 'price_from' => $event->eventOccurrences->flatMap(function ($occurrence) {
                     return $occurrence->ticketDefinitions->pluck('price');
                 })->min() / 100 ?? null,
-                'date_range' => $this->formatDateRange($firstOccurrence ? $firstOccurrence->start_at : null, $lastOccurrence ? $lastOccurrence->start_at : null, $event->eventOccurrences->count()),
+                'date_range' => $this->formatDateRange($firstOccurrence ? $firstOccurrence->start_at_utc : null, $lastOccurrence ? $lastOccurrence->start_at_utc : null, $event->eventOccurrences->count()),
                 'venue_name' => $firstOccurrence && $firstOccurrence->venue ? $firstOccurrence->venue->name : ($event->primaryVenue ? $event->primaryVenue->name : null),
                 'category_name' => $event->category ? $event->category->name : null,
             ];
