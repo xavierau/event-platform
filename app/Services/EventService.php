@@ -144,12 +144,13 @@ class EventService
                         ->orderBy('start_at_utc', 'asc');
                 },
                 'eventOccurrences.venue',
-                'eventOccurrences.ticketDefinitions' => function ($query) {
-                    $query->whereNull('availability_window_start_utc')
-                        ->orWhere([
-                            ['availability_window_start_utc', '<=', now()->utc()],
-                        ]);
-                }
+                'eventOccurrences.ticketDefinitions',
+                // 'eventOccurrences.ticketDefinitions' => function ($query) {
+                //     $query->whereNull('availability_window_start_utc')
+                //         ->orWhere([
+                //             ['availability_window_start_utc', '<=', now()->utc()],
+                //         ]);
+                // }
             ])
             // Only include events that have at least one future occurrence within the specified range
             ->whereHas('eventOccurrences', function ($query) use ($startDate, $endDate) {
