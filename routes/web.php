@@ -20,6 +20,7 @@ use App\Actions\Events\UpsertEventAction;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\QrScannerController;
 
 use App\Http\Controllers\Public\EventController as PublicEventController;
 use App\Http\Controllers\Public\MyBookingsController;
@@ -98,6 +99,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
     // Bookings CRUD (Admin)
     Route::resource('bookings', AdminBookingController::class);
+
+    // QR Scanner routes
+    Route::prefix('qr-scanner')->name('qr-scanner.')->group(function () {
+        Route::get('/', [QrScannerController::class, 'index'])->name('index');
+        Route::post('/validate', [QrScannerController::class, 'validateQrCode'])->name('validate');
+        Route::post('/check-in', [QrScannerController::class, 'checkIn'])->name('check-in');
+    });
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
