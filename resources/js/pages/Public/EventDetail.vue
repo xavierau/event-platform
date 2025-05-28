@@ -180,10 +180,10 @@ onMounted(() => {
     </section>
 
     <!-- Price Section -->
-    <section class="bg-white dark:bg-gray-800 p-4 mt-3 shadow-sm">
+    <section class="bg-white dark:bg-gray-800 p-4 mt-3 shadow-sm" v-if="selectedOcurrenceHasTickets">
       <div class="container mx-auto flex justify-between items-center">
         <div>
-          <span v-if="selectedOcurrenceHasTickets" class="text-2xl font-bold text-red-500 dark:text-red-400">
+          <span class="text-2xl font-bold text-red-500 dark:text-red-400">
             <span class="text-base">{{ eventPrice.currency }}</span>{{ eventPrice.amount }}
           </span>
           <span class="text-2xl font-bold text-red-500 dark:text-red-400">{{ eventPrice.suffix }}</span>
