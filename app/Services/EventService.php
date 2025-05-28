@@ -146,7 +146,9 @@ class EventService
                 'eventOccurrences.venue',
                 'eventOccurrences.ticketDefinitions' => function ($query) {
                     $query->whereNull('availability_window_start_utc')
-                        ->orWhere('availability_window_start_utc', '<=', now()->utc());
+                        ->orWhere([
+                            ['availability_window_start_utc', '<=', now()->utc()],
+                        ]);
                 }
             ])
             // Only include events that have at least one future occurrence within the specified range

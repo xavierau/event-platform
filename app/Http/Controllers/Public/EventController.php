@@ -59,7 +59,7 @@ class EventController extends Controller
         }
 
         // Always filter for published events in public listing
-        $eventFilters['event_status'] = 'published';
+        $eventFilters['event_status'] = ['published', 'completed'];
 
         if ($categorySlug) {
             $category = $this->categoryService->getCategoryBySlug(

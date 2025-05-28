@@ -85,7 +85,7 @@ const formatPrice = (priceFrom: number, priceTo?: number, currency: string = 'US
             {{ event.venue_name }}
           </p>
         </div>
-        <div class="text-right mt-2">
+        <div class="text-right mt-2" v-if="event.price_from > 0">
           <span class="text-base md:text-lg font-bold text-red-500 dark:text-red-400">{{ formatPrice(event.price_from, event.price_to, event.currency) }}</span>
         </div>
       </div>
