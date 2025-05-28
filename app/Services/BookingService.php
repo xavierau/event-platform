@@ -22,6 +22,7 @@ use App\DataTransferObjects\BookingData; // Assuming BookingData DTO will be cre
 use App\Actions\Booking\UpsertBookingAction; // Assuming UpsertBookingAction will be created
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth; // To get the authenticated user if needed directly
+use App\Helpers\QrCodeHelper; // Import the QrCodeHelper
 
 class BookingService
 {
@@ -179,12 +180,13 @@ class BookingService
                             'ticket_definition_id' => $itemData->ticket_id,
                             'quantity' => 1, // Each booking record represents one physical ticket
                             'price_per_unit' => $ticketDefinition->price, // Price from DB
-                            'price_at_booking' => $ticketDefinition->price, // Adding the missing price_at_booking field'price_at_booking' => $ticketDefinition->price, // Adding the missing price_at_booking field
+                            'price_at_booking' => $ticketDefinition->price, // Adding the missing price_at_booking field
                             'currency_at_booking' => $currency, // Adding the missing currency_at_booking field
                             'total_price' => $ticketDefinition->price, // Price for one unit
                             'currency' => $currency,
                             'status' => $initialBookingStatus, // Use the determined initial booking status
-                            // 'qr_code_identifier' => null, // Generate later upon confirmation if needed for each ticket
+                            'qr_code_identifier' => QrCodeHelper::generate(), // Generate BK- format QR code
+                            'max_allowed_check_ins' => $ticketDefinition->max_check_ins ?? 1, // Set max check-ins from ticket definition
                             // Consider adding a unique reference/seat number here if applicable per ticket
                         ]);
                         $createdBookings[] = $booking;
@@ -211,10 +213,12 @@ class BookingService
                     'quantity' => 1, // Or based on some logic for general admission
                     'price_per_unit' => 0,
                     'total_price' => 0,
-                    'price_at_booking' => $ticketDefinition->price, // Adding the missing price_at_booking field'price_at_booking' => $ticketDefinition->price, // Adding the missing price_at_booking field
+                    'price_at_booking' => 0, // Free booking
                     'currency_at_booking' => $currency, // Adding the missing currency_at_booking field
                     'currency' => $currency,
                     'status' => BookingStatusEnum::CONFIRMED, // Directly confirmed for free general admission
+                    'qr_code_identifier' => QrCodeHelper::generate(), // Generate BK- format QR code
+                    'max_allowed_check_ins' => 1, // Default to 1 for free bookings
                 ]);
             }
 

@@ -35,6 +35,11 @@ class QrScannerController extends Controller
 
         return Inertia::render('Admin/QrScanner/Index', [
             'events' => $events,
+            'roles' => [
+                'ADMIN' => RoleNameEnum::ADMIN->value,
+                'ORGANIZER' => RoleNameEnum::ORGANIZER->value,
+                'USER' => RoleNameEnum::USER->value,
+            ],
             'user_role' => $user->roles->first()?->name,
         ]);
     }
@@ -129,6 +134,11 @@ class QrScannerController extends Controller
 
             // Additional validation: ensure user has permission
             $booking = \App\Models\Booking::byQrCode($checkInData->qr_code_identifier)->first();
+
+            // If not found by qr_code_identifier, try booking_number (for legacy QR codes)
+            if (!$booking) {
+                $booking = \App\Models\Booking::where('booking_number', $checkInData->qr_code_identifier)->first();
+            }
 
             if (!$booking || !$this->canAccessBooking($booking, Auth::user())) {
                 return response()->json([

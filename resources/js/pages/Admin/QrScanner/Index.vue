@@ -54,6 +54,8 @@ const isProcessing = ref(false);
 const showDetailsModal = ref(false);
 const showLoadingModal = ref(false);
 const checkInStatus = ref<{ success: boolean; message: string } | null>(null);
+const scannerKey = ref(0); // Add key to force scanner re-render
+const lastScannedQr = ref<string | null>(null); // Track last scanned QR to allow re-scanning
 
 // Browser API refs (reactive and SSR-safe)
 const isHttps = ref(false);
@@ -103,6 +105,13 @@ watch(selectedEventId, (newEventId, oldEventId) => {
 const onDetect = async (detectedCodes: DetectedBarcode[]) => {
   if (isProcessing.value || detectedCodes.length === 0) return;
 
+  const rawValue = detectedCodes[0].rawValue;
+
+  // Allow re-scanning the same QR code after reset
+  console.log('QR detected:', rawValue);
+  console.log('Last scanned QR:', lastScannedQr.value);
+  console.log('Is same QR?', rawValue === lastScannedQr.value);
+
   // Show loading modal immediately
   showLoadingModal.value = true;
   isProcessing.value = true;
@@ -111,8 +120,6 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
   eventOccurrences.value = [];
   checkInHistory.value = null;
   checkInStatus.value = null;
-
-  const rawValue = detectedCodes[0].rawValue;
 
   try {
     const decodedData = decodeQRCodeData(rawValue);
@@ -125,6 +132,10 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
     }
 
     const qrCodeToValidate = decodedData.bookingNumber;
+    lastScannedQr.value = rawValue; // Store the scanned QR
+
+    console.log('Validating QR code:', qrCodeToValidate);
+    console.log('Selected event ID:', selectedEventId.value);
 
     const response = await fetch(route('admin.qr-scanner.validate'), {
       method: 'POST',
@@ -139,7 +150,9 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
       }),
     });
 
+    console.log('Response status:', response.status);
     const data = await response.json();
+    console.log('Response data:', data);
 
     if (response.ok && data.success) {
       bookingDetails.value = data.booking;
@@ -258,7 +271,8 @@ const resetScannerState = () => {
     showDetailsModal: showDetailsModal.value,
     showLoadingModal: showLoadingModal.value,
     scanResult: scanResult.value,
-    bookingDetails: !!bookingDetails.value
+    bookingDetails: !!bookingDetails.value,
+    lastScannedQr: lastScannedQr.value
   });
 
   // Reset all scan-related state
@@ -271,11 +285,11 @@ const resetScannerState = () => {
   isProcessing.value = false;
   showDetailsModal.value = false;
   showLoadingModal.value = false;
+  lastScannedQr.value = null; // Reset last scanned QR to allow re-scanning
 
   // Reset camera/scanner state to allow new scans
   cameraError.value = null;
-  // Note: Don't reset scannerReady to false as it will disable the camera
-  // The camera should remain active and ready for the next scan
+  scannerKey.value++; // Force scanner component to re-render
 
   // Reset form
   checkInForm.reset();
@@ -287,7 +301,9 @@ const resetScannerState = () => {
     cameraError: cameraError.value,
     showDetailsModal: showDetailsModal.value,
     showLoadingModal: showLoadingModal.value,
-    shouldShowScanner: shouldShowScanner.value
+    shouldShowScanner: shouldShowScanner.value,
+    scannerKey: scannerKey.value,
+    lastScannedQr: lastScannedQr.value
   });
 
   // For platform admins, don't require event selection
@@ -634,10 +650,11 @@ const getCheckInStatusText = (status: string): string => {
               </div>
               <qrcode-stream
                 v-if="!cameraError && shouldShowScanner"
+                :key="scannerKey"
                 @detect="onDetect"
                 @error="onCameraError"
                 @camera-on="onScannerReady"
-                :track="true"
+                :track="false"
                 :formats="['qr_code']"
                 class="w-full h-full"
               >

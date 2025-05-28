@@ -110,7 +110,7 @@ class QrCodeValidationTest extends TestCase
 
         $this->assertFalse($result['is_valid']);
         $this->assertNull($result['booking']);
-        $this->assertContains('Invalid QR code format', $result['errors']);
+        $this->assertContains('Booking not found for this QR code', $result['errors']);
     }
 
     /** @test */
@@ -148,5 +148,58 @@ class QrCodeValidationTest extends TestCase
         $this->assertNotNull($result['booking']->user);
         $this->assertEquals($event->id, $result['booking']->event->id);
         $this->assertEquals($user->id, $result['booking']->user->id);
+    }
+
+    /** @test */
+    public function it_finds_booking_by_booking_number_uuid_format()
+    {
+        // Create test data
+        $user = User::factory()->create();
+        $event = Event::factory()->create();
+        $ticketDefinition = TicketDefinition::factory()->create();
+        $transaction = Transaction::factory()->create(['user_id' => $user->id]);
+
+        $bookingNumber = '550e8400-e29b-41d4-a716-446655440000'; // Example UUID
+        $booking = Booking::factory()->create([
+            'transaction_id' => $transaction->id,
+            'event_id' => $event->id,
+            'ticket_definition_id' => $ticketDefinition->id,
+            'booking_number' => $bookingNumber,
+            'qr_code_identifier' => 'BK-LEGACY123456', // Has BK- format too
+            'status' => 'confirmed',
+        ]);
+
+        // Test finding by booking_number (UUID format)
+        $result = $this->qrCodeValidationService->findBookingByQrCode($bookingNumber);
+
+        $this->assertNotNull($result);
+        $this->assertEquals($booking->id, $result->id);
+        $this->assertEquals($bookingNumber, $result->booking_number);
+    }
+
+    /** @test */
+    public function it_validates_qr_code_with_booking_number_uuid_format()
+    {
+        // Create test data
+        $user = User::factory()->create();
+        $event = Event::factory()->create();
+        $ticketDefinition = TicketDefinition::factory()->create();
+        $transaction = Transaction::factory()->create(['user_id' => $user->id]);
+
+        $bookingNumber = '550e8400-e29b-41d4-a716-446655440001'; // Example UUID
+        $booking = Booking::factory()->create([
+            'transaction_id' => $transaction->id,
+            'event_id' => $event->id,
+            'ticket_definition_id' => $ticketDefinition->id,
+            'booking_number' => $bookingNumber,
+            'status' => 'confirmed',
+        ]);
+
+        // Test validation with booking_number (UUID format)
+        $result = $this->qrCodeValidationService->validateQrCode($bookingNumber);
+
+        $this->assertTrue($result['is_valid']);
+        $this->assertEquals($booking->id, $result['booking']->id);
+        $this->assertEmpty($result['errors']);
     }
 }

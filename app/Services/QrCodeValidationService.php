@@ -20,40 +20,35 @@ class QrCodeValidationService
     /**
      * Find booking by QR code identifier.
      * Returns null if QR code format is invalid or booking not found.
+     * Supports both qr_code_identifier (BK-XXXXXXXXXXXX) and booking_number (UUID) formats.
      */
     public function findBookingByQrCode(string $qrCode): ?Booking
     {
-        // First validate the format
-        if (!$this->isValidFormat($qrCode)) {
-            return null;
+        // First try to find by qr_code_identifier (BK- format)
+        if ($this->isValidFormat($qrCode)) {
+            return Booking::with(['event', 'user', 'transaction'])
+                ->byQrCode($qrCode)
+                ->first();
         }
 
-        // Find booking with relationships loaded
+        // If not BK- format, try to find by booking_number (UUID format)
+        // This supports legacy QR codes that contain booking numbers
         return Booking::with(['event', 'user', 'transaction'])
-            ->byQrCode($qrCode)
+            ->where('booking_number', $qrCode)
             ->first();
     }
 
     /**
      * Comprehensive QR code validation.
      * Returns array with validation result, booking (if found), and any errors.
+     * Supports both qr_code_identifier (BK-XXXXXXXXXXXX) and booking_number (UUID) formats.
      */
     public function validateQrCode(string $qrCode): array
     {
         $errors = [];
         $booking = null;
 
-        // Step 1: Validate QR code format
-        if (!$this->isValidFormat($qrCode)) {
-            $errors[] = 'Invalid QR code format';
-            return [
-                'is_valid' => false,
-                'booking' => null,
-                'errors' => $errors,
-            ];
-        }
-
-        // Step 2: Find booking by QR code
+        // Step 1: Try to find booking (supports both formats)
         $booking = $this->findBookingByQrCode($qrCode);
         if (!$booking) {
             $errors[] = 'Booking not found for this QR code';
@@ -64,7 +59,7 @@ class QrCodeValidationService
             ];
         }
 
-        // Step 3: Basic booking validation (more detailed validation will be in CHK-002.4)
+        // Step 2: Basic booking validation
         if (!$booking->event) {
             $errors[] = 'Event not found for this booking';
         }
@@ -77,6 +72,7 @@ class QrCodeValidationService
         if (empty($errors)) {
             Log::info('QR code validation successful', [
                 'qr_code' => $qrCode,
+                'qr_code_format' => $this->isValidFormat($qrCode) ? 'BK-format' : 'booking_number',
                 'booking_id' => $booking->id,
                 'user_id' => $booking->user->id ?? null,
                 'event_id' => $booking->event->id ?? null,

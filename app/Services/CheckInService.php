@@ -30,9 +30,16 @@ class CheckInService
     {
         return DB::transaction(function () use ($checkInData) {
             // 1. Find the booking
-            $booking = Booking::with(['event', 'user', 'ticketDefinition', 'checkInLogs'])
+            $booking = Booking::with(['event', 'user', 'ticketDefinition'])
                 ->byQrCode($checkInData->qr_code_identifier)
                 ->first();
+
+            // If not found by qr_code_identifier, try booking_number (for legacy QR codes)
+            if (!$booking) {
+                $booking = Booking::with(['event', 'user', 'ticketDefinition'])
+                    ->where('booking_number', $checkInData->qr_code_identifier)
+                    ->first();
+            }
 
             if (!$booking) {
                 return $this->createFailureResponse('Booking not found', CheckInStatus::FAILED_INVALID_CODE);
