@@ -152,15 +152,14 @@ class EventService
             // Only include events that have at least one future occurrence within the specified range
             ->whereHas('eventOccurrences', function ($query) use ($startDate, $endDate) {
                 $query->where('start_at_utc', '>=', $startDate)
-                    ->where('start_at_utc', '<=', $endDate);
-                // ->where('status', 'scheduled');
+                    ->where('start_at_utc', '<=', $endDate)
+                    ->whereIn('status', ['active', 'scheduled', 'completed']);
             })
             // Exclude specific event IDs if provided
             ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
                 return $query->whereNotIn('id', $excludeIds);
             })
             // Order by the earliest upcoming occurrence within the specified range
-            // REVERTING TEMPORARY ORDERING
             ->orderBy(function ($query) use ($startDate, $endDate) { // Pass and use $endDate here
                 return $query->select('start_at_utc')
                     ->from('event_occurrences')
