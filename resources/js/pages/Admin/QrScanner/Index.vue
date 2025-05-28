@@ -289,7 +289,8 @@ const resetScannerState = () => {
 
   // Reset camera/scanner state to allow new scans
   cameraError.value = null;
-  scannerKey.value++; // Force scanner component to re-render
+  // Note: Don't increment scannerKey to avoid camera re-initialization
+  // The camera should remain active and ready for the next scan
 
   // Reset form
   checkInForm.reset();
