@@ -30,7 +30,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function createAdminLogin(Request $request): InertiaResponse
     {
-        return Inertia::render('Auth/AdminLogin', [
+        return Inertia::render('auth/AdminLogin', [
             'canResetPassword' => RouteFacade::has('password.request'),
             'status' => $request->session()->get('status'),
             'loginRoute' => route('admin.login'),
