@@ -238,14 +238,25 @@ class EventService
             ->get()
             ->map(function (Event $event) use ($queryStartDate, $queryEndDate) { // Pass effective dates for filtering
                 // Re-filter occurrences specifically for this event within the map, to be absolutely sure
-                $relevantOccurrences = $event->eventOccurrences
-                    ->where('start_at_utc', '>=', $queryStartDate)
-                    ->where('start_at_utc', '<=', $queryEndDate)
-                    ->sortBy('start_at_utc');
+                // $relevantOccurrences = $event->eventOccurrences
+                //     ->where('start_at_utc', '>=', $queryStartDate)
+                //     ->where('start_at_utc', '<=', $queryEndDate)
+                //     ->sortBy('start_at_utc');
 
-                // REVERTING: Conditional null return + filter + values. The whereHas should handle this.
-                $firstOccurrence = $relevantOccurrences->first();
-                $ticketData = $relevantOccurrences->flatMap(function ($occurrence) { // Use relevantOccurrences
+                // // REVERTING: Conditional null return + filter + values. The whereHas should handle this.
+                // $firstOccurrence = $relevantOccurrences->first();
+                // $ticketData = $relevantOccurrences->flatMap(function ($occurrence) { // Use relevantOccurrences
+                //     return $occurrence->ticketDefinitions->map(function ($ticket) {
+                //         return [
+                //             'price' => $ticket->price,
+                //             'currency' => $ticket->currency
+                //         ];
+                //     });
+                // });
+
+                $firstOccurrence = $event->eventOccurrences->first();
+
+                $ticketData =  $event->eventOccurrences->flatMap(function ($occurrence) { // Use relevantOccurrences
                     return $occurrence->ticketDefinitions->map(function ($ticket) {
                         return [
                             'price' => $ticket->price,

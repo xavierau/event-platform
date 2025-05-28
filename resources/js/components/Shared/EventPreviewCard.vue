@@ -53,7 +53,7 @@ const formatPrice = (priceFrom: number, priceTo?: number, currency: string = 'US
           {{ event.name }}
         </h4>
         <div class="flex justify-between items-center">
-          <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ formatPrice(event.price_from, event.price_to, event.currency) }}</span>
+          <span class="text-indigo-600 dark:text-indigo-400">{{ formatPrice(event.price_from, event.price_to, event.currency) }}</span>
         </div>
       </div>
     </div>
