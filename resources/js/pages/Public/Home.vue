@@ -131,7 +131,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
 </script>
 
 <template>
-  <Head title="Welcome to EventPlatform" />
+  <Head title="Welcome to ShowEasy" />
 
   <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
     <!-- Header Section (FE-LP-002) -->
