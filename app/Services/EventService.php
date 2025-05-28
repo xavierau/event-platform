@@ -265,7 +265,7 @@ class EventService
                     });
                 });
 
-                $prices = $ticketData;
+                $prices = $ticketData->pluck('price');
                 $currency = $ticketData->first()['currency'] ?? 'HKD'; // Use first ticket's currency or default to USD
 
                 return [
