@@ -90,13 +90,13 @@ const prevSlide = () => {
             <a :href="item.url" class="block relative aspect-video rounded-lg overflow-hidden group">
               <img :src="item.image" :alt="item.title" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
               <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
-                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <h3 class="text-2xl font-bold mb-2">{{ item.title }}</h3>
-                  <p class="text-sm mb-4">{{ item.subtitle }}</p>
+                <!-- <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 class="text-2xl font-bold mb-2">{{ item.title }}</h3> -->
+                  <!-- <p class="text-sm mb-4">{{ item.subtitle }}</p> -->
                   <!-- <div class="flex items-center space-x-2">
                     <span class="px-3 py-1 bg-white/20 rounded-full text-sm capitalize">{{ item.type }}</span>
                   </div> -->
-                </div>
+                <!-- </div> -->
               </div>
             </a>
           </div>
