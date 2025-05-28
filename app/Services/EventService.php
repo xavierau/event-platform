@@ -211,10 +211,11 @@ class EventService
                         ->whereIn('status', ['active', 'scheduled'])
                         ->orderBy('start_at_utc', 'asc');
                 },
-                'eventOccurrences.ticketDefinitions' => function ($query) {
-                    $query->whereNull('availability_window_start_utc')
-                        ->orWhere('availability_window_start_utc', '<=', now()->utc());
-                }
+                'eventOccurrences.ticketDefinitions',
+                //  'eventOccurrences.ticketDefinitions' => function ($query) {
+                //     $query->whereNull('availability_window_start_utc')
+                //         ->orWhere('availability_window_start_utc', '<=', now()->utc());
+                // }
             ])
             // Filter events that have at least one future occurrence within the date range
             ->whereHas('eventOccurrences', function ($query) use ($queryStartDate, $queryEndDate) { // Ensure endDate is used here
