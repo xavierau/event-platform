@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/layouts/AppLayout.vue';
-import { Country, State } from '@/types'; // Assuming these types exist for props
+// import { Country, State } from '@/types'; // Assuming these types exist for props
 import RichTextEditor from '@/components/Form/RichTextEditor.vue'; // Import the new component
 import MediaUpload from '@/components/Form/MediaUpload.vue'; // Import MediaUpload
 
-// TODO: Define props for countries and states if they will be passed from controller
 interface Props {
-    countries: Country[];
-    states: State[]; // Or make this dependent on selected country
+    countries: Array<{id: number, name: Record<string, string>}>;
+    states: Array<{id: number, country_id: number, name: Record<string, string>}>;
 }
-// const props = defineProps<Props>(); // Uncomment when ready to pass props
+const props = defineProps<Props>();
 
 const form = useForm({
     name: { en: '', 'zh-TW': '', 'zh-CN': '' },
@@ -37,34 +36,40 @@ const form = useForm({
 });
 
 const submit = () => {
-    // Ensure media fields are correctly prepared for submission if they are optional
-    // and might not be part of the initial form data sent by useForm by default
-    // if they are null/empty.
-    // However, Inertia's useForm typically sends all defined fields.
-    // We might need to explicitly set them to undefined if the backend expects them to be absent
-    // when no files are uploaded, rather than null or empty array.
-    // For now, let's assume sending null/empty array is fine.
+    // Clean up empty string values in translatable fields to avoid validation issues
+    const cleanTranslatableField = (field: any) => {
+        if (!field || typeof field !== 'object') return field;
+        const cleaned: any = {};
+        for (const [locale, value] of Object.entries(field)) {
+            if (value && typeof value === 'string' && value.trim() !== '') {
+                cleaned[locale] = value;
+            }
+        }
+        return Object.keys(cleaned).length > 0 ? cleaned : field;
+    };
+
     const dataToSubmit = {
         ...form.data(),
+        // Clean translatable fields
+        name: cleanTranslatableField(form.name),
+        description: cleanTranslatableField(form.description),
+        address_line_1: cleanTranslatableField(form.address_line_1),
+        address_line_2: cleanTranslatableField(form.address_line_2),
+        city: cleanTranslatableField(form.city),
+        // Handle media fields
         uploaded_main_image: form.uploaded_main_image || undefined,
         uploaded_gallery_images: form.uploaded_gallery_images.length > 0 ? form.uploaded_gallery_images : undefined,
     };
 
-    form.transform(data => dataToSubmit) // Use transform to ensure these are definitely part of the payload
+    form.transform(() => dataToSubmit)
         .post(route('admin.venues.store'), {
-        // onSuccess: () => form.reset(), // Consider resetting form, including file inputs
-    });
+            onError: (errors) => {
+                console.error('Validation errors:', errors);
+            },
+        });
 };
 
-// Dummy data for dropdowns - replace with props later
-const dummyCountries = [
-    { id: 1, name: { en: 'Hong Kong SAR China' } },
-    { id: 2, name: { en: 'Macau SAR China' } },
-];
-const dummyStates = [ // Filter these by country_id in a real scenario
-    { id: 1, country_id: 1, name: { en: 'Hong Kong Island' } },
-    { id: 2, country_id: 1, name: { en: 'Kowloon' } },
-];
+// Use props data for dropdowns
 
 // Helper to get a specific translation for dropdowns, adjust as needed
 // TODO: Centralize this helper
@@ -139,6 +144,7 @@ const getTranslation = (translations: any, locale: string = 'en', fallbackLocale
 
                                 <MediaUpload
                                     v-model="form.uploaded_main_image"
+                                    :existingMedia="null"
                                     collectionName="main_image"
                                     label="Main Image"
                                     :multiple="false"
@@ -147,6 +153,7 @@ const getTranslation = (translations: any, locale: string = 'en', fallbackLocale
 
                                 <MediaUpload
                                     v-model="form.uploaded_gallery_images"
+                                    :existingMedia="null"
                                     collectionName="gallery_images"
                                     label="Gallery Images"
                                     :multiple="true"
@@ -160,7 +167,7 @@ const getTranslation = (translations: any, locale: string = 'en', fallbackLocale
                                         <label for="country_id" class="label">Country</label>
                                         <select v-model="form.country_id" id="country_id" class="mt-1 block w-full input">
                                             <option :value="null">-- Select Country --</option>
-                                            <option v-for="country in dummyCountries" :key="country.id" :value="country.id">
+                                            <option v-for="country in props.countries" :key="country.id" :value="country.id">
                                                 {{ getTranslation(country.name) }}
                                             </option>
                                         </select>
@@ -172,8 +179,7 @@ const getTranslation = (translations: any, locale: string = 'en', fallbackLocale
                                         <label for="state_id" class="label">State/Province</label>
                                         <select v-model="form.state_id" id="state_id" class="mt-1 block w-full input" :disabled="!form.country_id">
                                             <option :value="null">-- Select State/Province --</option>
-                                            <!-- TODO: Filter states based on selected country_id -->
-                                            <option v-for="state in dummyStates.filter(s => s.country_id === form.country_id)" :key="state.id" :value="state.id">
+                                            <option v-for="state in props.states.filter((s: any) => s.country_id === form.country_id)" :key="state.id" :value="state.id">
                                                  {{ getTranslation(state.name) }}
                                             </option>
                                         </select>

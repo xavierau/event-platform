@@ -8,6 +8,7 @@ use Spatie\LaravelData\Support\Validation\ValidationContext;
 use Illuminate\Http\UploadedFile;
 use Spatie\LaravelData\Attributes\MapName;
 use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+use App\Rules\RequiredTranslation;
 
 #[MapName(SnakeCaseMapper::class)]
 class VenueData extends Data
@@ -51,10 +52,10 @@ class VenueData extends Data
 
         return [
             'id' => 'nullable|integer',
-            'name' => 'required|array',
-            'name.en' => 'required_without_all:name.zh_TW,name.zh_CN|nullable|string|max:255',
-            'name.zh_TW' => 'required_without_all:name.en,name.zh_CN|nullable|string|max:255',
-            'name.zh_CN' => 'required_without_all:name.en,name.zh_TW|nullable|string|max:255',
+            'name' => ['required', 'array', new RequiredTranslation('name')],
+            'name.en' => 'nullable|string|max:255',
+            'name.zh_TW' => 'nullable|string|max:255',
+            'name.zh_CN' => 'nullable|string|max:255',
             'slug' => [
                 'required',
                 'string',
@@ -65,18 +66,18 @@ class VenueData extends Data
             'description.en' => 'nullable|string',
             'description.zh_TW' => 'nullable|string',
             'description.zh_CN' => 'nullable|string',
-            'address_line_1' => 'required|array',
-            'address_line_1.en' => 'required_without_all:address_line_1.zh_TW,address_line_1.zh_CN|nullable|string|max:255',
-            'address_line_1.zh_TW' => 'required_without_all:address_line_1.en,address_line_1.zh_CN|nullable|string|max:255',
-            'address_line_1.zh_CN' => 'required_without_all:address_line_1.en,address_line_1.zh_TW|nullable|string|max:255',
+            'address_line_1' => ['required', 'array', new RequiredTranslation('address line 1')],
+            'address_line_1.en' => 'nullable|string|max:255',
+            'address_line_1.zh_TW' => 'nullable|string|max:255',
+            'address_line_1.zh_CN' => 'nullable|string|max:255',
             'address_line_2' => 'nullable|array',
             'address_line_2.en' => 'nullable|string|max:255',
             'address_line_2.zh_TW' => 'nullable|string|max:255',
             'address_line_2.zh_CN' => 'nullable|string|max:255',
-            'city' => 'required|array',
-            'city.en' => 'required_without_all:city.zh_TW,city.zh_CN|nullable|string|max:255',
-            'city.zh_TW' => 'required_without_all:city.en,city.zh_CN|nullable|string|max:255',
-            'city.zh_CN' => 'required_without_all:city.en,city.zh_TW|nullable|string|max:255',
+            'city' => ['required', 'array', new RequiredTranslation('city')],
+            'city.en' => 'nullable|string|max:255',
+            'city.zh_TW' => 'nullable|string|max:255',
+            'city.zh_CN' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
             'country_id' => 'required|integer|exists:countries,id',
             'state_id' => 'nullable|integer|exists:states,id',

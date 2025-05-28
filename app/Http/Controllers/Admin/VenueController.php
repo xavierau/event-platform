@@ -40,8 +40,22 @@ class VenueController extends Controller
 
     public function create(): InertiaResponse
     {
-        // Pass necessary data for form selects, e.g., countries, states
-        // For now, assume these will be fetched client-side or via dedicated endpoints if large
+        // Pass necessary data for form selects
+        $countries = Country::where('is_active', true)->get()->map(function ($country) {
+            return [
+                'id' => $country->id,
+                'name' => $country->getTranslations('name'),
+            ];
+        });
+
+        $states = State::where('is_active', true)->get()->map(function ($state) {
+            return [
+                'id' => $state->id,
+                'country_id' => $state->country_id,
+                'name' => $state->getTranslations('name'),
+            ];
+        });
+
         return Inertia::render('Admin/Venues/Create', [
             'pageTitle' => 'Create New Venue',
             'breadcrumbs' => [
@@ -49,15 +63,32 @@ class VenueController extends Controller
                 ['text' => 'Venues', 'href' => route('admin.venues.index')],
                 ['text' => 'Create New Venue']
             ],
-            // 'countries' => Country::all(), // Example
-            // 'states' => State::all(), // Example
+            'countries' => $countries,
+            'states' => $states,
         ]);
     }
 
-    public function store(VenueData $venueData): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
-        $this->venueService->createVenue($venueData);
-        return redirect()->route('admin.venues.index')->with('success', 'Venue created successfully.');
+        try {
+            $venueData = VenueData::from($request->all());
+            $this->venueService->createVenue($venueData);
+            return redirect()->route('admin.venues.index')->with('success', 'Venue created successfully.');
+        } catch (CannotCreateData $e) {
+            Log::error('VenueController@store: DTO Creation/Validation Failed.', [
+                'message' => $e->getMessage(),
+                'trace_snippet' => mb_substr($e->getTraceAsString(), 0, 500),
+                'request_data_snippet' => mb_substr(json_encode($request->all()), 0, 1000),
+            ]);
+            return back()->withInput()->withErrors(['dto_error' => 'Error processing venue data: ' . $e->getMessage()]);
+        } catch (\Exception $e) {
+            Log::error('VenueController@store: General Exception.', [
+                'message' => $e->getMessage(),
+                'trace_snippet' => mb_substr($e->getTraceAsString(), 0, 500),
+                'request_data_snippet' => mb_substr(json_encode($request->all()), 0, 1000),
+            ]);
+            return back()->withInput()->withErrors(['error' => 'An unexpected error occurred. Please try again.']);
+        }
     }
 
     public function show(Venue $venue): InertiaResponse
