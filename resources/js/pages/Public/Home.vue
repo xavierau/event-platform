@@ -59,7 +59,7 @@ const categories = computed(() => {
 });
 
 // State for managing which events to show
-const activeFilter = ref('today'); // 'today', 'upcoming'
+const activeFilter = ref('upcoming'); // 'today', 'upcoming'
 const displayedEvents = computed(() => {
   switch (activeFilter.value) {
     case 'today':

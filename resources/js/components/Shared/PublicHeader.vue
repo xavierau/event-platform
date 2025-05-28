@@ -28,7 +28,7 @@ const isAuthenticated = computed(() => !!auth.value?.user);
   <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b dark:border-gray-700">
     <div class="container mx-auto flex justify-between items-center p-4">
       <!-- Left side: Logo, Location, Search -->
-      <div class="flex items-center space-x-4 flex-1">
+      <div class="flex items-center space-x-4 flex-1 min-w-0">
 
         <!-- Location Selector -->
         <!-- <div v-if="showLocationSelector" class="text-sm text-gray-600 dark:text-gray-300 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400">
@@ -40,12 +40,12 @@ const isAuthenticated = computed(() => !!auth.value?.user);
           v-if="showSearch"
           type="search"
           placeholder="Search events, artists, venues..."
-          class="p-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:ring-indigo-500 focus:border-indigo-500 w-64 md:w-96 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
+          class="p-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:ring-indigo-500 focus:border-indigo-500 w-full max-w-xs md:max-w-md lg:max-w-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
         />
       </div>
 
       <!-- Right side: Language Switcher & Authentication -->
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-3 flex-shrink-0">
         <!-- Language Switcher -->
         <LocaleSwitcher variant="dropdown" />
 
