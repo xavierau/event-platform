@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import TicketPurchaseModal from '@/components/Modals/TicketPurchaseModal.vue';
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
 import WishlistButton from '@/components/Shared/WishlistButton.vue';
@@ -148,6 +148,10 @@ const handleWishlistError = (message: string) => {
 if (props.event.occurrences && props.event.occurrences.length > 0) {
   selectOccurrence(props.event.occurrences[0]);
 }
+
+onMounted(() => {
+    console.log(props.event);
+});
 
 </script>
 
