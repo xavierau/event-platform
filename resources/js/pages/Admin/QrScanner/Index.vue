@@ -48,6 +48,12 @@ const isProcessing = ref(false);
 const showDetailsModal = ref(false);
 const checkInStatus = ref<{ success: boolean; message: string } | null>(null);
 
+// Browser API refs (reactive and SSR-safe)
+const isHttps = ref(false);
+const isSecureContext = ref(false);
+const hasGetUserMedia = ref(false);
+const currentUrl = ref('');
+
 const isAdmin = computed(() => props.user_role === 'admin');
 
 // Form for check-in
@@ -58,7 +64,15 @@ const checkInForm = useForm({
   operator_user_id: props.auth.user?.id,
 });
 
-watch(selectedEventId, () => {
+watch(selectedEventId, (newEventId, oldEventId) => {
+  console.group('📋 Event Selection Changed');
+  console.log('Previous event ID:', oldEventId);
+  console.log('New event ID:', newEventId);
+  console.log('Scanner should be active?', !!(newEventId || (!isAdmin.value && props.events.length > 0)));
+  console.log('Is admin?', isAdmin.value);
+  console.log('Available events:', props.events.length);
+  console.groupEnd();
+
   resetScannerState();
 });
 
@@ -118,11 +132,83 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
 };
 
 const onCameraError = (error: any) => {
-  cameraError.value = `Camera error: ${error.name}. Ensure camera access is allowed.`;
-  console.error("Camera error:", error);
+  console.group('🎥 Camera Error Details');
+  console.error('Error object:', error);
+  console.error('Error name:', error.name);
+  console.error('Error message:', error.message);
+  console.error('Error stack:', error.stack);
+  console.error('Navigator userAgent:', typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A');
+  console.error('Is HTTPS?', typeof window !== 'undefined' ? window.location.protocol === 'https:' : false);
+  console.error('Current URL:', typeof window !== 'undefined' ? window.location.href : 'N/A');
+
+  // Check if getUserMedia is available
+  console.error('getUserMedia available?', typeof navigator !== 'undefined' && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+
+  // Check permissions API if available
+  if (typeof navigator !== 'undefined' && navigator.permissions) {
+    navigator.permissions.query({ name: 'camera' as PermissionName }).then(result => {
+      console.error('Camera permission state:', result.state);
+    }).catch(permErr => {
+      console.error('Could not check camera permissions:', permErr);
+    });
+  }
+
+  console.groupEnd();
+
+  let errorMessage = `Camera error: ${error.name}`;
+
+  switch (error.name) {
+    case 'NotAllowedError':
+      errorMessage = 'Camera access denied. Please allow camera access in your browser settings and refresh the page.';
+      break;
+    case 'NotFoundError':
+      errorMessage = 'No camera found. Please ensure a camera is connected to your device.';
+      break;
+    case 'NotReadableError':
+      errorMessage = 'Camera is already in use by another application. Please close other apps using the camera.';
+      break;
+    case 'OverconstrainedError':
+      errorMessage = 'Camera constraints could not be satisfied. Try refreshing the page.';
+      break;
+    case 'SecurityError':
+      errorMessage = 'Camera access blocked due to security restrictions. Ensure you are on HTTPS.';
+      break;
+    case 'AbortError':
+      errorMessage = 'Camera access was aborted. Please try again.';
+      break;
+    default:
+      errorMessage = `Camera error: ${error.name}. ${error.message || 'Please ensure camera access is allowed.'}`;
+  }
+
+  cameraError.value = errorMessage;
 };
 
 const onScannerReady = () => {
+  console.group('✅ Camera Successfully Initialized');
+  console.log('Scanner ready at:', new Date().toISOString());
+  console.log('Current URL:', typeof window !== 'undefined' ? window.location.href : 'N/A');
+  console.log('Is HTTPS?', typeof window !== 'undefined' ? window.location.protocol === 'https:' : false);
+  console.log('User agent:', typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A');
+
+  // Log available media devices if possible
+  if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+    navigator.mediaDevices.enumerateDevices().then(devices => {
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      console.log('Available video devices:', videoDevices.length);
+      videoDevices.forEach((device, index) => {
+        console.log(`Video device ${index + 1}:`, {
+          deviceId: device.deviceId,
+          label: device.label || 'Unknown camera',
+          groupId: device.groupId
+        });
+      });
+    }).catch(err => {
+      console.error('Could not enumerate devices:', err);
+    });
+  }
+
+  console.groupEnd();
+
   scannerReady.value = true;
   cameraError.value = null;
 };
@@ -184,10 +270,152 @@ const closeModalAndReset = () => {
   resetScannerState();
 };
 
+const testCameraAccess = async () => {
+  console.group('🧪 Manual Camera Access Test');
+  console.log('Test initiated at:', new Date().toISOString());
+
+  if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    console.error('❌ getUserMedia not supported');
+    alert('Camera API not supported in this browser');
+    console.groupEnd();
+    return;
+  }
+
+  try {
+    console.log('Requesting camera access...');
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment' // Prefer back camera for QR scanning
+      }
+    });
+
+    console.log('✅ Camera access granted!');
+    console.log('Stream details:', {
+      id: stream.id,
+      active: stream.active,
+      videoTracks: stream.getVideoTracks().length,
+      audioTracks: stream.getAudioTracks().length
+    });
+
+    // Log video track details
+    stream.getVideoTracks().forEach((track, index) => {
+      console.log(`Video track ${index + 1}:`, {
+        label: track.label,
+        kind: track.kind,
+        enabled: track.enabled,
+        readyState: track.readyState,
+        settings: track.getSettings(),
+        capabilities: track.getCapabilities ? track.getCapabilities() : 'Not available'
+      });
+    });
+
+    // Stop the stream after testing
+    stream.getTracks().forEach(track => {
+      track.stop();
+      console.log('Stopped track:', track.label);
+    });
+
+    alert('✅ Camera access test successful! Check console for details.');
+
+  } catch (error: any) {
+    console.error('❌ Camera access test failed:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+
+    let userMessage = 'Camera access failed: ';
+    switch (error.name) {
+      case 'NotAllowedError':
+        userMessage += 'Permission denied. Please allow camera access and try again.';
+        break;
+      case 'NotFoundError':
+        userMessage += 'No camera found. Please ensure a camera is connected.';
+        break;
+      case 'NotReadableError':
+        userMessage += 'Camera is in use by another application.';
+        break;
+      case 'SecurityError':
+        userMessage += 'Security error. Ensure you are on HTTPS.';
+        break;
+      default:
+        userMessage += error.message || 'Unknown error occurred.';
+    }
+
+    alert(userMessage);
+  }
+
+  console.groupEnd();
+};
+
 onMounted(() => {
+  // Initialize browser API reactive values
+  if (typeof window !== 'undefined') {
+    isHttps.value = window.location.protocol === 'https:';
+    isSecureContext.value = window.isSecureContext;
+    hasGetUserMedia.value = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    currentUrl.value = window.location.href;
+  }
+
+  console.group('🚀 QR Scanner Component Mounted');
+  console.log('Mount time:', new Date().toISOString());
+  console.log('Current URL:', currentUrl.value);
+  console.log('Protocol:', typeof window !== 'undefined' ? window.location.protocol : 'N/A');
+  console.log('Is HTTPS?', isHttps.value);
+  console.log('User role:', props.user_role);
+  console.log('Is admin?', isAdmin.value);
+  console.log('Available events:', props.events.length);
+  console.log('Events:', props.events);
+
+  // Check browser capabilities
+  console.log('Navigator.mediaDevices available?', typeof navigator !== 'undefined' && !!(navigator.mediaDevices));
+  console.log('getUserMedia available?', hasGetUserMedia.value);
+  console.log('Permissions API available?', typeof navigator !== 'undefined' && !!(navigator.permissions));
+
+  // Check if we're in a secure context
+  console.log('Secure context?', isSecureContext.value);
+
+  // Log user agent for debugging
+  console.log('User agent:', typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A');
+
   if (!isAdmin.value && props.events.length === 1) {
     selectedEventId.value = props.events[0].id;
+    console.log('Auto-selected event for organizer:', props.events[0]);
   }
+
+  // Test camera permissions immediately
+  if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    console.log('Testing camera access...');
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        console.log('✅ Camera access test successful');
+        console.log('Stream:', stream);
+        console.log('Video tracks:', stream.getVideoTracks().length);
+        stream.getVideoTracks().forEach((track, index) => {
+          console.log(`Video track ${index + 1}:`, {
+            label: track.label,
+            enabled: track.enabled,
+            readyState: track.readyState,
+            settings: track.getSettings()
+          });
+        });
+        // Stop the test stream
+        stream.getTracks().forEach(track => track.stop());
+      })
+      .catch(error => {
+        console.error('❌ Camera access test failed:', error);
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      });
+  } else {
+    console.error('❌ getUserMedia not available');
+  }
+
+  console.groupEnd();
 });
 
 onUnmounted(() => {
@@ -272,6 +500,22 @@ const formatOccurrenceDateTime = (startAt: string, endAt?: string): string => {
 
             <div class="space-y-4">
               <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Scan Status</h3>
+
+              <!-- Debug Information -->
+              <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-md p-3 text-xs">
+                <h4 class="font-medium text-blue-900 dark:text-blue-100 mb-2">Debug Info:</h4>
+                <div class="space-y-1 text-blue-800 dark:text-blue-200">
+                  <div>🔒 HTTPS: {{ isHttps ? 'Yes' : 'No' }}</div>
+                  <div>🎥 Camera API: {{ hasGetUserMedia ? 'Available' : 'Not Available' }}</div>
+                  <div>🔐 Secure Context: {{ isSecureContext ? 'Yes' : 'No' }}</div>
+                  <div>👤 Role: {{ props.user_role }}</div>
+                  <div>📅 Events: {{ props.events.length }}</div>
+                  <div>🎯 Selected Event: {{ selectedEventId || 'None' }}</div>
+                  <div>📷 Scanner Ready: {{ scannerReady ? 'Yes' : 'No' }}</div>
+                  <div>❌ Camera Error: {{ cameraError ? 'Yes' : 'No' }}</div>
+                  <div>🔄 Should Show Scanner: {{ !cameraError && ((isAdmin && selectedEventId) || (!isAdmin && props.events.length > 0)) ? 'Yes' : 'No' }}</div>
+                </div>
+              </div>
               <div v-if="isProcessing && !scanResult && !bookingDetails && !checkInStatus" class="flex items-center text-sm text-gray-600 dark:text-gray-400">
                   <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -296,7 +540,10 @@ const formatOccurrenceDateTime = (startAt: string, endAt?: string): string => {
 
             </div>
           </div>
-           <div class="mt-6 flex justify-end">
+           <div class="mt-6 flex justify-between">
+                <PrimaryButton @click="testCameraAccess" class="bg-blue-600 hover:bg-blue-700">
+                    Test Camera Access
+                </PrimaryButton>
                 <SecondaryButton @click="resetScannerState" :disabled="isProcessing && !showDetailsModal">
                     Reset Scanner
                 </SecondaryButton>

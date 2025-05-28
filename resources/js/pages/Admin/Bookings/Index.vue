@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { type Booking } from '@/types'; // Assuming a Booking type will be defined in @/types
-import { Eye } from 'lucide-vue-next';
+import { Eye, QrCode } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 
 // Props passed from the controller
@@ -28,12 +28,23 @@ const formatDate = (dateString: string | undefined) => {
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 bg-white border-b border-gray-200">
-                        <!-- Optional: Add a Create Booking button if applicable -->
-                        <!-- <div class="flex justify-end mb-4">
-                            <Button as-child>
-                                <Link :href="route('admin.bookings.create')">Create Booking</Link>
-                            </Button>
-                        </div> -->
+                        <!-- Action buttons -->
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <Button variant="outline" as-child>
+                                    <Link :href="route('admin.qr-scanner.index')">
+                                        <QrCode class="h-4 w-4 mr-2" />
+                                        QR Code Scanner
+                                    </Link>
+                                </Button>
+                            </div>
+                            <!-- Optional: Add a Create Booking button if applicable -->
+                            <!-- <div>
+                                <Button as-child>
+                                    <Link :href="route('admin.bookings.create')">Create Booking</Link>
+                                </Button>
+                            </div> -->
+                        </div>
 
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">

@@ -153,8 +153,8 @@ class QrScannerController extends Controller
     private function getAccessibleEvents($user)
     {
         $query = Event::with(['media'])
-            ->select(['id', 'name', 'organizer_id', 'status'])
-            ->where('status', 'published');
+            ->select(['id', 'name', 'organizer_id', 'event_status'])
+            ->where('event_status', 'published');
 
         // Platform admins can see all events
         if ($user->hasRole(RoleNameEnum::ADMIN)) {
