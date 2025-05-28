@@ -45,7 +45,7 @@ class Booking extends Model
         parent::boot();
         static::creating(function ($booking) {
             if (empty($booking->booking_number)) {
-                $booking->booking_number = (string) Str::uuid();
+                $booking->booking_number = QrCodeHelper::generate();
             }
             $booking->quantity = 1; // Ensure quantity is always 1
         });
