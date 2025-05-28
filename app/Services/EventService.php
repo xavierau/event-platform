@@ -133,7 +133,7 @@ class EventService
         $endDate = $endDate ? $endDate->utc() : now()->addYears(6)->utc();
 
         $query = Event::query()
-            ->where('event_status', 'published')
+            ->whereIn('event_status', ['published', 'completed'])
             ->with([
                 'category',
                 'media',
