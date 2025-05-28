@@ -119,12 +119,12 @@ const openPurchaseModal = () => {
   }
 
   // Existing logic to open modal if tickets are available
-  if (selectedOccurrence.value && selectedOccurrence.value.tickets && selectedOccurrence.value.tickets.length > 0) {
+  if (selectedOccurrence.value && selectedOcurrenceHasTickets.value) {
     showPurchaseModal.value = true;
   } else {
     // Optionally, handle the case where there are no tickets or no occurrence selected
     // For now, we can just prevent the modal from opening or show an alert.
-    alert('当前场次暂无可售票品或未选择场次。');
+    alert('No tickets available for this occurrence.');
     console.warn('Attempted to open purchase modal without tickets or selected occurrence.', selectedOccurrence.value);
   }
 };
