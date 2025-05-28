@@ -37,19 +37,6 @@ class Booking extends Model
         'status' => BookingStatusEnum::class,
     ];
 
-    /**
-     * Boot the model.
-     */
-    protected static function boot()
-    {
-        parent::boot();
-        static::creating(function ($booking) {
-            if (empty($booking->booking_number)) {
-                $booking->booking_number = QrCodeHelper::generate();
-            }
-            $booking->quantity = 1; // Ensure quantity is always 1
-        });
-    }
 
     /**
      * Get the transaction that this booking belongs to.

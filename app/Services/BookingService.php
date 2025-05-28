@@ -178,6 +178,7 @@ class BookingService
                             'transaction_id' => $orderId,
                             'event_id' => $occurrence->event->id,
                             'ticket_definition_id' => $itemData->ticket_id,
+                            'qr_code_identifier' => QrCodeHelper::generate(), // Generate BK- format QR code
                             'quantity' => 1, // Each booking record represents one physical ticket
                             'price_per_unit' => $ticketDefinition->price, // Price from DB
                             'price_at_booking' => $ticketDefinition->price, // Adding the missing price_at_booking field
@@ -185,7 +186,6 @@ class BookingService
                             'total_price' => $ticketDefinition->price, // Price for one unit
                             'currency' => $currency,
                             'status' => $initialBookingStatus, // Use the determined initial booking status
-                            'qr_code_identifier' => QrCodeHelper::generate(), // Generate BK- format QR code
                             'max_allowed_check_ins' => $ticketDefinition->max_check_ins ?? 1, // Set max check-ins from ticket definition
                             // Consider adding a unique reference/seat number here if applicable per ticket
                         ]);
@@ -209,6 +209,7 @@ class BookingService
                     'user_id' => $user->id,
                     'transaction_id' => $orderId,
                     'event_id' => $occurrence->event->id,
+                    'qr_code_identifier' => QrCodeHelper::generate(), // Generate BK- format QR code
                     'ticket_definition_id' => null, // No specific ticket
                     'quantity' => 1, // Or based on some logic for general admission
                     'price_per_unit' => 0,
@@ -217,7 +218,6 @@ class BookingService
                     'currency_at_booking' => $currency, // Adding the missing currency_at_booking field
                     'currency' => $currency,
                     'status' => BookingStatusEnum::CONFIRMED, // Directly confirmed for free general admission
-                    'qr_code_identifier' => QrCodeHelper::generate(), // Generate BK- format QR code
                     'max_allowed_check_ins' => 1, // Default to 1 for free bookings
                 ]);
             }
