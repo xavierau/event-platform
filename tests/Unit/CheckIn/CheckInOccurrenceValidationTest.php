@@ -226,7 +226,7 @@ class CheckInOccurrenceValidationTest extends TestCase
         $this->assertCount(4, $result['errors']); // Now includes ticket-occurrence validation error
         $this->assertContains('The event occurrence does not belong to the same event as this booking', $result['errors']);
         $this->assertContains('This ticket is not valid for the selected event occurrence', $result['errors']);
-        $this->assertContains('Booking is not confirmed (current status: cancelled)', $result['errors']);
+        $this->assertContains('Booking status is not valid for check-in (current status: cancelled)', $result['errors']);
         $this->assertContains('Maximum allowed check-ins reached (1/1)', $result['errors']);
     }
 

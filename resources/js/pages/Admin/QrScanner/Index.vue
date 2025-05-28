@@ -41,11 +41,13 @@ const scannerReady = ref(false);
 const scanResult = ref<any>(null); // To store decoded QR data or error message
 const bookingDetails = ref<any>(null);
 const eventOccurrences = ref<any[]>([]);
+const checkInHistory = ref<any>(null);
 const selectedEventId = ref<number | null>(null);
 const selectedOccurrenceId = ref<number | null>(null);
 const cameraError = ref<string | null>(null);
 const isProcessing = ref(false);
 const showDetailsModal = ref(false);
+const showLoadingModal = ref(false);
 const checkInStatus = ref<{ success: boolean; message: string } | null>(null);
 
 // Browser API refs (reactive and SSR-safe)
@@ -55,6 +57,22 @@ const hasGetUserMedia = ref(false);
 const currentUrl = ref('');
 
 const isAdmin = computed(() => props.user_role === 'admin');
+
+// Add a new computed property to determine if platform admin can scan all QR codes
+const isPlatformAdmin = computed(() => props.user_role === 'admin');
+
+// Update the scanner activation logic
+const shouldShowScanner = computed(() => {
+  // Platform admins can scan without selecting an event
+  if (isPlatformAdmin.value) {
+    return true;
+  }
+  // Organizers need to have events available and select one (if multiple)
+  if (!isAdmin.value && props.events.length > 0) {
+    return props.events.length === 1 || selectedEventId.value !== null;
+  }
+  return false;
+});
 
 // Form for check-in
 const checkInForm = useForm({
@@ -68,7 +86,8 @@ watch(selectedEventId, (newEventId, oldEventId) => {
   console.group('📋 Event Selection Changed');
   console.log('Previous event ID:', oldEventId);
   console.log('New event ID:', newEventId);
-  console.log('Scanner should be active?', !!(newEventId || (!isAdmin.value && props.events.length > 0)));
+  console.log('Is platform admin?', isPlatformAdmin.value);
+  console.log('Should show scanner?', shouldShowScanner.value);
   console.log('Is admin?', isAdmin.value);
   console.log('Available events:', props.events.length);
   console.groupEnd();
@@ -78,10 +97,14 @@ watch(selectedEventId, (newEventId, oldEventId) => {
 
 const onDetect = async (detectedCodes: DetectedBarcode[]) => {
   if (isProcessing.value || detectedCodes.length === 0) return;
+
+  // Show loading modal immediately
+  showLoadingModal.value = true;
   isProcessing.value = true;
   scanResult.value = null;
   bookingDetails.value = null;
   eventOccurrences.value = [];
+  checkInHistory.value = null;
   checkInStatus.value = null;
 
   const rawValue = detectedCodes[0].rawValue;
@@ -91,6 +114,7 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
 
     if (!isQRCodeDataValid(decodedData, 24 * 30)) {
       scanResult.value = { error: 'QR code has expired or is invalid.' };
+      showLoadingModal.value = false;
       isProcessing.value = false;
       return;
     }
@@ -115,17 +139,23 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
     if (response.ok && data.success) {
       bookingDetails.value = data.booking;
       eventOccurrences.value = data.event_occurrences;
+      checkInHistory.value = data.check_in_history;
       scanResult.value = { success: `Booking ${data.booking.booking_number} found.` };
       checkInForm.qr_code_identifier = data.booking.booking_number;
+
+      // Hide loading modal and show details modal
+      showLoadingModal.value = false;
       showDetailsModal.value = true;
     } else {
       scanResult.value = { error: data.message || 'Failed to validate QR code.' };
       bookingDetails.value = null;
+      showLoadingModal.value = false;
     }
   } catch (error: any) {
     console.error('Error processing QR code:', error);
     scanResult.value = { error: error.message || 'Error processing QR code.' };
     bookingDetails.value = null;
+    showLoadingModal.value = false;
   } finally {
     isProcessing.value = false;
   }
@@ -217,14 +247,23 @@ const resetScannerState = () => {
   scanResult.value = null;
   bookingDetails.value = null;
   eventOccurrences.value = [];
+  checkInHistory.value = null;
   selectedOccurrenceId.value = null;
   checkInStatus.value = null;
   isProcessing.value = false;
   showDetailsModal.value = false;
+  showLoadingModal.value = false;
   checkInForm.reset();
   checkInForm.qr_code_identifier = '';
+
+  // For platform admins, don't require event selection
+  if (isPlatformAdmin.value) {
+    // Platform admins can scan without event selection
+    return;
+  }
+
   if (isAdmin.value && props.events.length > 0 && !selectedEventId.value) {
-    // Admin still needs to select event
+    // Regular admin still needs to select event
   } else if (!isAdmin.value) {
     selectedEventId.value = props.events.length === 1 ? props.events[0].id : null;
   }
@@ -250,23 +289,56 @@ const handleCheckIn = async () => {
       body: JSON.stringify(checkInForm.data()),
     });
 
-    const data = await response.json();
-    if (response.ok && data.success) {
-      checkInStatus.value = { success: true, message: data.message || 'Check-in successful!' };
+    // Handle 204 No Content response (successful check-in)
+    if (response.status === 204) {
+      checkInStatus.value = { success: true, message: 'Check-in successful!' };
       if (bookingDetails.value) {
-          bookingDetails.value.status = 'checked_in';
+        bookingDetails.value.status = 'used';
       }
+      // Refresh check-in history
+      await refreshCheckInHistory();
     } else {
+      const data = await response.json();
       checkInStatus.value = { success: false, message: data.message || 'Check-in failed.' };
     }
   } catch (error: any) {
     console.error('Check-in error:', error);
     checkInStatus.value = { success: false, message: error.message || 'An unexpected error occurred during check-in.' };
+  } finally {
+    isProcessing.value = false;
+  }
+};
+
+const refreshCheckInHistory = async () => {
+  if (!bookingDetails.value) return;
+
+  try {
+    const response = await fetch(route('admin.qr-scanner.validate'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content,
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        qr_code: bookingDetails.value.booking_number,
+        event_id: selectedEventId.value,
+      }),
+    });
+
+    const data = await response.json();
+    if (response.ok && data.success) {
+      checkInHistory.value = data.check_in_history;
+      bookingDetails.value = data.booking; // Update booking details
+    }
+  } catch (error) {
+    console.error('Error refreshing check-in history:', error);
   }
 };
 
 const closeModalAndReset = () => {
   showDetailsModal.value = false;
+  showLoadingModal.value = false;
   resetScannerState();
 };
 
@@ -365,6 +437,8 @@ onMounted(() => {
   console.log('Is HTTPS?', isHttps.value);
   console.log('User role:', props.user_role);
   console.log('Is admin?', isAdmin.value);
+  console.log('Is platform admin?', isPlatformAdmin.value);
+  console.log('Should show scanner?', shouldShowScanner.value);
   console.log('Available events:', props.events.length);
   console.log('Events:', props.events);
 
@@ -379,6 +453,7 @@ onMounted(() => {
   // Log user agent for debugging
   console.log('User agent:', typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A');
 
+  // Auto-select event for organizers with single event
   if (!isAdmin.value && props.events.length === 1) {
     selectedEventId.value = props.events[0].id;
     console.log('Auto-selected event for organizer:', props.events[0]);
@@ -433,6 +508,42 @@ const formatOccurrenceDateTime = (startAt: string, endAt?: string): string => {
     return start.format('MMM D, YYYY • HH:mm');
 };
 
+const formatCheckInDateTime = (timestamp: string): string => {
+  return dayjs(timestamp).format('MMM D, YYYY • HH:mm');
+};
+
+const getCheckInStatusColor = (status: string): string => {
+  switch (status) {
+    case 'SUCCESSFUL':
+      return 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100';
+    case 'FAILED_MAX_USES_REACHED':
+      return 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
+    case 'FAILED_ALREADY_USED':
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
+  }
+};
+
+const getCheckInStatusText = (status: string): string => {
+  switch (status) {
+    case 'SUCCESSFUL':
+      return 'Successful';
+    case 'FAILED_MAX_USES_REACHED':
+      return 'Max Uses Reached';
+    case 'FAILED_ALREADY_USED':
+      return 'Already Used';
+    case 'FAILED_INVALID_CODE':
+      return 'Invalid Code';
+    case 'FAILED_NOT_YET_VALID':
+      return 'Not Yet Valid';
+    case 'FAILED_EXPIRED':
+      return 'Expired';
+    default:
+      return status;
+  }
+};
+
 </script>
 
 <template>
@@ -456,13 +567,18 @@ const formatOccurrenceDateTime = (startAt: string, endAt?: string): string => {
               v-model="selectedEventId"
               class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
             >
-              <option :value="null">-- Select an Event --</option>
+              <option :value="null">
+                {{ isPlatformAdmin ? '-- All Events (Platform Admin) --' : '-- Select an Event --' }}
+              </option>
               <option v-for="eventItem in props.events" :key="eventItem.id" :value="eventItem.id">
                 {{ eventItem.name }}
               </option>
             </select>
-            <p v-if="!selectedEventId && isAdmin" class="text-sm text-yellow-600 mt-1">
+            <p v-if="!selectedEventId && isAdmin && !isPlatformAdmin" class="text-sm text-yellow-600 mt-1">
               Admins: Please select an event to enable the scanner.
+            </p>
+            <p v-if="isPlatformAdmin" class="text-sm text-blue-600 mt-1">
+              Platform Admin: You can scan QR codes for any event. Optionally select a specific event to filter results.
             </p>
           </div>
           <div v-else-if="!isAdmin && props.events.length === 0" class="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
@@ -478,7 +594,7 @@ const formatOccurrenceDateTime = (startAt: string, endAt?: string): string => {
                 </p>
               </div>
               <qrcode-stream
-                v-if="!cameraError && ((isAdmin && selectedEventId) || (!isAdmin && props.events.length > 0))"
+                v-if="!cameraError && shouldShowScanner"
                 @detect="onDetect"
                 @error="onCameraError"
                 @camera-on="onScannerReady"
@@ -490,9 +606,9 @@ const formatOccurrenceDateTime = (startAt: string, endAt?: string): string => {
                   <p class="text-gray-500 dark:text-gray-400">Initializing camera...</p>
                 </div>
               </qrcode-stream>
-               <div v-if="(isAdmin && !selectedEventId && props.events.length > 0) || (!isAdmin && props.events.length === 0)" class="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+               <div v-if="(isAdmin && !selectedEventId && props.events.length > 0 && !isPlatformAdmin) || (!isAdmin && props.events.length === 0)" class="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
                   <p class="text-gray-500 dark:text-gray-400 text-center p-4">
-                    <span v-if="isAdmin && !selectedEventId">Please select an event above to activate the QR scanner.</span>
+                    <span v-if="isAdmin && !selectedEventId && !isPlatformAdmin">Please select an event above to activate the QR scanner.</span>
                     <span v-if="!isAdmin && props.events.length === 0">No events available for scanning.</span>
                   </p>
               </div>
@@ -509,11 +625,12 @@ const formatOccurrenceDateTime = (startAt: string, endAt?: string): string => {
                   <div>🎥 Camera API: {{ hasGetUserMedia ? 'Available' : 'Not Available' }}</div>
                   <div>🔐 Secure Context: {{ isSecureContext ? 'Yes' : 'No' }}</div>
                   <div>👤 Role: {{ props.user_role }}</div>
+                  <div>🛡️ Platform Admin: {{ isPlatformAdmin ? 'Yes' : 'No' }}</div>
                   <div>📅 Events: {{ props.events.length }}</div>
                   <div>🎯 Selected Event: {{ selectedEventId || 'None' }}</div>
                   <div>📷 Scanner Ready: {{ scannerReady ? 'Yes' : 'No' }}</div>
                   <div>❌ Camera Error: {{ cameraError ? 'Yes' : 'No' }}</div>
-                  <div>🔄 Should Show Scanner: {{ !cameraError && ((isAdmin && selectedEventId) || (!isAdmin && props.events.length > 0)) ? 'Yes' : 'No' }}</div>
+                  <div>🔄 Should Show Scanner: {{ shouldShowScanner ? 'Yes' : 'No' }}</div>
                 </div>
               </div>
               <div v-if="isProcessing && !scanResult && !bookingDetails && !checkInStatus" class="flex items-center text-sm text-gray-600 dark:text-gray-400">
@@ -530,11 +647,12 @@ const formatOccurrenceDateTime = (startAt: string, endAt?: string): string => {
                 {{ scanResult.error }}
               </div>
 
-              <div v-if="!bookingDetails && !scanResult && !isProcessing && !checkInStatus && ((isAdmin && selectedEventId) || (!isAdmin && props.events.length > 0))" class="text-sm text-gray-500 dark:text-gray-400">
+              <div v-if="!bookingDetails && !scanResult && !isProcessing && !checkInStatus && shouldShowScanner" class="text-sm text-gray-500 dark:text-gray-400">
                 Point the camera at a QR code to scan.
               </div>
-               <div v-else-if="!bookingDetails && !scanResult && !isProcessing && !checkInStatus && ((isAdmin && !selectedEventId && props.events.length > 0) || (!isAdmin && props.events.length === 0))" class="text-sm text-gray-500 dark:text-gray-400">
-                 <span v-if="isAdmin && !selectedEventId">Select an event to begin scanning.</span>
+               <div v-else-if="!bookingDetails && !scanResult && !isProcessing && !checkInStatus && !shouldShowScanner" class="text-sm text-gray-500 dark:text-gray-400">
+                 <span v-if="isAdmin && !selectedEventId && !isPlatformAdmin">Select an event to begin scanning.</span>
+                 <span v-else-if="!isAdmin && props.events.length === 0">No events available for scanning.</span>
                  <span v-else>Scanner is idle.</span>
               </div>
 
@@ -552,41 +670,116 @@ const formatOccurrenceDateTime = (startAt: string, endAt?: string): string => {
       </div>
     </div>
 
-    <div v-if="showDetailsModal && bookingDetails" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 transition-opacity duration-300" @click.self="closeModalAndReset">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto" @click.stop>
-        <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Booking: {{ bookingDetails.booking_number }}
-          </h3>
-          <button @click="closeModalAndReset" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+    <!-- Loading Modal -->
+    <div v-if="showLoadingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+      <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="text-center">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Processing QR Code...</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Validating booking and checking usage history</p>
         </div>
+      </div>
+    </div>
 
-        <div class="p-6 space-y-4">
-            <div class="flex items-start justify-between">
-                <div class="flex-1">
-                    <h4 class="text-md font-medium text-gray-900 dark:text-gray-100">
-                        {{ bookingDetails.ticket_definition?.name || 'General Admission' }}
-                        <span class="text-sm text-gray-500 dark:text-gray-400"> ({{ bookingDetails.quantity }}x)</span>
-                    </h4>
-                    <span
-                        :class="[
-                          'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1',
-                           getBookingStatusColor(bookingDetails.status)
-                           ]"
-                    >
-                        {{ getBookingStatusText(bookingDetails.status) }}
+    <!-- Booking Details Modal -->
+    <div v-if="showDetailsModal && bookingDetails" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="mt-3">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Booking Details</h3>
+            <button @click="closeModalAndReset" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Booking Information -->
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Booking Information</h4>
+                <div class="space-y-1 text-sm">
+                  <div><span class="font-medium">Booking #:</span> {{ bookingDetails.booking_number }}</div>
+                  <div><span class="font-medium">Status:</span>
+                    <span :class="getBookingStatusClass(bookingDetails.status)">
+                      {{ getBookingStatusText(bookingDetails.status) }}
                     </span>
+                  </div>
+                  <div><span class="font-medium">Quantity:</span> {{ bookingDetails.quantity }}</div>
+                  <div><span class="font-medium">Total:</span> {{ formatCurrency(bookingDetails.total_price, bookingDetails.currency) }}</div>
                 </div>
+              </div>
+              <div>
+                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Customer Information</h4>
+                <div class="space-y-1 text-sm">
+                  <div><span class="font-medium">Name:</span> {{ bookingDetails.user.name }}</div>
+                  <div><span class="font-medium">Email:</span> {{ bookingDetails.user.email }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Event Information -->
+          <div class="bg-blue-50 dark:bg-blue-900 rounded-lg p-4 mb-4">
+            <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Event Information</h4>
+            <div class="space-y-1 text-sm">
+              <div><span class="font-medium">Event:</span> {{ bookingDetails.event.name }}</div>
+              <div v-if="bookingDetails.ticket_definition">
+                <span class="font-medium">Ticket Type:</span> {{ bookingDetails.ticket_definition.name }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Check-in History -->
+          <div v-if="checkInHistory" class="bg-yellow-50 dark:bg-yellow-900 rounded-lg p-4 mb-4">
+            <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Check-in History & Usage</h4>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div class="text-center">
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ checkInHistory.successful_check_ins }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">Successful</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ checkInHistory.failed_check_ins }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">Failed</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ checkInHistory.remaining_check_ins }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">Remaining</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ checkInHistory.max_allowed_check_ins }}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400">Max Allowed</div>
+              </div>
             </div>
 
-            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Event Details</h5>
-                <p class="text-sm text-gray-700 dark:text-gray-300 mb-1">{{ bookingDetails.event.name }}</p>
+            <!-- Check-in Log Entries -->
+            <div v-if="checkInHistory.check_in_logs.length > 0" class="space-y-2">
+              <h5 class="font-medium text-gray-900 dark:text-gray-100 text-sm">Recent Check-in Attempts:</h5>
+              <div class="max-h-32 overflow-y-auto space-y-1">
+                <div
+                  v-for="log in checkInHistory.check_in_logs.slice(0, 5)"
+                  :key="log.id"
+                  class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded text-xs"
+                >
+                  <div class="flex items-center space-x-2">
+                    <span :class="getCheckInStatusColor(log.status)" class="px-2 py-1 rounded-full text-xs font-medium">
+                      {{ getCheckInStatusText(log.status) }}
+                    </span>
+                    <span class="text-gray-600 dark:text-gray-400">{{ formatCheckInDateTime(log.timestamp) }}</span>
+                  </div>
+                  <div v-if="log.event_occurrence" class="text-gray-500 dark:text-gray-400 text-right">
+                    <div>{{ log.event_occurrence.name || 'Main Occurrence' }}</div>
+                  </div>
+                </div>
+              </div>
             </div>
+            <div v-else class="text-sm text-gray-600 dark:text-gray-400">
+              No previous check-in attempts found.
+            </div>
+          </div>
 
-
+          <!-- Event Occurrence Selection for Check-in -->
           <div v-if="eventOccurrences.length > 0" class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
             <h5 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Select Event Occurrence for Check-in:</h5>
             <div class="space-y-2 max-h-48 overflow-y-auto">
@@ -613,6 +806,7 @@ const formatOccurrenceDateTime = (startAt: string, endAt?: string): string => {
              <p v-if="!selectedOccurrenceId && checkInForm.errors.event_occurrence_id" class="text-xs text-red-500 mt-1">{{ checkInForm.errors.event_occurrence_id }}</p>
              <p v-else-if="!selectedOccurrenceId && bookingDetails.status === 'confirmed' && !checkInStatus" class="text-xs text-yellow-600 mt-1">Please select an occurrence to proceed with check-in.</p>
           </div>
+
           <div v-else class="bg-yellow-50 dark:bg-yellow-700 border border-yellow-300 dark:border-yellow-600 rounded-md text-sm text-yellow-700 dark:text-yellow-200 p-3">
               No upcoming occurrences found for this event. Check-in may not be possible.
           </div>

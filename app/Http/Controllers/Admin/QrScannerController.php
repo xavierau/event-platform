@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\QrCodeValidationService;
+use App\Services\CheckInService;
 use App\DataTransferObjects\CheckInData;
 use App\Models\EventOccurrence;
 use App\Models\Event;
@@ -16,7 +17,8 @@ use Inertia\Response;
 class QrScannerController extends Controller
 {
     public function __construct(
-        private QrCodeValidationService $qrCodeValidationService
+        private QrCodeValidationService $qrCodeValidationService,
+        private CheckInService $checkInService
     ) {
         // Middleware will be applied at the route level
     }
@@ -38,7 +40,7 @@ class QrScannerController extends Controller
     }
 
     /**
-     * Validate QR code and return booking information
+     * Validate QR code and return booking information with usage history
      */
     public function validateQrCode(Request $request)
     {
@@ -85,6 +87,9 @@ class QrScannerController extends Controller
                 ];
             });
 
+        // Get check-in history for this booking
+        $checkInHistory = $this->checkInService->getCheckInHistory($booking);
+
         return response()->json([
             'success' => true,
             'booking' => [
@@ -110,6 +115,7 @@ class QrScannerController extends Controller
                 ] : null,
             ],
             'event_occurrences' => $eventOccurrences,
+            'check_in_history' => $checkInHistory,
         ]);
     }
 
@@ -131,13 +137,19 @@ class QrScannerController extends Controller
                 ], 403);
             }
 
-            // TODO: Implement check-in logic using CheckInService
-            // This would be implemented in a future task
+            // Process the check-in using the CheckInService
+            $result = $this->checkInService->processCheckIn($checkInData);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Check-in functionality will be implemented in a future update',
-            ]);
+            if ($result['success']) {
+                // Return 204 No Content for successful check-in as requested
+                return response()->noContent();
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'],
+                    'status' => $result['status']->value ?? null,
+                ], 400);
+            }
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

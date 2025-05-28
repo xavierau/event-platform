@@ -15,7 +15,7 @@ class CheckInEligibilityService
     /**
      * Valid booking statuses for check-in
      */
-    public const VALID_BOOKING_STATUSES = ['confirmed'];
+    public const VALID_BOOKING_STATUSES = ['confirmed', 'used'];
 
     /**
      * Validate if a booking is eligible for check-in.
@@ -42,7 +42,7 @@ class CheckInEligibilityService
 
         // 2. Check booking status
         if (!in_array($booking->status->value, self::VALID_BOOKING_STATUSES)) {
-            $errors[] = "Booking is not confirmed (current status: {$booking->status->value})";
+            $errors[] = "Booking status is not valid for check-in (current status: {$booking->status->value})";
         }
 
         // 3. Check event timing (removed window constraints - operators can check in anytime)
@@ -220,7 +220,7 @@ class CheckInEligibilityService
 
         // 4. Check booking status
         if (!in_array($booking->status->value, self::VALID_BOOKING_STATUSES)) {
-            $errors[] = "Booking is not confirmed (current status: {$booking->status->value})";
+            $errors[] = "Booking status is not valid for check-in (current status: {$booking->status->value})";
         }
 
         // 5. Check max allowed check-ins

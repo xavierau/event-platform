@@ -64,7 +64,7 @@ class CheckInEligibilityValidationTest extends TestCase
         $result = $this->eligibilityService->validateEligibility($booking);
 
         $this->assertFalse($result['is_eligible']);
-        $this->assertContains('Booking is not confirmed (current status: cancelled)', $result['errors']);
+        $this->assertContains('Booking status is not valid for check-in (current status: cancelled)', $result['errors']);
     }
 
     /** @test */
@@ -138,7 +138,7 @@ class CheckInEligibilityValidationTest extends TestCase
 
         $this->assertFalse($result['is_eligible']);
         $this->assertCount(2, $result['errors']);
-        $this->assertContains('Booking is not confirmed (current status: cancelled)', $result['errors']);
+        $this->assertContains('Booking status is not valid for check-in (current status: cancelled)', $result['errors']);
         $this->assertContains('Maximum allowed check-ins reached (1/1)', $result['errors']);
     }
 
