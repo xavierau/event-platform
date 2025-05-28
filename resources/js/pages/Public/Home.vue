@@ -153,7 +153,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-0">Upcoming Events</h2>
             <div class="flex space-x-2 text-sm flex-wrap">
-              <button
+              <!-- <button
                 @click="showTodayEvents"
                 :class="[
                   'px-3 py-1 rounded-full font-medium',
@@ -163,7 +163,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
                 ]"
               >
                 Today
-              </button>
+              </button> -->
               <button
                 @click="showUpcomingEvents"
                 :class="[
@@ -175,8 +175,8 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
               >
                 Upcoming
               </button>
-              <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" @click="goToTomorrow">Tomorrow</button>
-              <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" @click="goToThisWeek">This Week</button>
+              <!-- <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" @click="goToTomorrow">Tomorrow</button> -->
+              <!-- <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" @click="goToThisWeek">This Week</button> -->
               <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center" @click="openCalendar">
                 Calendar <span class="ml-1.5 text-base">📅</span>
               </button>
