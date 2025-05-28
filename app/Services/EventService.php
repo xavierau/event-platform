@@ -341,7 +341,12 @@ class EventService
                 $firstOccurrence = $event->eventOccurrences->first();
                 $lastOccurrence = $event->eventOccurrences->last();
                 $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
-                    return $occurrence->ticketDefinitions->pluck('price');
+                    return $occurrence->ticketDefinitions->map(function ($ticket) {
+                        return [
+                            'price' => $ticket->price,
+                            'currency' => $ticket->currency
+                        ];
+                    });
                 });
 
                 $prices = $ticketData->pluck('price');
