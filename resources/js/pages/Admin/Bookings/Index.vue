@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 
 // Props passed from the controller
 // The controller should pass pageTitle and breadcrumbs as well
-defineProps<{
+const props = defineProps<{
     bookings: { data: Booking[] }; // Assuming pagination or a structured response
     pageTitle: string; // Expected by AppLayout
     breadcrumbs: Array<{ title: string; href?: string }>; // Changed text to title
  }>();
+
+ console.log(props);
 
 // Helper to format date, assuming booking has a created_at or similar date field
 const formatDate = (dateString: string | undefined) => {

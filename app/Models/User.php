@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Modules\Membership\Models\UserMembership;
+use App\Modules\Wallet\Models\Wallet;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -81,5 +83,72 @@ class User extends Authenticatable
     public function hasInWishlist(Event $event): bool
     {
         return $this->wishlistedEvents()->where('event_id', $event->id)->exists();
+    }
+
+    /**
+     * Get the user's wallet.
+     */
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    /**
+     * Get the user's current membership.
+     */
+    public function currentMembership()
+    {
+        return $this->hasOne(UserMembership::class)
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->latest();
+    }
+
+    /**
+     * Get all user memberships.
+     */
+    public function memberships()
+    {
+        return $this->hasMany(UserMembership::class);
+    }
+
+    /**
+     * Check if the user has an active membership.
+     */
+    public function hasMembership(): bool
+    {
+        return $this->currentMembership()->exists();
+    }
+
+    /**
+     * Get the user's points balance.
+     */
+    public function getPointsBalance(): int
+    {
+        return $this->wallet?->points_balance ?? 0;
+    }
+
+    /**
+     * Get the user's kill points balance.
+     */
+    public function getKillPointsBalance(): int
+    {
+        return $this->wallet?->kill_points_balance ?? 0;
+    }
+
+    /**
+     * Check if the user has enough points.
+     */
+    public function hasEnoughPoints(int $amount): bool
+    {
+        return $this->getPointsBalance() >= $amount;
+    }
+
+    /**
+     * Check if the user has enough kill points.
+     */
+    public function hasEnoughKillPoints(int $amount): bool
+    {
+        return $this->getKillPointsBalance() >= $amount;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\RoleNameEnum;
 use App\Http\Controllers\Controller;
 use App\Services\BookingService; // Assuming BookingService will be created
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ class BookingController extends Controller
             $bookingsCollection = $this->bookingService->getBookingsForUser($user);
         } elseif ($user->hasRole('organizer')) {
             $bookingsCollection = $this->bookingService->getBookingsForOrganizerEvents($user);
-        } elseif ($user->hasRole('super-admin')) { // Example: Allow super-admin to see all bookings
+        } elseif ($user->hasRole(RoleNameEnum::ADMIN->value)) { // Example: Allow super-admin to see all bookings
             $bookingsCollection = $this->bookingService->getAllBookings();
         }
         // If you were using pagination, it would typically already be in the correct structure:
