@@ -29,7 +29,7 @@ class MyBookingsController extends Controller
         // Get bookings for the authenticated user with necessary relationships
         $bookings = $this->bookingService->getBookingsForUser($user)
             ->filter(function ($booking) {
-                return $booking->status === BookingStatusEnum::CONFIRMED;
+                return $booking->status === BookingStatusEnum::CONFIRMED || $booking->status === BookingStatusEnum::USED;
             });
 
         // Transform the bookings to include the necessary data for the frontend
