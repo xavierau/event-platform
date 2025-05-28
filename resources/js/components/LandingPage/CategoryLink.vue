@@ -57,7 +57,7 @@ const iconDisplay = computed(() => {
         <!-- Emoji/Text Icon (legacy or fallback) -->
         <div
           v-else
-          class="text-3xl sm:text-4xl text-indigo-600 dark:text-indigo-400"
+          class="text-4xl sm:text-4xl text-indigo-600 dark:text-indigo-400"
         >
           {{ iconDisplay.content }}
         </div>

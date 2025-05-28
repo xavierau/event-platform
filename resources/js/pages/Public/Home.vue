@@ -197,10 +197,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-0">More Events</h2>
           <div class="flex space-x-2 text-sm flex-wrap">
-            <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">All Categories ▼</button>
-            <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">All Times ▼</button>
             <button class="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200 font-medium">Recommended</button>
-            <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">Nearest</button>
           </div>
         </div>
         <div>
