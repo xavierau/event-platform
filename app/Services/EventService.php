@@ -256,16 +256,11 @@ class EventService
 
                 $firstOccurrence = $event->eventOccurrences->first();
 
-                $ticketData =  $event->eventOccurrences->flatMap(function ($occurrence) { // Use relevantOccurrences
-                    return $occurrence->ticketDefinitions->map(function ($ticket) {
-                        return [
-                            'price' => $ticket->price,
-                            'currency' => $ticket->currency
-                        ];
-                    });
+                $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
+                    return $occurrence->ticketDefinitions->pluck('price');
                 });
 
-                $prices = $ticketData->pluck('price');
+                $prices = $ticketData;
                 $currency = $ticketData->first()['currency'] ?? 'HKD'; // Use first ticket's currency or default to USD
 
                 return [
