@@ -249,6 +249,7 @@ class BookingService
             try {
 
                 $params = [
+                    'allow_promotion_codes' => true,
                     'success_url' => route('payment.success') . '?transaction_id=' . $orderId . '&session_id={CHECKOUT_SESSION_ID}',
                     'cancel_url' => route('payment.cancel') . '?transaction_id=' . $orderId . '&session_id={CHECKOUT_SESSION_ID}',
                     'metadata' => $metadata,
