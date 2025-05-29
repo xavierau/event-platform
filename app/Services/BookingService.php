@@ -269,6 +269,7 @@ class BookingService
                     'requires_payment' => true,
                     'checkout_url' => $checkoutSession->url,
                     'booking_id' => $orderId, // Or primary booking ID
+                    'allow_promotion_codes' => true
                 ];
             } catch (ApiErrorException $e) {
                 Log::error('Stripe API Error during checkout session creation in BookingService: ' . $e->getMessage(), ['order_id' => $orderId]);
