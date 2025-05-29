@@ -37,27 +37,24 @@ class PromotionDataTest extends TestCase
     }
 
     #[Test]
-    public function it_validates_required_title_in_english()
+    public function it_can_create_promotion_with_only_url()
     {
-        $this->expectException(ValidationException::class);
-
-        PromotionData::validateAndCreate([
-            'title' => ['zh-TW' => '夏季特賣'], // Missing 'en'
-            'subtitle' => ['en' => 'Up to 50% off'],
+        $data = [
+            'title' => [],
+            'subtitle' => [],
             'url' => 'https://example.com',
-        ]);
-    }
+        ];
 
-    #[Test]
-    public function it_validates_required_subtitle_in_english()
-    {
-        $this->expectException(ValidationException::class);
+        $promotionData = PromotionData::validateAndCreate($data);
 
-        PromotionData::validateAndCreate([
-            'title' => ['en' => 'Summer Sale'],
-            'subtitle' => ['zh-TW' => '最高5折優惠'], // Missing 'en'
-            'url' => 'https://example.com',
-        ]);
+        $this->assertInstanceOf(PromotionData::class, $promotionData);
+        $this->assertEquals([], $promotionData->title);
+        $this->assertEquals([], $promotionData->subtitle);
+        $this->assertEquals('https://example.com', $promotionData->url);
+        $this->assertFalse($promotionData->is_active);
+        $this->assertNull($promotionData->starts_at);
+        $this->assertNull($promotionData->ends_at);
+        $this->assertEquals(0, $promotionData->sort_order);
     }
 
     #[Test]
@@ -66,8 +63,6 @@ class PromotionDataTest extends TestCase
         $this->expectException(ValidationException::class);
 
         PromotionData::validateAndCreate([
-            'title' => ['en' => 'Summer Sale'],
-            'subtitle' => ['en' => 'Up to 50% off'],
             'url' => 'not-a-valid-url',
         ]);
     }
@@ -78,8 +73,6 @@ class PromotionDataTest extends TestCase
         $this->expectException(ValidationException::class);
 
         PromotionData::validateAndCreate([
-            'title' => ['en' => 'Summer Sale'],
-            'subtitle' => ['en' => 'Up to 50% off'],
             'url' => 'https://example.com',
             'starts_at' => 'invalid-date',
         ]);
@@ -91,8 +84,6 @@ class PromotionDataTest extends TestCase
         $this->expectException(ValidationException::class);
 
         PromotionData::validateAndCreate([
-            'title' => ['en' => 'Summer Sale'],
-            'subtitle' => ['en' => 'Up to 50% off'],
             'url' => 'https://example.com',
             'starts_at' => '2024-12-31',
             'ends_at' => '2024-01-01', // Before starts_at
@@ -107,8 +98,8 @@ class PromotionDataTest extends TestCase
         $file = UploadedFile::fake()->image('banner.jpg');
 
         $data = [
-            'title' => ['en' => 'Summer Sale'],
-            'subtitle' => ['en' => 'Up to 50% off'],
+            'title' => [],
+            'subtitle' => [],
             'url' => 'https://example.com',
             'uploaded_banner_image' => $file,
         ];
@@ -123,8 +114,8 @@ class PromotionDataTest extends TestCase
     public function it_allows_optional_fields_to_be_null()
     {
         $data = [
-            'title' => ['en' => 'Summer Sale'],
-            'subtitle' => ['en' => 'Up to 50% off'],
+            'title' => [],
+            'subtitle' => [],
             'url' => 'https://example.com',
         ];
 
@@ -135,5 +126,7 @@ class PromotionDataTest extends TestCase
         $this->assertNull($promotionData->ends_at);
         $this->assertFalse($promotionData->is_active);
         $this->assertEquals(0, $promotionData->sort_order);
+        $this->assertEquals([], $promotionData->title);
+        $this->assertEquals([], $promotionData->subtitle);
     }
 }

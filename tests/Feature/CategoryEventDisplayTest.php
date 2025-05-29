@@ -166,7 +166,7 @@ class CategoryEventDisplayTest extends TestCase
             'slug' => 'magic',
         ]);
 
-        // Create an event with past occurrence
+        // Create an event with recent past occurrence (within 3 years - should appear)
         $pastEvent = $this->createTestEvent([
             'category_id' => $magicCategory->id,
             'name' => ['en' => 'Past Magic Event'],
@@ -181,20 +181,20 @@ class CategoryEventDisplayTest extends TestCase
             'name' => ['en' => 'Future Magic Event'],
         ]);
 
-        // Test: Check category page only shows future events
+        // Test: Check category page shows both recent past and future events
         $categoryResponse = $this->get('/events?category=magic');
         $categoryResponse->assertStatus(200);
 
         $categoryResponse->assertInertia(function ($page) use ($futureEvent, $pastEvent) {
             $page->component('Public/EventsByCategory')
                 ->where('title', '魔術')
-                ->has('events', 1)
-                ->where('events.0.id', $futureEvent->id);
+                ->has('events', 2); // Should show both events
 
             $events = collect($page->toArray()['props']['events']);
             $eventIds = $events->pluck('id')->toArray();
 
-            $this->assertNotContains($pastEvent->id, $eventIds);
+            $this->assertContains($futureEvent->id, $eventIds, 'Future event should be included');
+            $this->assertContains($pastEvent->id, $eventIds, 'Recent past event should be included');
 
             return $page;
         });
@@ -253,5 +253,57 @@ class CategoryEventDisplayTest extends TestCase
 
         $this->assertContains($publishedEvent->id, $moreEventIds);
         $this->assertNotContains($draftEvent->id, $moreEventIds);
+    }
+
+    public function test_event_with_very_old_occurrence_does_not_appear(): void
+    {
+        // Create a specific category
+        $magicCategory = Category::factory()->create([
+            'name' => ['en' => '魔術'],
+            'slug' => 'magic',
+        ]);
+
+        // Create an event with recent past occurrence (within 3 years - should appear)
+        $recentPastEvent = $this->createTestEvent([
+            'category_id' => $magicCategory->id,
+            'name' => ['en' => 'Recent Past Magic Event'],
+        ], [
+            'start_at_utc' => now()->utc()->subDays(1),
+            'end_at_utc' => now()->utc()->subDays(1)->addHours(2),
+        ]);
+
+        // Create an event with future occurrence
+        $futureEvent = $this->createTestEvent([
+            'category_id' => $magicCategory->id,
+            'name' => ['en' => 'Future Magic Event'],
+        ]);
+
+        // Create an event with very old occurrence (beyond 3 years - should not appear)
+        $veryOldEvent = $this->createTestEvent([
+            'category_id' => $magicCategory->id,
+            'name' => ['en' => 'Very Old Magic Event'],
+        ], [
+            'start_at_utc' => now()->utc()->subYears(4),
+            'end_at_utc' => now()->utc()->subYears(4)->addHours(2),
+        ]);
+
+        // Test: Check category page shows recent past and future events, but not very old events
+        $categoryResponse = $this->get('/events?category=magic');
+        $categoryResponse->assertStatus(200);
+
+        $categoryResponse->assertInertia(function ($page) use ($futureEvent, $recentPastEvent, $veryOldEvent) {
+            $page->component('Public/EventsByCategory')
+                ->where('title', '魔術')
+                ->has('events', 2); // Should show future and recent past events
+
+            $events = collect($page->toArray()['props']['events']);
+            $eventIds = $events->pluck('id')->toArray();
+
+            $this->assertContains($futureEvent->id, $eventIds, 'Future event should be included');
+            $this->assertContains($recentPastEvent->id, $eventIds, 'Recent past event should be included');
+            $this->assertNotContains($veryOldEvent->id, $eventIds, 'Very old event should not be included');
+
+            return $page;
+        });
     }
 }

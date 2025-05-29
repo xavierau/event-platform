@@ -54,8 +54,8 @@ const submit = () => {
                                     <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">Promotion Title (Translatable)</legend>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
                                         <div>
-                                            <label for="title_en" class="block text-xs font-medium text-gray-700 dark:text-gray-400">English *</label>
-                                            <input type="text" v-model="form.title.en" id="title_en" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required />
+                                            <label for="title_en" class="block text-xs font-medium text-gray-700 dark:text-gray-400">English</label>
+                                            <input type="text" v-model="form.title.en" id="title_en" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" />
                                         </div>
                                         <div>
                                             <label for="title_zh_TW" class="block text-xs font-medium text-gray-700 dark:text-gray-400">Traditional Chinese</label>
@@ -77,8 +77,8 @@ const submit = () => {
                                     <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 px-1">Promotion Subtitle (Translatable)</legend>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
                                         <div>
-                                            <label for="subtitle_en" class="block text-xs font-medium text-gray-700 dark:text-gray-400">English *</label>
-                                            <input type="text" v-model="form.subtitle.en" id="subtitle_en" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" required />
+                                            <label for="subtitle_en" class="block text-xs font-medium text-gray-700 dark:text-gray-400">English</label>
+                                            <input type="text" v-model="form.subtitle.en" id="subtitle_en" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" />
                                         </div>
                                         <div>
                                             <label for="subtitle_zh_TW" class="block text-xs font-medium text-gray-700 dark:text-gray-400">Traditional Chinese</label>

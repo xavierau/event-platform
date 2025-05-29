@@ -8,8 +8,8 @@ use Spatie\LaravelData\Data;
 class PromotionData extends Data
 {
     public function __construct(
-        public readonly array $title,
-        public readonly array $subtitle,
+        public readonly array $title = [],
+        public readonly array $subtitle = [],
         public readonly string $url,
         public readonly bool $is_active = false,
         public readonly ?string $starts_at = null,
@@ -21,9 +21,11 @@ class PromotionData extends Data
     public static function rules(): array
     {
         return [
+            'title' => ['nullable', 'array'],
             'title.en' => ['nullable', 'string', 'max:255'],
             'title.zh-TW' => ['nullable', 'string', 'max:255'],
             'title.zh-CN' => ['nullable', 'string', 'max:255'],
+            'subtitle' => ['nullable', 'array'],
             'subtitle.en' => ['nullable', 'string', 'max:255'],
             'subtitle.zh-TW' => ['nullable', 'string', 'max:255'],
             'subtitle.zh-CN' => ['nullable', 'string', 'max:255'],

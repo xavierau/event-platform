@@ -42,21 +42,15 @@ class EventService
 
     public function findEventById(int $id): ?Event
     {
-
         $withSubQuery = [
-            'ticketDefinitions' => function ($subQuery) {
-                return $subQuery->whereNull('availability_window_start_utc')
-                    ->orWhere('availability_window_start_utc', '<=', now()->utc());
-            }
+            'ticketDefinitions' => fn($subQuery) => $this->applyTicketAvailabilityFilter($subQuery)
         ];
 
         $with = [
             'category',
             'organizer',
             'tags',
-            'eventOccurrences' => function ($query) use ($withSubQuery) {
-                return $query->with($withSubQuery)->where('status', 'scheduled');
-            }
+            'eventOccurrences' => fn($query) => $query->with($withSubQuery)->where('status', 'scheduled')
         ];
         return Event::with($with)->find($id);
     }
@@ -132,47 +126,17 @@ class EventService
         $startDate = $startDate ? $startDate->utc() : now()->addYears(-3)->utc();
         $endDate = $endDate ? $endDate->utc() : now()->addYears(6)->utc();
 
-        $query = Event::query()
-            ->whereIn('event_status', ['published', 'completed'])
-            ->with([
-                'category',
-                'media',
-                'eventOccurrences' => function ($query) use ($startDate, $endDate) {
-                    $query->where('start_at_utc', '>=', $startDate)
-                        ->where('start_at_utc', '<=', $endDate)
-                        ->whereIn('status', ['active', 'scheduled', 'completed'])
-                        ->orderBy('start_at_utc', 'asc');
-                },
-                'eventOccurrences.venue',
-                'eventOccurrences.ticketDefinitions',
-                // 'eventOccurrences.ticketDefinitions' => function ($query) {
-                //     $query->whereNull('availability_window_start_utc')
-                //         ->orWhere([
-                //             ['availability_window_start_utc', '<=', now()->utc()],
-                //         ]);
-                // }
-            ])
-            // Only include events that have at least one future occurrence within the specified range
-            ->whereHas('eventOccurrences', function ($query) use ($startDate, $endDate) {
-                $query->where('start_at_utc', '>=', $startDate)
-                    ->where('start_at_utc', '<=', $endDate)
-                    ->whereIn('status', ['active', 'scheduled', 'completed']);
-            })
-            // Exclude specific event IDs if provided
-            ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
-                return $query->whereNotIn('id', $excludeIds);
-            })
-            // Order by the earliest upcoming occurrence within the specified range
-            ->orderBy(function ($query) use ($startDate, $endDate) { // Pass and use $endDate here
-                return $query->select('start_at_utc')
-                    ->from('event_occurrences')
-                    ->whereColumn('event_id', 'events.id')
-                    ->where('start_at_utc', '>=', $startDate)
-                    ->where('start_at_utc', '<=', $endDate) // Added this condition for strict ordering within range
-                    ->whereIn('status', ['active', 'scheduled', 'completed'])
-                    ->orderBy('start_at_utc')
-                    ->limit(1);
-            });
+        $eventStatuses = ['published', 'completed'];
+        $occurrenceStatuses = ['active', 'scheduled', 'completed'];
+
+        $query = $this->buildBaseEventQuery($eventStatuses, $startDate, $endDate, $occurrenceStatuses, true);
+
+        $this->applyOccurrenceFilter($query, $startDate, $endDate, $occurrenceStatuses);
+
+        // Exclude specific event IDs if provided
+        $query->when(!empty($excludeIds), fn($q) => $q->whereNotIn('id', $excludeIds));
+
+        $this->applyEarliestOccurrenceOrdering($query, $startDate, $endDate, $occurrenceStatuses);
 
         if ($limit) {
             $query->take($limit);
@@ -199,86 +163,24 @@ class EventService
         $upcomingWindowDays = config('app.upcoming_events_window_days', self::DEFAULT_UPCOMING_EVENTS_WINDOW_DAYS);
         $queryEndDate = $endDate ? $endDate->utc() : now()->addDays($upcomingWindowDays)->utc()->endOfDay();
 
-        return Event::query()
-            ->where('event_status', 'published')
-            ->with([
-                'category',
-                'media',
-                'eventOccurrences' => function ($query) use ($queryStartDate, $queryEndDate) {
-                    // Only load future scheduled occurrences within the date range
-                    $query->where('start_at_utc', '>=', $queryStartDate)
-                        ->where('start_at_utc', '<=', $queryEndDate) // Ensure occurrences are within the end date
-                        ->whereIn('status', ['active', 'scheduled'])
-                        ->orderBy('start_at_utc', 'asc');
-                },
-                'eventOccurrences.ticketDefinitions',
-                //  'eventOccurrences.ticketDefinitions' => function ($query) {
-                //     $query->whereNull('availability_window_start_utc')
-                //         ->orWhere('availability_window_start_utc', '<=', now()->utc());
-                // }
-            ])
-            // Filter events that have at least one future occurrence within the date range
-            ->whereHas('eventOccurrences', function ($query) use ($queryStartDate, $queryEndDate) { // Ensure endDate is used here
-                $query->where('start_at_utc', '>=', $queryStartDate)
-                    ->where('start_at_utc', '<=', $queryEndDate) // Added this condition
-                    ->whereIn('status', ['active', 'scheduled']);
-            })
-            // Order by the earliest upcoming occurrence start date
-            ->orderBy(function ($query) use ($queryStartDate, $queryEndDate) { // Ensure endDate is used here for ordering
-                return $query->select('start_at_utc') // Fixed: use start_at_utc consistently
-                    ->from('event_occurrences')
-                    ->whereColumn('event_id', 'events.id')
-                    ->where('start_at_utc', '>=', $queryStartDate)
-                    ->where('start_at_utc', '<=', $queryEndDate) // Added this condition
-                    ->whereIn('status', ['active', 'scheduled'])
-                    ->orderBy('start_at_utc')
-                    ->limit(1);
-            })
-            ->take($limit)
+        $eventStatuses = ['published'];
+        $occurrenceStatuses = ['active', 'scheduled'];
+
+        $query = $this->buildBaseEventQuery($eventStatuses, $queryStartDate, $queryEndDate, $occurrenceStatuses);
+
+        $this->applyOccurrenceFilter($query, $queryStartDate, $queryEndDate, $occurrenceStatuses);
+
+        $this->applyEarliestOccurrenceOrdering($query, $queryStartDate, $queryEndDate, $occurrenceStatuses);
+
+        return $query->take($limit)
             ->get()
-            ->map(function (Event $event) use ($queryStartDate, $queryEndDate) { // Pass effective dates for filtering
-                // Re-filter occurrences specifically for this event within the map, to be absolutely sure
-                // $relevantOccurrences = $event->eventOccurrences
-                //     ->where('start_at_utc', '>=', $queryStartDate)
-                //     ->where('start_at_utc', '<=', $queryEndDate)
-                //     ->sortBy('start_at_utc');
-
-                // // REVERTING: Conditional null return + filter + values. The whereHas should handle this.
-                // $firstOccurrence = $relevantOccurrences->first();
-                // $ticketData = $relevantOccurrences->flatMap(function ($occurrence) { // Use relevantOccurrences
-                //     return $occurrence->ticketDefinitions->map(function ($ticket) {
-                //         return [
-                //             'price' => $ticket->price,
-                //             'currency' => $ticket->currency
-                //         ];
-                //     });
-                // });
-
+            ->map(function (Event $event) {
                 $firstOccurrence = $event->eventOccurrences->first();
+                $ticketData = $this->extractTicketData($event->eventOccurrences);
 
-                $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
-                    return $occurrence->ticketDefinitions->map(function ($ticket) {
-                        return [
-                            'price' => $ticket->price,
-                            'currency' => $ticket->currency
-                        ];
-                    });
-                });
-
-                $prices = $ticketData->pluck('price');
-                $currency = $ticketData->first()['currency'] ?? 'HKD'; // Use first ticket's currency or default to USD
-
-                return [
-                    'id' => $event->id,
-                    'name' => $event->name, // Translatable
-                    'href' => route('events.show', $event->id),
-                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
-                    'price_from' => $prices->min() / 100 ?? null,
-                    'price_to' => $prices->max() / 100 ?? null,
-                    'currency' => $currency,
+                return $this->mapEventToArray($event, $ticketData, [
                     'date_short' => $firstOccurrence ? $this->formatDateShort($firstOccurrence->start_at_utc) : null,
-                    'category_name' => $event->category ? $event->category->name : null, // Translatable
-                ];
+                ]);
             });
     }
 
@@ -304,69 +206,31 @@ class EventService
     public function getMoreEventsForHomepage(int $limit = 4, array $excludeIds = [])
     {
         $nowUtc = now()->utc(); // Ensure UTC for consistent comparison
+        $endDate = now()->addYears(6)->utc(); // Far future date for broad inclusion
 
-        return Event::query()
-            ->where('event_status', 'published')
-            ->with([
-                'category',
-                'media',
-                'eventOccurrences' => function ($query) use ($nowUtc) {
-                    // Only load future scheduled occurrences
-                    $query->where('start_at_utc', '>=', $nowUtc)
-                        ->whereIn('status', ['active', 'scheduled'])
-                        ->orderBy('start_at_utc', 'asc');
-                },
-                'eventOccurrences.ticketDefinitions'
-                // 'eventOccurrences.ticketDefinitions' => function ($query) use ($nowUtc) {
-                //     $query->whereNull('availability_window_start_utc')
-                //         ->orWhere('availability_window_start_utc', '<=', $nowUtc);
-                // }
-            ])
-            ->whereHas('eventOccurrences', function ($query) use ($nowUtc) {
-                $query->where('start_at_utc', '>=', $nowUtc)
-                    ->whereIn('status', ['active', 'scheduled']);
-            })
-            // Exclude events that are already shown in upcoming section
-            ->when(!empty($excludeIds), function ($query) use ($excludeIds) {
-                return $query->whereNotIn('id', $excludeIds);
-            })
-            // Order by the earliest upcoming occurrence start date
-            ->orderBy(function ($query) use ($nowUtc) {
-                return $query->select('start_at_utc') // Fixed: use start_at_utc consistently
-                    ->from('event_occurrences')
-                    ->whereColumn('event_id', 'events.id')
-                    ->where('start_at_utc', '>=', $nowUtc)
-                    ->where('status', 'scheduled')
-                    ->orderBy('start_at_utc')
-                    ->limit(1);
-            })
-            ->take($limit) // Fixed: Apply the limit
+        $eventStatuses = ['published'];
+        $occurrenceStatuses = ['active', 'scheduled'];
+
+        $query = $this->buildBaseEventQuery($eventStatuses, $nowUtc, $endDate, $occurrenceStatuses);
+
+        $this->applyOccurrenceFilter($query, $nowUtc, $endDate, $occurrenceStatuses);
+
+        // Exclude events that are already shown in upcoming section
+        $query->when(!empty($excludeIds), fn($q) => $q->whereNotIn('id', $excludeIds));
+
+        $this->applyEarliestOccurrenceOrdering($query, $nowUtc, $endDate, $occurrenceStatuses);
+
+        return $query->take($limit)
             ->get()
             ->map(function (Event $event) {
                 $firstOccurrence = $event->eventOccurrences->first();
                 $lastOccurrence = $event->eventOccurrences->last();
-                $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
-                    return $occurrence->ticketDefinitions->map(function ($ticket) {
-                        return [
-                            'price' => $ticket->price,
-                            'currency' => $ticket->currency
-                        ];
-                    });
-                });
+                $ticketData = $this->extractTicketData($event->eventOccurrences);
 
-                $prices = $ticketData->pluck('price');
-                $currency = $ticketData->first()['currency'] ?? ''; // Use first ticket's currency or default to USD
-
-                return [
-                    'id' => $event->id,
-                    'name' => $event->name,
-                    'href' => route('events.show', $event->id),
+                return $this->mapEventToArray($event, $ticketData, [
                     'image_url' => $event->getFirstMediaUrl('portrait_poster') ?:
                         $event->getFirstMediaUrl('event_thumbnail') ?:
                         'https://via.placeholder.com/300x400.png?text=Event',
-                    'price_from' => $prices->min() / 100 ?? null,
-                    'price_to' => $prices->max() / 100 ?? null,
-                    'currency' => $currency,
                     'date_range' => $this->formatDateRange(
                         $firstOccurrence ? $firstOccurrence->start_at_utc : null,
                         $lastOccurrence ? $lastOccurrence->start_at_utc : null,
@@ -375,8 +239,7 @@ class EventService
                     'venue_name' => $firstOccurrence && $firstOccurrence->venue
                         ? $firstOccurrence->venue->name
                         : ($event->getPrimaryVenue() ? $event->getPrimaryVenue()->name : null),
-                    'category_name' => $event->category ? $event->category->name : null,
-                ];
+                ]);
             });
     }
 
@@ -414,53 +277,31 @@ class EventService
         $todayStart = now()->utc()->startOfDay(); // Ensure UTC for consistent comparison
         $todayEnd = now()->utc()->endOfDay(); // Ensure UTC for consistent comparison
 
-        // Call getPublishedEventsWithFutureOccurrences with a strict today window
-        // No changes needed here if getPublishedEventsWithFutureOccurrences correctly respects its $endDate
-        $events = $this->getPublishedEventsWithFutureOccurrences(
-            $limit,
-            [],
-            $todayStart,
-            $todayEnd
-        )
+        $eventStatuses = ['published', 'completed'];
+        $occurrenceStatuses = ['active', 'scheduled', 'completed'];
+
+        $query = $this->buildBaseEventQuery($eventStatuses, $todayStart, $todayEnd, $occurrenceStatuses);
+
+        $this->applyOccurrenceFilter($query, $todayStart, $todayEnd, $occurrenceStatuses);
+
+        $this->applyEarliestOccurrenceOrdering($query, $todayStart, $todayEnd, $occurrenceStatuses);
+
+        $events = $query->take($limit)
             ->get()
-            ->map(function (Event $event) use ($todayStart, $todayEnd) { // Pass $todayStart and $todayEnd
+            ->map(function (Event $event) use ($todayStart, $todayEnd) {
                 // Re-filter occurrences to be absolutely sure only today's are considered for mapping
                 $todaysOccurrences = $event->eventOccurrences
                     ->where('start_at_utc', '>=', $todayStart)
                     ->where('start_at_utc', '<=', $todayEnd)
                     ->sortBy('start_at_utc');
 
-                // REVERTING: Conditional null return + filter + values. The whereHas should handle this.
-                $firstOccurrence = $todaysOccurrences->first(); // Use the filtered and sorted collection
+                $firstOccurrence = $todaysOccurrences->first();
+                $ticketData = $this->extractTicketData($todaysOccurrences);
 
-                $ticketData = $todaysOccurrences->flatMap(function ($occurrence) { // Use todaysOccurrences
-                    return $occurrence->ticketDefinitions->map(function ($ticket) {
-                        return [
-                            'price' => $ticket->price,
-                            'currency' => $ticket->currency
-                        ];
-                    });
-                });
-
-                $prices = $ticketData->pluck('price');
-                $currency = $ticketData->first()['currency'] ?? 'USD'; // Use first ticket's currency or default to USD
-
-                // If after filtering, there's no relevant firstOccurrence for today, this event shouldn't be in "today's events"
-                // However, the whereHas in getPublishedEventsWithFutureOccurrences should prevent such events from being returned at all.
-                // This mapping logic assumes the event is relevant.
-
-                return [
-                    'id' => $event->id,
-                    'name' => $event->name,
-                    'href' => route('events.show', $event->id),
-                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
-                    'price_from' => $prices->min() / 100 ?? null,
-                    'price_to' => $prices->max() / 100 ?? null,
-                    'currency' => $currency,
+                return $this->mapEventToArray($event, $ticketData, [
                     'start_time' => $firstOccurrence ? $firstOccurrence->start_at_utc->format('H:i') : null,
                     'venue_name' => $firstOccurrence && $firstOccurrence->venue ? $firstOccurrence->venue->name : null,
-                    'category_name' => $event->category ? $event->category->name : null,
-                ];
+                ]);
             })
             ->toArray();
 
@@ -477,32 +318,28 @@ class EventService
      */
     public function getEventsByCategory(int $categoryId, int $limit = 20, array $excludeIds = []): array
     {
-        return $this->getPublishedEventsWithFutureOccurrences($limit, $excludeIds)
-            ->where('category_id', $categoryId)
+        $startDate = now()->addYears(-3)->utc();
+        $endDate = now()->addYears(6)->utc();
+        $eventStatuses = ['published', 'completed'];
+        $occurrenceStatuses = ['active', 'scheduled', 'completed'];
+
+        $query = $this->buildBaseEventQuery($eventStatuses, $startDate, $endDate, $occurrenceStatuses);
+
+        $this->applyOccurrenceFilter($query, $startDate, $endDate, $occurrenceStatuses);
+
+        $query->where('category_id', $categoryId)
+            ->when(!empty($excludeIds), fn($q) => $q->whereNotIn('id', $excludeIds));
+
+        $this->applyEarliestOccurrenceOrdering($query, $startDate, $endDate, $occurrenceStatuses);
+
+        return $query->take($limit)
             ->get()
             ->map(function (Event $event) {
                 $firstOccurrence = $event->eventOccurrences->first();
                 $lastOccurrence = $event->eventOccurrences->last();
-                $ticketData = $event->eventOccurrences->flatMap(function ($occurrence) {
-                    return $occurrence->ticketDefinitions->map(function ($ticket) {
-                        return [
-                            'price' => $ticket->price,
-                            'currency' => $ticket->currency
-                        ];
-                    });
-                });
+                $ticketData = $this->extractTicketData($event->eventOccurrences);
 
-                $prices = $ticketData->pluck('price');
-                $currency = $ticketData->first()['currency'] ?? 'USD'; // Use first ticket's currency or default to USD
-
-                return [
-                    'id' => $event->id,
-                    'name' => $event->name,
-                    'href' => route('events.show', $event->id),
-                    'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
-                    'price_from' => $prices->min() / 100 ?? null,
-                    'price_to' => $prices->max() / 100 ?? null,
-                    'currency' => $currency,
+                return $this->mapEventToArray($event, $ticketData, [
                     'date_range' => $this->formatDateRange(
                         $firstOccurrence ? $firstOccurrence->start_at_utc : null,
                         $lastOccurrence ? $lastOccurrence->start_at_utc : null,
@@ -510,9 +347,165 @@ class EventService
                     ),
                     'venue_name' => $firstOccurrence && $firstOccurrence->venue ?
                         $firstOccurrence->venue->name : ($event->getPrimaryVenue() ? $event->getPrimaryVenue()->name : null),
-                    'category_name' => $event->category ? $event->category->name : null,
-                ];
+                ]);
             })->toArray();
+    }
+
+    /**
+     * Apply ticket availability window filtering to a query.
+     *
+     * Tickets are considered available if:
+     * 1. No availability window is set (both start and end are null), OR
+     * 2. Current time is within the availability window (after start AND before end)
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \Carbon\Carbon|null $currentTime
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function applyTicketAvailabilityFilter($query, ?\Carbon\Carbon $currentTime = null)
+    {
+        $nowUtc = $currentTime ? $currentTime->utc() : now()->utc();
+
+        return $query->where(function ($q) use ($nowUtc) {
+            // Case 1: No availability window (both start and end are null)
+            $q->whereNull('availability_window_start_utc')
+                ->whereNull('availability_window_end_utc');
+        })->orWhere(function ($q) use ($nowUtc) {
+            // Case 2: Within availability window (after start AND before end)
+            $q->where('availability_window_start_utc', '<=', $nowUtc)
+                ->where('availability_window_end_utc', '>=', $nowUtc);
+        });
+    }
+
+    /**
+     * Build base event query with common eager loading relationships.
+     *
+     * @param array $eventStatuses
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @param array $occurrenceStatuses
+     * @param bool $includeVenue
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function buildBaseEventQuery(
+        array $eventStatuses,
+        \Carbon\Carbon $startDate,
+        \Carbon\Carbon $endDate,
+        array $occurrenceStatuses,
+        bool $includeVenue = false
+    ) {
+        $with = [
+            'category',
+            'media',
+            'eventOccurrences' => fn($query) => $query->where('start_at_utc', '>=', $startDate)
+                ->where('start_at_utc', '<=', $endDate)
+                ->whereIn('status', $occurrenceStatuses)
+                ->orderBy('start_at_utc', 'asc'),
+            'eventOccurrences.ticketDefinitions' => fn($query) => $this->applyTicketAvailabilityFilter($query)
+        ];
+
+        if ($includeVenue) {
+            $with['eventOccurrences.venue'] = fn($query) => $query;
+        }
+
+        return Event::query()
+            ->whereIn('event_status', $eventStatuses)
+            ->with($with);
+    }
+
+    /**
+     * Apply occurrence filtering to event query.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @param array $occurrenceStatuses
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function applyOccurrenceFilter(
+        $query,
+        \Carbon\Carbon $startDate,
+        \Carbon\Carbon $endDate,
+        array $occurrenceStatuses
+    ) {
+        return $query->whereHas('eventOccurrences', fn($q) => $q->where('start_at_utc', '>=', $startDate)
+            ->where('start_at_utc', '<=', $endDate)
+            ->whereIn('status', $occurrenceStatuses));
+    }
+
+    /**
+     * Apply ordering by earliest occurrence within date range.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \Carbon\Carbon $startDate
+     * @param \Carbon\Carbon $endDate
+     * @param array $occurrenceStatuses
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function applyEarliestOccurrenceOrdering(
+        $query,
+        \Carbon\Carbon $startDate,
+        \Carbon\Carbon $endDate,
+        array $occurrenceStatuses
+    ) {
+        return $query->orderBy(fn($subQuery) => $subQuery->select('start_at_utc')
+            ->from('event_occurrences')
+            ->whereColumn('event_id', 'events.id')
+            ->where('start_at_utc', '>=', $startDate)
+            ->where('start_at_utc', '<=', $endDate)
+            ->whereIn('status', $occurrenceStatuses)
+            ->orderBy('start_at_utc')
+            ->limit(1));
+    }
+
+    /**
+     * Extract ticket data from event occurrences.
+     *
+     * @param \Illuminate\Support\Collection $occurrences
+     * @return array ['prices' => Collection, 'currency' => string]
+     */
+    private function extractTicketData($occurrences): array
+    {
+        $ticketData = $occurrences->flatMap(function ($occurrence) {
+            return $occurrence->ticketDefinitions->map(function ($ticket) {
+                return [
+                    'price' => $ticket->price,
+                    'currency' => $ticket->currency
+                ];
+            });
+        });
+
+        $prices = $ticketData->pluck('price');
+        $currency = $ticketData->first()['currency'] ?? 'HKD';
+
+        return [
+            'prices' => $prices,
+            'currency' => $currency
+        ];
+    }
+
+    /**
+     * Map event to basic array format with common fields.
+     *
+     * @param Event $event
+     * @param array $ticketData
+     * @param array $additionalFields
+     * @return array
+     */
+    private function mapEventToArray(Event $event, array $ticketData, array $additionalFields = []): array
+    {
+        $baseData = [
+            'id' => $event->id,
+            'name' => $event->name,
+            'href' => route('events.show', $event->id),
+            'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
+            'price_from' => $ticketData['prices']->min() / 100 ?? null,
+            'price_to' => $ticketData['prices']->max() / 100 ?? null,
+            'currency' => $ticketData['currency'],
+            'category_name' => $event->category ? $event->category->name : null,
+        ];
+
+        return array_merge($baseData, $additionalFields);
     }
 }
 

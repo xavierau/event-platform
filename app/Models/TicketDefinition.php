@@ -99,6 +99,26 @@ class TicketDefinition extends Model
         return $initialStock - $bookedQuantity;
     }
 
+    public function getPublicData(): array
+    {
+        $effectivePrice = $this->pivot->price_override ?? $this->price;
+
+        // Calculate available quantity for this occurrence
+        $quantityForOccurrence = $this->pivot->quantity_for_occurrence;
+        $availableQuantity = $quantityForOccurrence ?? $this->quantity_available;
+
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'currency' => $this->currency,
+            'price' => $effectivePrice / 100, // Convert from cents to currency units
+            'max_per_order' => $this->max_per_order,
+            'min_per_order' => $this->min_per_order,
+            'quantity_available' => $availableQuantity,
+        ];
+    }
+
 
 
 

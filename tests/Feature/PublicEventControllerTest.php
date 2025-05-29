@@ -104,7 +104,7 @@ class PublicEventControllerTest extends TestCase
         });
     }
 
-    public function test_events_index_only_shows_events_with_future_occurrences(): void
+    public function test_events_index_shows_events_from_past_3_years_and_future(): void
     {
         // Create event with future occurrence
         $futureEvent = $this->createTestEvent([
@@ -114,21 +114,46 @@ class PublicEventControllerTest extends TestCase
             'end_at_utc' => now()->utc()->addDays(1)->addHours(2),
         ]);
 
-        // Create event with past occurrence
-        $pastEvent = $this->createTestEvent([
-            'name' => ['en' => 'Past Event'],
+        // Create event with recent past occurrence (within 3 years - should appear)
+        $recentPastEvent = $this->createTestEvent([
+            'name' => ['en' => 'Recent Past Event'],
         ], [
             'start_at_utc' => now()->utc()->subDays(1),
             'end_at_utc' => now()->utc()->subDays(1)->addHours(2),
         ]);
 
+        // Create completed event (should appear)
+        $completedEvent = $this->createTestEvent([
+            'name' => ['en' => 'Completed Event'],
+            'event_status' => 'completed',
+        ], [
+            'start_at_utc' => now()->utc()->subDays(7),
+            'end_at_utc' => now()->utc()->subDays(7)->addHours(2),
+            'status' => 'completed',
+        ]);
+
+        // Create event with very old past occurrence (beyond 3 years - should not appear)
+        $veryOldEvent = $this->createTestEvent([
+            'name' => ['en' => 'Very Old Event'],
+        ], [
+            'start_at_utc' => now()->utc()->subYears(4),
+            'end_at_utc' => now()->utc()->subYears(4)->addHours(2),
+        ]);
+
         $response = $this->get('/events');
 
         $response->assertStatus(200);
-        $response->assertInertia(function ($page) use ($futureEvent) {
+        $response->assertInertia(function ($page) use ($futureEvent, $recentPastEvent, $completedEvent) {
             $page->component('Public/EventsByCategory')
-                ->has('events', 1) // Only future event should appear
-                ->where('events.0.id', $futureEvent->id);
+                ->has('events', 3); // Future, recent past, and completed events should appear
+
+            // Verify all three events are present
+            $events = collect($page->toArray()['props']['events']);
+            $eventIds = $events->pluck('id')->toArray();
+
+            $this->assertContains($futureEvent->id, $eventIds, 'Future event should be included');
+            $this->assertContains($recentPastEvent->id, $eventIds, 'Recent past event should be included');
+            $this->assertContains($completedEvent->id, $eventIds, 'Completed event should be included');
         });
     }
 

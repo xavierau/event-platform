@@ -229,7 +229,7 @@ class AllCategoriesTest extends TestCase
             'end_at_utc' => now()->utc()->addDays(1)->addHours(2),
         ]);
 
-        // Create event with past occurrence
+        // Create event with recent past occurrence (within 3 years - should appear)
         $pastEvent = $this->createTestEvent([
             'category_id' => $musicCategory->id,
             'name' => ['en' => 'Past Event'],
@@ -243,11 +243,11 @@ class AllCategoriesTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(function ($page) {
             $page->component('Public/EventsByCategory')
-                ->has('events', 1); // Should show only future event
+                ->has('events', 2); // Should show both future and recent past events
 
             $eventNames = collect($page->toArray()['props']['events'])->pluck('name')->toArray();
             $this->assertContains('Future Event', $eventNames);
-            $this->assertNotContains('Past Event', $eventNames);
+            $this->assertContains('Past Event', $eventNames);
 
             return $page;
         });

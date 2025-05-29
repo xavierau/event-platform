@@ -71,6 +71,24 @@ class EventOccurrence extends Model implements HasMedia
             ->withTimestamps(); // If the pivot table has timestamps
     }
 
+    public function getPublicData(): array
+    {
+
+        // Convert UTC time to the occurrence's timezone
+        $localStartTime = $this->start_at_utc?->setTimezone($this->timezone ?? 'UTC');
+
+        return [
+            'id' => $this->id,
+            'name' => $this->name ?: 'Event this',
+            'date_short' => $localStartTime?->format('m.d'),
+            'full_date_time' => $this->formatFullDateTime($localStartTime),
+            'status_tag' => $this->status,
+            'venue_name' => $this->venue?->name,
+            'venue_address' => $this->venue?->address,
+            'tickets' => $this->mapTicketDefinitions($this->ticketDefinitions),
+        ];
+    }
+
     // public function creator() // Assuming these are handled by a global scope or trait if needed
     // {
     //     return $this->belongsTo(User::class, 'created_by');

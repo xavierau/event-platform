@@ -95,7 +95,7 @@ class PromotionControllerTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->post(route('admin.promotions.store'), []);
 
-        $response->assertSessionHasErrors(['title.en', 'subtitle.en', 'url']);
+        $response->assertSessionHasErrors(['url']);
     }
 
     #[Test]
