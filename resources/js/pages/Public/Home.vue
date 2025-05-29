@@ -138,15 +138,16 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
     <PublicHeader />
 
     <main class="container mx-auto py-8 px-4">
-      <!-- Event Category Quick Links Section (FE-LP-003) -->
+
+      <!-- Promotion Carousel Section -->
+      <PromotionCarousel :promotions="activePromotions" title="Featured Events" />
+
+       <!-- Event Category Quick Links Section (FE-LP-003) -->
       <section id="event-categories" class="mb-12">
         <div class="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2 sm:gap-4">
           <CategoryLink v-for="category in categories" :key="category.id" :category="category" />
         </div>
       </section>
-
-      <!-- Promotion Carousel Section -->
-      <PromotionCarousel :promotions="activePromotions" title="Featured Events" />
 
       <!-- Upcoming Events Section (FE-LP-005) -->
       <section id="upcoming-events" class="mb-12">
