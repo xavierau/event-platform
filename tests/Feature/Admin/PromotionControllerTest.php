@@ -2,13 +2,16 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Enums\RoleNameEnum;
 use App\Models\Promotion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Config;
 use Inertia\Testing\AssertableInertia as Assert;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class PromotionControllerTest extends TestCase
@@ -21,10 +24,14 @@ class PromotionControllerTest extends TestCase
     {
         parent::setUp();
 
+        // Create roles if they don't exist
+        Role::firstOrCreate(['name' => RoleNameEnum::ADMIN->value, 'guard_name' => 'web']);
+
         // Create an admin user
         $this->admin = User::factory()->create();
-        // Assuming you have roles set up, assign admin role
-        // $this->admin->assignRole('admin');
+        $this->admin->assignRole(RoleNameEnum::ADMIN->value);
+
+        Config::set('app.locale', 'en');
     }
 
     #[Test]

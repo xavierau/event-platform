@@ -7,6 +7,7 @@ use App\Modules\Wallet\Enums\WalletTransactionType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Database\Factories\WalletTransactionFactory;
 
 class WalletTransaction extends Model
 {
@@ -91,5 +92,13 @@ class WalletTransaction extends Model
             WalletTransactionType::EARN_KILL_POINTS,
             WalletTransactionType::SPEND_KILL_POINTS,
         ]);
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return WalletTransactionFactory::new();
     }
 }

@@ -14,7 +14,7 @@ use App\DataTransferObjects\MediaData;
 use Illuminate\Support\Facades\Log;
 use App\Models\Country;
 use App\Models\State;
-use Spatie\LaravelData\Exceptions\CannotCreateData;
+use Illuminate\Validation\ValidationException;
 
 class VenueController extends Controller
 {
@@ -68,26 +68,19 @@ class VenueController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(VenueData $venueData): RedirectResponse
     {
         try {
-            $venueData = VenueData::from($request->all());
+            // $venueData is already validated and created by Laravel if typehinted
             $this->venueService->createVenue($venueData);
             return redirect()->route('admin.venues.index')->with('success', 'Venue created successfully.');
-        } catch (CannotCreateData $e) {
-            Log::error('VenueController@store: DTO Creation/Validation Failed.', [
+        } catch (\Exception $e) { // Catch general exceptions during service call or redirect
+            Log::error('VenueController@store: CAUGHT EXCEPTION IN SUCCESS PATH.', [
+                'exception_class' => get_class($e),
                 'message' => $e->getMessage(),
-                'trace_snippet' => mb_substr($e->getTraceAsString(), 0, 500),
-                'request_data_snippet' => mb_substr(json_encode($request->all()), 0, 1000),
+                'trace_snippet' => mb_substr($e->getTraceAsString(), 0, 1500), // Increased trace snippet
             ]);
-            return back()->withInput()->withErrors(['dto_error' => 'Error processing venue data: ' . $e->getMessage()]);
-        } catch (\Exception $e) {
-            Log::error('VenueController@store: General Exception.', [
-                'message' => $e->getMessage(),
-                'trace_snippet' => mb_substr($e->getTraceAsString(), 0, 500),
-                'request_data_snippet' => mb_substr(json_encode($request->all()), 0, 1000),
-            ]);
-            return back()->withInput()->withErrors(['error' => 'An unexpected error occurred. Please try again.']);
+            return back()->withInput()->withErrors(['error' => 'An unexpected error occurred while creating the venue. Please try again. Details: ' . $e->getMessage()]);
         }
     }
 
@@ -128,16 +121,15 @@ class VenueController extends Controller
         ]);
     }
 
-    public function update(Request $request, Venue $venue): RedirectResponse
+    public function update(Request $request, VenueData $venueData): RedirectResponse
     {
         try {
             // The DTO will handle validation based on its rules.
             // Data is sourced from $request->all(), which merges query, post, and file data.
             // For multipart/form-data, Laravel handles parsing of fields like name[en] into nested arrays if accessed directly via $request->input('name').
             // Spatie/laravel-data should correctly map these if the DTO expects an array for 'name'.
-            $validatedData = VenueData::from($request->all());
 
-            $this->venueService->updateVenue($venue->id, $validatedData);
+            $venue = $this->venueService->updateVenue($venueData->id, $venueData);
 
             // Handle media uploads if present
             if ($request->hasFile('new_featured_image')) {
@@ -160,7 +152,7 @@ class VenueController extends Controller
 
             // Redirect to the venue index page upon successful update.
             return redirect()->route('admin.venues.index')->with('success', 'Venue updated successfully.');
-        } catch (CannotCreateData $e) {
+        } catch (ValidationException $e) {
             Log::error('VenueController@update: DTO Creation/Validation Failed.', [
                 'message' => $e->getMessage(),
                 // 'errors' => property_exists($e, 'errors') ? $e->errors() : [], // If you need specific DTO validation errors

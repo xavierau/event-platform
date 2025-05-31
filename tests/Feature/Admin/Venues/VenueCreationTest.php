@@ -1,14 +1,24 @@
 <?php
 
+use App\Enums\RoleNameEnum;
 use App\Models\Country;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    // Create a user for authentication
+    // create a platform admin role
+    $this->platformAdminRole = Role::create([
+        'name' => RoleNameEnum::ADMIN->value,
+    ]);
+
+    // Create a platfor admin user for authentication
     $this->user = User::factory()->create();
+    $this->user->assignRole(RoleNameEnum::ADMIN->value);
+
 
     // Create a country for the venue
     $this->country = Country::create([
@@ -18,6 +28,7 @@ beforeEach(function () {
         'phone_code' => '+1',
         'is_active' => true,
     ]);
+    Config::set('app.locale', 'en');
 });
 
 it('can create a venue with the problematic data from frontend', function () {
@@ -56,7 +67,7 @@ it('can create a venue with the problematic data from frontend', function () {
 
 it('fails validation when city is empty for all locales', function () {
     // This tests the original failing scenario
-    $venueData = [
+    $venueDataWithEmptyCity = [
         "name" => ["en" => "new venue", "zh-TW" => "new venue", "zh-CN" => "new venue"],
         "slug" => "new-venue-2",
         "description" => ["en" => "<p>testing</p>", "zh-TW" => "<p>testing</p>", "zh-CN" => "<p>testing</p>"],
@@ -76,29 +87,9 @@ it('fails validation when city is empty for all locales', function () {
         "organizer_id" => null
     ];
 
-    try {
-        $response = $this->actingAs($this->user)
-            ->post(route('admin.venues.store'), $venueData);
+    $response = $this->actingAs($this->user)
+        ->post(route('admin.venues.store'), $venueDataWithEmptyCity);
 
-        // Debug the response
-        dump('Response status: ' . $response->getStatusCode());
-        dump('Has errors: ' . ($response->getSession()->has('errors') ? 'yes' : 'no'));
-        dump('Redirect location: ' . $response->headers->get('Location'));
-        if ($response->getSession()->has('success')) {
-            dump('Success message: ' . $response->getSession()->get('success'));
-        }
-        if ($response->getSession()->has('errors')) {
-            dump('Errors: ' . json_encode($response->getSession()->get('errors')));
-        }
-
-        // Check if venue was created
-        $venueExists = \App\Models\Venue::where('slug', 'new-venue-2')->exists();
-        dump('Venue created: ' . ($venueExists ? 'yes' : 'no'));
-
-        $response->assertRedirect(); // Should redirect back
-        $response->assertSessionHasErrors(); // Should have validation errors
-    } catch (\Exception $e) {
-        dump('Exception: ' . $e->getMessage());
-        throw $e;
-    }
+    $response->assertRedirect(); // Should redirect back (to form or previous page)
+    $response->assertSessionHasErrors(['city.en']); // Specifically check for city.en error
 });

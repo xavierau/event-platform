@@ -9,10 +9,22 @@ use App\Models\EventOccurrence;
 use App\Models\Venue;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 
 class CategoryEventDisplayTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Config::set('app.locale', 'zh-TW');
+        Config::set('app.available_locales', [
+            'en' => 'English',
+            'zh-TW' => 'Traditional Chinese',
+            'zh-CN' => 'Simplified Chinese'
+        ]);
+    }
 
     private function createTestEvent(array $eventData = [], array $occurrenceData = []): Event
     {
@@ -112,7 +124,7 @@ class CategoryEventDisplayTest extends TestCase
 
         $allEventsResponse->assertInertia(function ($page) use ($magicEvent) {
             $page->component('Public/EventsByCategory')
-                ->where('title', 'All Events')
+                ->where('title', '全部活動')
                 ->has('events', 1)
                 ->where('events.0.id', $magicEvent->id)
                 ->where('events.0.name', '魔術夢幻學院')

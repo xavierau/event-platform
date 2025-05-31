@@ -5,6 +5,7 @@ use App\Models\Country;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\LaravelData\Exceptions\CannotCreateData;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Config;
 // use Spatie\LaravelData\Exceptions\ValidationException; // No longer directly expected
 // use Illuminate\Support\Facades\Validator; // No longer needed for manual validation
 // use Spatie\LaravelData\Support\Validation\ValidationContext as SpatieValidationContext; // No longer needed
@@ -20,6 +21,7 @@ beforeEach(function () {
         'phone_code' => '+1',
         'is_active' => true,
     ]);
+    Config::set('app.locale', 'en'); // Set default locale for all tests in this file
 });
 
 it('validates basic required fields', function () {

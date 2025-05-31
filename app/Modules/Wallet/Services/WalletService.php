@@ -144,6 +144,8 @@ class WalletService
      */
     public function getBalance(User $user): array
     {
+        // Refresh the wallet relationship to get the latest data from database
+        $user->load('wallet');
         $wallet = $this->getOrCreateWallet($user);
 
         return [

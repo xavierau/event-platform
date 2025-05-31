@@ -9,10 +9,23 @@ use App\Models\EventOccurrence;
 use App\Models\Venue;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 
 class EventCategoryConsistencyTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Config::set('app.locale', 'zh-TW');
+        Config::set('app.fallback_locale', 'zh-TW');
+        Config::set('app.available_locales', [
+            'en' => 'English',
+            'zh-TW' => 'Traditional Chinese',
+            'zh-CN' => 'Simplified Chinese',
+        ]);
+    }
 
     private function createTestEvent(array $eventData = [], array $occurrenceData = []): Event
     {
@@ -51,7 +64,7 @@ class EventCategoryConsistencyTest extends TestCase
     {
         // Recreate the production scenario: 魔術 category
         $magicCategory = Category::factory()->create([
-            'name' => ['en' => '魔術'],
+            'name' => ['en' => 'Magic', 'zh-TW' => '魔術'],
             'slug' => 'magic',
         ]);
 
@@ -118,7 +131,7 @@ class EventCategoryConsistencyTest extends TestCase
 
         $allEventsResponse->assertInertia(function ($page) use ($moreEventsEvent, $upcomingEvent) {
             $page->component('Public/EventsByCategory')
-                ->where('title', 'All Events')
+                ->where('title', '全部活動')
                 ->has('events', 2); // Should show both events
 
             $events = collect($page->toArray()['props']['events']);
@@ -134,7 +147,7 @@ class EventCategoryConsistencyTest extends TestCase
     public function test_events_with_different_time_ranges(): void
     {
         $category = Category::factory()->create([
-            'name' => ['en' => 'Test Category'],
+            'name' => ['en' => 'Test Category', 'zh-TW' => '測試分類'],
             'slug' => 'test-category',
         ]);
 
@@ -177,7 +190,7 @@ class EventCategoryConsistencyTest extends TestCase
 
         $categoryResponse->assertInertia(function ($page) use ($todayEvent, $tomorrowEvent, $nextWeekEvent, $nextMonthEvent) {
             $page->component('Public/EventsByCategory')
-                ->where('title', 'Test Category')
+                ->where('title', '測試分類')
                 ->has('events', 4); // Should show all 4 events
 
             $events = collect($page->toArray()['props']['events']);

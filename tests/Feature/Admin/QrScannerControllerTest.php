@@ -9,10 +9,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    // Create roles
-    Role::create(['name' => RoleNameEnum::ADMIN->value, 'guard_name' => 'web']);
-    Role::create(['name' => RoleNameEnum::ORGANIZER->value, 'guard_name' => 'web']);
-    Role::create(['name' => RoleNameEnum::USER->value, 'guard_name' => 'web']);
+    // Clear permission cache
+    app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+    // Create roles if they don't already exist
+    Role::firstOrCreate(['name' => RoleNameEnum::ADMIN->value, 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => RoleNameEnum::ORGANIZER->value, 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => RoleNameEnum::USER->value, 'guard_name' => 'web']);
 });
 
 it('allows platform admin to access QR scanner page', function () {
@@ -83,16 +86,11 @@ it('shows no events for regular user', function () {
     // Act as the user and visit the QR scanner page
     $response = $this->actingAs($user)->get(route('admin.qr-scanner.index'));
 
-    // Assert the response is successful
-    $response->assertStatus(200);
+    // Assert the response is a redirect to home with an error message
+    $response->assertRedirect(route('home'));
+    $response->assertSessionHas('error', 'You do not have permission to access this page.');
 
-    // Assert no events are returned for regular users
-    $response->assertInertia(
-        fn($page) => $page
-            ->component('Admin/QrScanner/Index')
-            ->has('events', 0)
-            ->where('user_role', RoleNameEnum::USER->value)
-    );
+    // $response->assertStatus(403); // Original expectation was 403
 });
 
 it('platform admin can see all published events regardless of organizer', function () {

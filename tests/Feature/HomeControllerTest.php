@@ -366,22 +366,25 @@ class HomeControllerTest extends TestCase
 
     public function test_events_with_similar_dates_should_appear_together(): void
     {
-        // Create events with dates close to each other (both in May 2025)
-        $mayDate1 = Carbon::parse('2025-05-28 06:00:00', 'UTC');
-        $mayDate2 = Carbon::parse('2025-05-31 10:00:00', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2024-06-01 12:00:00', 'UTC')); // Set predictable "now"
+
+        // Create events with dates close to each other, far in the future relative to mocked "now"
+        // These should fall into "moreEvents"
+        $farFutureDate1 = now()->addMonths(2)->startOfDay()->addHours(6); // e.g., 2024-08-01 06:00:00 UTC
+        $farFutureDate2 = now()->addMonths(2)->startOfDay()->addDays(3)->addHours(10); // e.g., 2024-08-04 10:00:00 UTC
 
         $event1 = $this->createTestEvent([
-            'name' => ['en' => 'Event 1 - May 28'],
+            'name' => ['en' => 'Event 1 - Far Future'],
         ], [
-            'start_at_utc' => $mayDate1,
-            'end_at_utc' => $mayDate1->copy()->addHours(2),
+            'start_at_utc' => $farFutureDate1,
+            'end_at_utc' => $farFutureDate1->copy()->addHours(2),
         ]);
 
         $event2 = $this->createTestEvent([
-            'name' => ['en' => 'Event 2 - May 31'],
+            'name' => ['en' => 'Event 2 - Far Future, Close Date'],
         ], [
-            'start_at_utc' => $mayDate2,
-            'end_at_utc' => $mayDate2->copy()->addHours(2),
+            'start_at_utc' => $farFutureDate2,
+            'end_at_utc' => $farFutureDate2->copy()->addHours(2),
         ]);
 
         $response = $this->get('/');
@@ -390,17 +393,21 @@ class HomeControllerTest extends TestCase
 
         // Both events should appear in the same section (upcoming events)
         // since they're both in the future and close in date
-        $response->assertInertia(function ($page) {
+        $response->assertInertia(function ($page) use ($event1, $event2) {
             $upcomingEvents = $page->toArray()['props']['upcomingEvents'];
             $moreEvents = $page->toArray()['props']['moreEvents'];
 
             // Both events should be in upcoming events, not split between sections
-            $this->assertCount(2, $upcomingEvents, 'Both events should appear in upcoming events');
+            $this->assertCount(0, $upcomingEvents, 'Events far in the future should not be in upcoming events');
+            $this->assertCount(2, $moreEvents, 'Both events far in the future should appear in more events');
+
+            // Check that the specific events are in moreEvents
+            $moreEventIds = collect($moreEvents)->pluck('id')->toArray();
+            $this->assertContains($event1->id, $moreEventIds, 'Event 1 should be in more events');
+            $this->assertContains($event2->id, $moreEventIds, 'Event 2 should be in more events');
 
             // Check that the events are not duplicated in more events
             $upcomingEventIds = collect($upcomingEvents)->pluck('id')->toArray();
-            $moreEventIds = collect($moreEvents)->pluck('id')->toArray();
-
             $this->assertEmpty(
                 array_intersect($upcomingEventIds, $moreEventIds),
                 'Events should not appear in both upcoming and more events sections'
@@ -408,6 +415,8 @@ class HomeControllerTest extends TestCase
 
             return $page->component('Public/Home');
         });
+
+        Carbon::setTestNow(); // Clear mocked time
     }
 
     public function test_events_separated_by_30_day_window_issue(): void

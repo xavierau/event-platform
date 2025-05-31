@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Database\Factories\WalletFactory;
 
 class Wallet extends Model
 {
@@ -112,5 +113,13 @@ class Wallet extends Model
         $this->increment('total_kill_points_spent', $amount);
 
         return true;
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return WalletFactory::new();
     }
 }

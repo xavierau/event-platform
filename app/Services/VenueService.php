@@ -23,7 +23,7 @@ class VenueService
         $dataArray = $venueData->all(); // Get all properties as an array
         $dataArray['id'] = $venueId;    // Override the id
 
-        $updateData = VenueData::from($dataArray);
+        $updateData = VenueData::validateAndCreate($dataArray);
         return $this->upsertVenueAction->execute($updateData);
     }
 
