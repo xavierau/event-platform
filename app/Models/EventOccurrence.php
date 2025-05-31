@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -85,8 +86,22 @@ class EventOccurrence extends Model implements HasMedia
             'status_tag' => $this->status,
             'venue_name' => $this->venue?->name,
             'venue_address' => $this->venue?->address,
-            'tickets' => $this->mapTicketDefinitions($this->ticketDefinitions),
+            'tickets' => $this->ticketDefinitions,
         ];
+    }
+
+    /**
+     * Format full date time for display
+     */
+    public function formatFullDateTime(?Carbon $localStartTime): string
+    {
+        if (! $localStartTime) {
+            return '';
+        }
+
+        return $localStartTime->format('Y.m.d') . ' ' .
+            $localStartTime->locale(app()->getLocale())->isoFormat('dddd') . ' ' .
+            $localStartTime->format('H:i');
     }
 
     // public function creator() // Assuming these are handled by a global scope or trait if needed

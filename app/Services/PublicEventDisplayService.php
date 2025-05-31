@@ -137,7 +137,11 @@ class PublicEventDisplayService
     protected function mapEventOccurrences($occurrences): array
     {
         return $occurrences->map(function ($occurrence) {
-            return $occurrence->getPublicData();
+            $publicData = $occurrence->getPublicData();
+            // Now, explicitly map the ticket definitions using the service's own method
+            // $publicData['tickets'] already contains the collection from $occurrence->ticketDefinitions
+            $publicData['tickets'] = $this->mapTicketDefinitions($publicData['tickets']);
+            return $publicData;
         })->toArray();
     }
 
