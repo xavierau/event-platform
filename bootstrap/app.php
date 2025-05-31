@@ -34,6 +34,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
         ]);
+
+        $middleware->alias([
+            'role' => \App\Http\Middleware\CheckRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

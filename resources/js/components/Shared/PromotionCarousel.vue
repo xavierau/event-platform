@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import type { EventItem, Promotion } from '@/types';
+import 'vue3-carousel/dist/carousel.css';
+import { Carousel, Slide, Pagination } from 'vue3-carousel';
 
 interface Props {
   events?: EventItem[];
@@ -54,65 +56,29 @@ const displayItems = computed(() => {
   return items;
 });
 
-const currentSlide = ref(0);
-
-const nextSlide = () => {
-  currentSlide.value = (currentSlide.value + 1) % displayItems.value.length;
-};
-
-const prevSlide = () => {
-  currentSlide.value = currentSlide.value === 0 ? displayItems.value.length - 1 : currentSlide.value - 1;
-};
 </script>
 
 <template>
-  <section id="promotion-carousel" class="mb-12">
-    <div class="flex justify-between items-center mb-6">
+  <section id="promotion-carousel">
+    <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ title }}</h2>
-      <div v-if="displayItems.length > 1" class="flex space-x-2">
-        <button class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" @click="prevSlide">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <button class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" @click="nextSlide">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
     </div>
 
     <div v-if="displayItems.length > 0" class="relative">
-      <div class="overflow-hidden">
-        <div class="flex transition-transform duration-500 ease-in-out" :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
-          <div v-for="item in displayItems" :key="item.id" class="w-full flex-shrink-0">
-            <a :href="item.url" class="block relative aspect-video rounded-lg overflow-hidden group">
+      <Carousel :items-to-show="1" :wrap-around="true" :autoplay="3000">
+        <Slide v-for="item in displayItems" :key="item.id">
+          <div class="carousel__item w-full">
+            <a :href="item.url" class="block relative overflow-hidden group" style="aspect-ratio: 2.35 / 1;">
               <img :src="item.image" :alt="item.title" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
               <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
-                <!-- <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <h3 class="text-2xl font-bold mb-2">{{ item.title }}</h3> -->
-                  <!-- <p class="text-sm mb-4">{{ item.subtitle }}</p> -->
-                  <!-- <div class="flex items-center space-x-2">
-                    <span class="px-3 py-1 bg-white/20 rounded-full text-sm capitalize">{{ item.type }}</span>
-                  </div> -->
-                <!-- </div> -->
               </div>
             </a>
           </div>
-        </div>
-      </div>
-
-      <!-- Slide Indicators -->
-      <div v-if="displayItems.length > 1" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        <button
-          v-for="(_, index) in displayItems"
-          :key="index"
-          @click="currentSlide = index"
-          class="w-2 h-2 rounded-full transition-colors duration-200"
-          :class="currentSlide === index ? 'bg-white' : 'bg-white/50'"
-        ></button>
-      </div>
+        </Slide>
+        <template #addons>
+          <Pagination />
+        </template>
+      </Carousel>
     </div>
 
     <!-- Empty State -->
@@ -127,3 +93,34 @@ const prevSlide = () => {
     </div>
   </section>
 </template>
+
+<style>
+.carousel__prev,
+.carousel__next {
+  background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent white background */
+  border-radius: 50%; /* Circular buttons */
+  width: 3rem; /* Adjust size as needed */
+  height: 3rem; /* Adjust size as needed */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333; /* Icon color */
+}
+
+.carousel__prev:hover,
+.carousel__next:hover {
+  background-color: rgba(255, 255, 255, 0.8); /* Lighter background on hover */
+}
+
+.carousel__icon {
+  fill: currentColor; /* Use the text color for the icon */
+}
+
+.carousel__pagination-button {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.carousel__pagination-button--active {
+  background-color: white;
+}
+</style>
