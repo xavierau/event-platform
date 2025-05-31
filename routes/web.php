@@ -17,6 +17,7 @@ use App\Services\CategoryService;
 use App\Actions\Categories\UpsertCategoryAction;
 use App\Services\EventService;
 use App\Actions\Events\UpsertEventAction;
+use App\Enums\RoleNameEnum;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
@@ -65,7 +66,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Admin Routes for Site Settings
-Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', "role:" . RoleNameEnum::ADMIN->value])->group(function () {
     // Example: Route::middleware(['auth', 'role:platform-admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -119,11 +120,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/dev/media-upload-test', [DevController::class, 'mediaUploadTest'])->name('admin.dev.media-upload-test');
     Route::post('/admin/dev/media-upload-test/post', [DevController::class, 'handleMediaPost'])->name('admin.dev.media-upload-test.post');
     Route::put('/admin/dev/media-upload-test/put', [DevController::class, 'handleMediaPut'])->name('admin.dev.media-upload-test.put');
-});
-
-Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');
-    // Add other admin routes here
 });
 
 require __DIR__ . '/settings.php';

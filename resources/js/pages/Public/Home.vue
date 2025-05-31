@@ -137,21 +137,21 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
     <!-- Header Section (FE-LP-002) -->
     <PublicHeader />
 
-    <main class="container mx-auto py-8 px-4">
+    <main class="container mx-auto py-4 px-4">
 
       <!-- Promotion Carousel Section -->
-      <PromotionCarousel :promotions="activePromotions" title="Featured Events" />
+      <PromotionCarousel :promotions="activePromotions" title="Featured Events" class="mb-4" />
 
        <!-- Event Category Quick Links Section (FE-LP-003) -->
-      <section id="event-categories" class="mb-12">
+      <section id="event-categories" class="mb-6">
         <div class="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2 sm:gap-4">
           <CategoryLink v-for="category in categories" :key="category.id" :category="category" />
         </div>
       </section>
 
       <!-- Upcoming Events Section (FE-LP-005) -->
-      <section id="upcoming-events" class="mb-12">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+      <section id="upcoming-events" class="mb-6">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
             <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-0">Upcoming Events</h2>
             <div class="flex space-x-2 text-sm flex-wrap">
               <!-- <button
@@ -195,7 +195,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
 
       <!-- More Events Section (FE-LP-007) -->
       <section id="more-events">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
           <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-0">More Events</h2>
           <div class="flex space-x-2 text-sm flex-wrap">
             <button class="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-700 text-indigo-700 dark:text-indigo-200 font-medium">Recommended</button>
@@ -211,7 +211,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
       </section>
     </main>
 
-    <footer class="bg-gray-800 dark:bg-gray-950 text-white dark:text-gray-300 p-6 text-center mt-12 border-t dark:border-gray-700">
+    <footer class="bg-gray-800 dark:bg-gray-950 text-white dark:text-gray-300 p-6 text-center mt-6 border-t dark:border-gray-700">
       <p>&copy; {{ new Date().getFullYear() }} Showeasy. All rights reserved. Made with ❤️</p>
     </footer>
   </div>
