@@ -32,6 +32,7 @@ const props = defineProps({
     upcomingEvents: Array as () => EventItem[], // Broader upcoming events
     moreEvents: Array as () => EventItem[],
     activePromotions: Array as () => Promotion[],
+    promotionCarouselTitle: String as () => string | null,
 });
 
 // Helper for icons, derived from original placeholder data
@@ -140,7 +141,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
     <main class="container mx-auto py-4 px-4">
 
       <!-- Promotion Carousel Section -->
-      <PromotionCarousel :promotions="activePromotions" title="Featured Events" class="mb-4" />
+      <PromotionCarousel :promotions="activePromotions" :title="promotionCarouselTitle" class="mb-4" />
 
        <!-- Event Category Quick Links Section (FE-LP-003) -->
       <section id="event-categories" class="mb-6">

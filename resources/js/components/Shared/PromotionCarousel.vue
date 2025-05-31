@@ -7,7 +7,7 @@ import { Carousel, Slide, Pagination } from 'vue3-carousel';
 interface Props {
   events?: EventItem[];
   promotions?: Promotion[];
-  title?: string;
+  title?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -60,7 +60,7 @@ const displayItems = computed(() => {
 
 <template>
   <section id="promotion-carousel">
-    <div class="flex justify-between items-center mb-4">
+    <div v-if="title" class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ title }}</h2>
     </div>
 

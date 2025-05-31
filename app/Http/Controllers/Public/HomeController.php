@@ -79,6 +79,7 @@ class HomeController extends Controller
             'activePromotions' => $activePromotions,
             'canLogin' => Route::has('login'), // Example from original route
             'canRegister' => Route::has('register'), // Example from original route
+            'promotionCarouselTitle' => null,
         ]);
     }
 }
