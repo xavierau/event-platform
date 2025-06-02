@@ -70,8 +70,8 @@ const displayItems = computed(() => {
           <div class="carousel__item w-full">
             <a :href="item.url" class="block relative overflow-hidden group" style="aspect-ratio: 2.35 / 1;">
               <img :src="item.image" :alt="item.title" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
-              </div>
+              <!-- <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent">
+              </div> -->
             </a>
           </div>
         </Slide>
