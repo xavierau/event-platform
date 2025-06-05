@@ -39,6 +39,10 @@ class DatabaseSeeder extends Seeder
             EventSeeder::class, // Depends on Users (for organizer_id), Categories
             TicketDefinitionSeeder::class,
             EventOccurrenceSeeder::class, // Depends on Events, Venues, TicketDefinitions
+
+            // Transaction and Booking Seeders
+            TransactionSeeder::class, // Depends on Users
+            BookingSeeder::class, // Depends on Transactions, Events, TicketDefinitions
             // ... other seeders
         ]);
 

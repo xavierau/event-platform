@@ -27,6 +27,7 @@ interface BookingItem {
     event?: { id: number; name: Record<string, string> | string }
     user?: { id: number; name: string; email: string }
     ticket_definition?: { id: number; name: Record<string, string> | string }
+    transaction?: { id: number; payment_gateway_transaction_id?: string }
 }
 
 interface BookingsData {
@@ -446,6 +447,9 @@ watch(() => filterForm.per_page, () => {
                                         Amount
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Transaction
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Date
                                     </th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -455,7 +459,7 @@ watch(() => filterForm.per_page, () => {
                             </thead>
                             <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200">
                                 <tr v-if="!bookings.data || bookings.data.length === 0">
-                                    <td colspan="8" class="px-6 py-12 text-center">
+                                    <td colspan="9" class="px-6 py-12 text-center">
                                         <div class="flex flex-col items-center">
                                             <Ticket class="h-12 w-12 text-gray-400 mb-4" />
                                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No bookings found</h3>
@@ -474,18 +478,15 @@ watch(() => filterForm.per_page, () => {
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            #{{ booking.booking_number || booking.id }}
-                                        </div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            QR: {{ booking.qr_code_identifier }}
+                                            #{{ booking.qr_code_identifier || booking.id }}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {{ booking.event?.name || 'N/A' }}
+                                            {{ booking.event ? getTranslation(booking.event.name, currentLocale) : 'N/A' }}
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ booking.ticket_definition?.name || 'General Admission' }}
+                                            {{ booking.ticket_definition ? getTranslation(booking.ticket_definition.name, currentLocale) : 'General Admission' }}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -505,8 +506,18 @@ watch(() => filterForm.per_page, () => {
                                         <div class="font-medium">
                                             ${{ formatCurrency(booking.price_at_booking * booking.quantity) }}
                                         </div>
-                                        <div class="text-gray-500 dark:text-gray-400">
-                                            {{ booking.quantity }} × ${{ formatCurrency(booking.price_at_booking) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        <div v-if="booking.transaction">
+                                            <div class="font-medium text-gray-900 dark:text-gray-100">
+                                                #{{ booking.transaction.id }}
+                                            </div>
+                                            <div v-if="booking.transaction.payment_gateway_transaction_id" class="text-xs font-mono truncate max-w-32" :title="booking.transaction.payment_gateway_transaction_id">
+                                                {{ booking.transaction.payment_gateway_transaction_id }}
+                                            </div>
+                                        </div>
+                                        <div v-else class="text-gray-400">
+                                            N/A
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">

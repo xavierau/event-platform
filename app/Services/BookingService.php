@@ -363,7 +363,7 @@ class BookingService
             'user', // Remove column selection to avoid hasOneThrough ambiguity
             'event:id,name',
             'ticketDefinition:id,name,price,currency',
-            'transaction:id,total_amount,currency,status,created_at'
+            'transaction:id,total_amount,currency,status,payment_gateway,payment_gateway_transaction_id,payment_intent_id,created_at'
         ]);
 
         // Apply search filter
@@ -432,7 +432,7 @@ class BookingService
             'user', // Remove column selection to avoid hasOneThrough ambiguity
             'event:id,name',
             'ticketDefinition:id,name,price,currency',
-            'transaction:id,total_amount,currency,status,created_at'
+            'transaction:id,total_amount,currency,status,payment_gateway,payment_gateway_transaction_id,payment_intent_id,created_at,updated_at'
         ])
             ->whereIn('event_id', $organizerEventIds);
 
@@ -492,7 +492,9 @@ class BookingService
             'user', // Remove column selection to avoid hasOneThrough ambiguity
             'event:id,name,description',
             'ticketDefinition:id,name,description,price,currency,total_quantity',
-            'transaction:id,total_amount,currency,status,created_at,updated_at',
+            'ticketDefinition.eventOccurrences:id,event_id,venue_id,name,description,start_at_utc,end_at_utc,timezone,status,capacity,is_online,online_meeting_link',
+            'ticketDefinition.eventOccurrences.venue:id,name,address_line_1,city,postal_code',
+            'transaction:id,total_amount,currency,status,payment_gateway,payment_gateway_transaction_id,payment_intent_id,created_at,updated_at',
             'checkInLogs:id,booking_id,method,check_in_timestamp,operator_user_id,device_identifier,location_description,status',
             'checkInLogs.operator:id,name'
         ])->find($bookingId);
@@ -547,10 +549,13 @@ class BookingService
             'pending_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::PENDING_CONFIRMATION)->count(),
             'used_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::USED)->count(),
             'cancelled_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::CANCELLED)->count(),
-            'total_revenue' => (clone $baseQuery)
-                ->join('transactions', 'bookings.transaction_id', '=', 'transactions.id')
-                ->where('transactions.status', TransactionStatusEnum::CONFIRMED)
-                ->sum('transactions.total_amount'),
+            'total_revenue' => Transaction::whereIn('id', function ($query) use ($baseQuery) {
+                $query->select('transaction_id')
+                    ->from('bookings')
+                    ->whereIn('id', (clone $baseQuery)->select('id'));
+            })
+                ->where('status', TransactionStatusEnum::CONFIRMED)
+                ->sum('total_amount'),
             'recent_bookings' => (clone $baseQuery)
                 ->with(['user', 'event:id,name']) // Remove column selection from user relationship
                 ->latest()

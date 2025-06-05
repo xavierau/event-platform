@@ -96,20 +96,89 @@
                         <CardContent class="space-y-4">
                             <div>
                                 <Label class="text-sm font-medium text-gray-500">Event Name</Label>
-                                <p class="text-lg font-semibold">{{ booking.event.name }}</p>
+                                <p class="text-lg font-semibold">{{ getTranslation(booking.event.name, currentLocale) }}</p>
                             </div>
                             <div v-if="booking.event.description">
                                 <Label class="text-sm font-medium text-gray-500">Description</Label>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ booking.event.description }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ getTranslation(booking.event.description, currentLocale) }}</p>
                             </div>
-                            <div class="grid grid-cols-2 gap-4" v-if="booking.event.start_date">
-                                <div>
-                                    <Label class="text-sm font-medium text-gray-500">Start Date</Label>
-                                    <p class="text-sm">{{ formatDate(booking.event.start_date) }}</p>
+                        </CardContent>
+                    </Card>
+
+                    <!-- Event Occurrence Information -->
+                    <Card v-if="booking.ticket_definition?.event_occurrences && booking.ticket_definition.event_occurrences.length > 0">
+                        <CardHeader>
+                            <CardTitle class="flex items-center">
+                                <Clock class="h-5 w-5 mr-2" />
+                                Event Schedule
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent class="space-y-4">
+                            <div
+                                v-for="occurrence in booking.ticket_definition.event_occurrences"
+                                :key="occurrence.id"
+                                class="border rounded-lg p-4 space-y-3"
+                            >
+                                <div v-if="occurrence.name">
+                                    <Label class="text-sm font-medium text-gray-500">Session Name</Label>
+                                    <p class="font-semibold">{{ getTranslation(occurrence.name, currentLocale) }}</p>
                                 </div>
-                                <div v-if="booking.event.end_date">
-                                    <Label class="text-sm font-medium text-gray-500">End Date</Label>
-                                    <p class="text-sm">{{ formatDate(booking.event.end_date) }}</p>
+                                <div v-if="occurrence.description">
+                                    <Label class="text-sm font-medium text-gray-500">Session Description</Label>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ getTranslation(occurrence.description, currentLocale) }}</p>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label class="text-sm font-medium text-gray-500">Start Date & Time</Label>
+                                        <p class="text-sm">{{ formatDateWithTimezone(occurrence.start_at_utc, occurrence.timezone) }}</p>
+                                    </div>
+                                    <div v-if="occurrence.end_at_utc">
+                                        <Label class="text-sm font-medium text-gray-500">End Date & Time</Label>
+                                        <p class="text-sm">{{ formatDateWithTimezone(occurrence.end_at_utc, occurrence.timezone) }}</p>
+                                    </div>
+                                    <div>
+                                        <Label class="text-sm font-medium text-gray-500">Status</Label>
+                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                            {{ formatStatus(occurrence.status) }}
+                                        </span>
+                                    </div>
+                                    <div v-if="occurrence.capacity">
+                                        <Label class="text-sm font-medium text-gray-500">Capacity</Label>
+                                        <p class="text-sm">{{ occurrence.capacity }} attendees</p>
+                                    </div>
+                                </div>
+
+                                <!-- Venue Information -->
+                                <div v-if="occurrence.venue" class="mt-4 pt-4 border-t">
+                                    <div class="flex items-center mb-2">
+                                        <MapPin class="h-4 w-4 mr-2 text-gray-500" />
+                                        <Label class="text-sm font-medium text-gray-500">Venue</Label>
+                                    </div>
+                                    <div class="ml-6 space-y-1">
+                                        <p class="font-medium">{{ getTranslation(occurrence.venue.name, currentLocale) }}</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            {{ getTranslation(occurrence.venue.address_line_1, currentLocale) }}<br>
+                                            {{ getTranslation(occurrence.venue.city, currentLocale) }} {{ occurrence.venue.postal_code }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Online Meeting Information -->
+                                <div v-if="occurrence.is_online" class="mt-4 pt-4 border-t">
+                                    <div class="flex items-center mb-2">
+                                        <Calendar class="h-4 w-4 mr-2 text-gray-500" />
+                                        <Label class="text-sm font-medium text-gray-500">Online Event</Label>
+                                    </div>
+                                    <div class="ml-6">
+                                        <p class="text-sm text-blue-600 dark:text-blue-400" v-if="occurrence.online_meeting_link">
+                                            <a :href="occurrence.online_meeting_link" target="_blank" class="underline">
+                                                Join Online Meeting
+                                            </a>
+                                        </p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400" v-else>
+                                            Online meeting link will be provided closer to the event date.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>
@@ -126,11 +195,11 @@
                         <CardContent class="space-y-4">
                             <div>
                                 <Label class="text-sm font-medium text-gray-500">Ticket Type</Label>
-                                <p class="text-lg font-semibold">{{ booking.ticket_definition.name }}</p>
+                                <p class="text-lg font-semibold">{{ getTranslation(booking.ticket_definition.name, currentLocale) }}</p>
                             </div>
                             <div v-if="booking.ticket_definition.description">
                                 <Label class="text-sm font-medium text-gray-500">Description</Label>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ booking.ticket_definition.description }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ getTranslation(booking.ticket_definition.description, currentLocale) }}</p>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -164,10 +233,10 @@
                                         <div>
                                             <p class="font-medium">{{ log.method || 'Manual' }} Check-in</p>
                                             <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                {{ formatDate(log.checked_in_at) }}
+                                                {{ formatDate(log.check_in_timestamp) }}
                                             </p>
-                                            <p v-if="log.operator_name" class="text-sm text-gray-600 dark:text-gray-400">
-                                                Operator: {{ log.operator_name }}
+                                            <p v-if="log.operator?.name" class="text-sm text-gray-600 dark:text-gray-400">
+                                                Operator: {{ log.operator.name }}
                                             </p>
                                         </div>
                                         <span class="text-xs bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded">
@@ -233,6 +302,22 @@
                                 <Label class="text-sm font-medium text-gray-500">Currency</Label>
                                 <p class="text-sm uppercase">{{ booking.transaction.currency }}</p>
                             </div>
+                            <div v-if="booking.transaction.payment_gateway">
+                                <Label class="text-sm font-medium text-gray-500">Payment Gateway</Label>
+                                <p class="text-sm capitalize">{{ booking.transaction.payment_gateway }}</p>
+                            </div>
+                            <div v-if="booking.transaction.payment_gateway_transaction_id">
+                                <Label class="text-sm font-medium text-gray-500">Stripe Session ID</Label>
+                                <p class="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded break-all">
+                                    {{ booking.transaction.payment_gateway_transaction_id }}
+                                </p>
+                            </div>
+                            <div v-if="booking.transaction.payment_intent_id">
+                                <Label class="text-sm font-medium text-gray-500">Stripe Payment Intent ID</Label>
+                                <p class="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded break-all">
+                                    {{ booking.transaction.payment_intent_id }}
+                                </p>
+                            </div>
                             <div>
                                 <Label class="text-sm font-medium text-gray-500">Transaction Date</Label>
                                 <p class="text-sm">{{ formatDate(booking.transaction.created_at) }}</p>
@@ -246,14 +331,14 @@
                             <CardTitle>Quick Actions</CardTitle>
                         </CardHeader>
                         <CardContent class="space-y-3">
-                            <Button variant="outline" class="w-full" @click="resendConfirmation">
+                            <!-- <Button variant="outline" class="w-full" @click="resendConfirmation">
                                 <Mail class="h-4 w-4 mr-2" />
                                 Resend Confirmation
-                            </Button>
-                            <Button variant="outline" class="w-full" @click="printTicket">
+                            </Button> -->
+                            <!-- <Button variant="outline" class="w-full" @click="printTicket">
                                 <Printer class="h-4 w-4 mr-2" />
                                 Print Ticket
-                            </Button>
+                            </Button> -->
                             <Button variant="destructive" class="w-full" @click="cancelBooking">
                                 <XCircle class="h-4 w-4 mr-2" />
                                 Cancel Booking
@@ -270,14 +355,35 @@
 import { Head, Link } from '@inertiajs/vue3'
 import {
     ArrowLeft, Edit, Download, Ticket, Calendar, CreditCard,
-    CheckCircle, User, DollarSign, Mail, Printer, XCircle
+    CheckCircle, User, DollarSign, Mail, Printer, XCircle, MapPin, Clock
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getTranslation, currentLocale } from '@/Utils/i18n'
 
 // Define interfaces
+interface EventOccurrence {
+    id: number
+    name: Record<string, string> | string
+    description?: Record<string, string> | string
+    start_at_utc: string
+    end_at_utc?: string
+    timezone: string
+    status: string
+    capacity?: number
+    is_online: boolean
+    online_meeting_link?: string
+    venue?: {
+        id: number
+        name: Record<string, string> | string
+        address_line_1: Record<string, string> | string
+        city: Record<string, string> | string
+        postal_code: string
+    }
+}
+
 interface BookingDetails {
     id: number
     booking_number: string
@@ -289,10 +395,8 @@ interface BookingDetails {
     created_at: string
     event?: {
         id: number
-        name: string
-        description?: string
-        start_date?: string
-        end_date?: string
+        name: Record<string, string> | string
+        description?: Record<string, string> | string
     }
     user?: {
         id: number
@@ -302,23 +406,27 @@ interface BookingDetails {
     }
     ticket_definition?: {
         id: number
-        name: string
-        description?: string
+        name: Record<string, string> | string
+        description?: Record<string, string> | string
         price: number
         total_quantity?: number
+        event_occurrences?: EventOccurrence[]
     }
     transaction?: {
         id: number
         total_amount: number
         currency: string
         status: string
+        payment_gateway?: string
+        payment_gateway_transaction_id?: string
+        payment_intent_id?: string
         created_at: string
     }
     check_in_logs?: Array<{
         id: number
         method?: string
-        checked_in_at: string
-        operator_name?: string
+        check_in_timestamp: string
+        operator?: { name: string }
         status?: string
     }>
 }
@@ -373,6 +481,18 @@ const formatDate = (date: string) => {
 
 const formatCurrency = (amount: number) => {
     return (amount / 100).toFixed(2)
+}
+
+const formatDateWithTimezone = (dateString: string, timezone: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: timezone
+    }) + ` (${timezone})`
 }
 
 const resendConfirmation = () => {
