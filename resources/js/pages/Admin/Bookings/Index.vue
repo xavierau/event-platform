@@ -3,7 +3,7 @@ import { ref, reactive, watch } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import {
     Plus, Download, Search, Filter, Eye, Edit, X,
-    Ticket, CheckCircle, Clock, DollarSign, XCircle
+    Ticket, CheckCircle, Clock, DollarSign, XCircle, QrCode
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { Button } from '@/components/ui/button'
@@ -192,6 +192,12 @@ watch(() => filterForm.per_page, () => {
                     <Button variant="outline" @click="exportBookings">
                         <Download class="h-4 w-4 mr-2" />
                         Export
+                    </Button>
+                    <Button variant="secondary" as-child>
+                        <Link :href="route('admin.check-in.scan')">
+                            <QrCode class="h-4 w-4 mr-2" />
+                            Scan QR
+                        </Link>
                     </Button>
                     <Button as-child>
                         <Link :href="route('admin.bookings.create')">
