@@ -552,7 +552,8 @@ class BookingService
             'total_revenue' => Transaction::whereIn('id', function ($query) use ($baseQuery) {
                 $query->select('transaction_id')
                     ->from('bookings')
-                    ->whereIn('id', (clone $baseQuery)->select('id'));
+                    ->whereIn('id', (clone $baseQuery)->select('id'))
+                    ->where('status', BookingStatusEnum::CONFIRMED);
             })
                 ->where('status', TransactionStatusEnum::CONFIRMED)
                 ->sum('total_amount'),
