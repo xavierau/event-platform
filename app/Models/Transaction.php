@@ -19,7 +19,7 @@ class Transaction extends Model
         'status', // e.g., pending, completed, failed, refunded
         'payment_gateway', // e.g., stripe, paypal
         'payment_gateway_transaction_id',
-        'payment_gateway_payment_intent_id', // For storing Stripe payment intent ID
+        'payment_intent_id', // For storing Stripe payment intent ID
         'notes',
         'metadata',
     ];
