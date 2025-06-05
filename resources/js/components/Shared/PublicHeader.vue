@@ -26,7 +26,7 @@ const isAuthenticated = computed(() => !!auth.value?.user);
 
 <template>
   <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b dark:border-gray-700">
-    <div class="container mx-auto flex justify-between items-center p-4">
+    <div class="container mx-auto flex justify-between items-center p-2">
       <!-- Left side: Logo, Location, Search -->
       <div class="flex items-center space-x-4 flex-1 min-w-0">
 

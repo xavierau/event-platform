@@ -44,7 +44,7 @@ const iconDisplay = computed(() => {
 
 <template>
   <Link :href="category.href || '#'">
-    <div class="flex flex-col items-center justify-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg dark:hover:shadow-gray-700/50 transition-all duration-200 ease-in-out transform hover:-translate-y-1 h-28 sm:h-32 border border-transparent hover:border-indigo-300 dark:hover:border-indigo-700">
+    <div class="flex flex-col items-center justify-center p-1 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg dark:hover:shadow-gray-700/50 transition-all duration-200 ease-in-out transform hover:-translate-y-1 h-20 sm:h-32 border border-transparent hover:border-indigo-300 dark:hover:border-indigo-700">
       <!-- Icon Display -->
       <div class="mb-2 flex items-center justify-center">
         <!-- Image Icon (from media library) -->
