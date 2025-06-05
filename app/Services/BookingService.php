@@ -528,23 +528,25 @@ class BookingService
      */
     public function getBookingStatistics(?User $organizer = null): array
     {
-        $query = Booking::query();
+        $baseQuery = Booking::query();
 
         if ($organizer) {
             $organizerEventIds = Event::where('organizer_id', $organizer->id)->pluck('id');
-            $query->whereIn('event_id', $organizerEventIds);
+            $baseQuery->whereIn('event_id', $organizerEventIds);
         }
 
         return [
-            'total_bookings' => $query->count(),
-            'confirmed_bookings' => $query->where('status', BookingStatusEnum::CONFIRMED)->count(),
-            'pending_bookings' => $query->where('status', BookingStatusEnum::PENDING_CONFIRMATION)->count(),
-            'used_bookings' => $query->where('status', BookingStatusEnum::USED)->count(),
-            'cancelled_bookings' => $query->where('status', BookingStatusEnum::CANCELLED)->count(),
-            'total_revenue' => $query->join('transactions', 'bookings.transaction_id', '=', 'transactions.id')
+            'total_bookings' => (clone $baseQuery)->count(),
+            'confirmed_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::CONFIRMED)->count(),
+            'pending_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::PENDING_CONFIRMATION)->count(),
+            'used_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::USED)->count(),
+            'cancelled_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::CANCELLED)->count(),
+            'total_revenue' => (clone $baseQuery)
+                ->join('transactions', 'bookings.transaction_id', '=', 'transactions.id')
                 ->where('transactions.status', TransactionStatusEnum::CONFIRMED)
                 ->sum('transactions.total_amount'),
-            'recent_bookings' => $query->with(['user:id,name', 'event:id,name'])
+            'recent_bookings' => (clone $baseQuery)
+                ->with(['user:id,name', 'event:id,name'])
                 ->latest()
                 ->limit(5)
                 ->get()
