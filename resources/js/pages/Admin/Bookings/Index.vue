@@ -168,7 +168,10 @@ const formatDate = (date: string) => {
 }
 
 const formatCurrency = (amount: number) => {
-    return (amount / 100).toFixed(2)
+    return (amount / 100).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })
 }
 
 // Watch for filter changes and apply them automatically for some fields
@@ -220,8 +223,8 @@ watch(() => filterForm.per_page, () => {
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Bookings</dt>
-                                    <dd class="text-lg font-medium text-gray-900">{{ statistics.total_bookings }}</dd>
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Bookings</dt>
+                                    <dd class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ statistics.total_bookings }}</dd>
                                 </dl>
                             </div>
                         </div>
@@ -236,8 +239,8 @@ watch(() => filterForm.per_page, () => {
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Confirmed</dt>
-                                    <dd class="text-lg font-medium text-gray-900">{{ statistics.confirmed_bookings }}</dd>
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Confirmed</dt>
+                                    <dd class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ statistics.confirmed_bookings }}</dd>
                                 </dl>
                             </div>
                         </div>
@@ -252,8 +255,8 @@ watch(() => filterForm.per_page, () => {
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Pending</dt>
-                                    <dd class="text-lg font-medium text-gray-900">{{ statistics.pending_bookings }}</dd>
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Pending</dt>
+                                    <dd class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ statistics.pending_bookings }}</dd>
                                 </dl>
                             </div>
                         </div>
@@ -268,8 +271,8 @@ watch(() => filterForm.per_page, () => {
                             </div>
                             <div class="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
-                                    <dd class="text-lg font-medium text-gray-900">${{ formatCurrency(statistics.total_revenue) }}</dd>
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Revenue</dt>
+                                    <dd class="text-lg font-medium text-gray-900 dark:text-gray-100">${{ formatCurrency(statistics.total_revenue) }}</dd>
                                 </dl>
                             </div>
                         </div>
