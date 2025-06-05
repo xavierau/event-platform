@@ -9,6 +9,7 @@ use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Attributes\Validation;
 use Spatie\LaravelData\Support\Validation\ValidationContext;
+use Carbon\Carbon;
 
 #[MapName(SnakeCaseMapper::class)]
 class TicketDefinitionData extends Data
@@ -38,17 +39,17 @@ class TicketDefinitionData extends Data
         #[Validation\Rule(['nullable', 'date_format:Y-m-d\TH:i', 'after_or_equal:availability_window_start'])]
         public readonly ?string $availabilityWindowEnd,
 
+        #[Validation\Rule(['nullable', 'array'])]
+        public readonly ?array $metadata,
+
         #[Validation\Rule(['required', 'integer', 'min:1'])]
         public readonly int $minPerOrder = 1,
 
         #[Validation\Rule(['nullable', 'integer', 'min:1'])]
-        public readonly ?int $maxPerOrder,
+        public readonly ?int $maxPerOrder = null,
 
         #[Validation\Rule(['required', new Enum(TicketDefinitionStatus::class)])]
         public readonly TicketDefinitionStatus $status = TicketDefinitionStatus::ACTIVE,
-
-        #[Validation\Rule(['nullable', 'array'])]
-        public readonly ?array $metadata,
 
         #[Validation\Rule([
             'nullable',
@@ -79,5 +80,32 @@ class TicketDefinitionData extends Data
         }
 
         return $rules;
+    }
+
+    /**
+     * Transform data from model array to DTO format
+     */
+    public static function from(...$payloads): static
+    {
+        $payload = $payloads[0];
+
+        // Convert UTC datetime fields to datetime-local format for frontend
+        if (isset($payload['availability_window_start_utc']) && $payload['availability_window_start_utc']) {
+            $payload['availability_window_start'] = Carbon::parse($payload['availability_window_start_utc'])
+                ->setTimezone(config('app.timezone', 'UTC'))
+                ->format('Y-m-d\TH:i');
+        } else {
+            $payload['availability_window_start'] = null;
+        }
+
+        if (isset($payload['availability_window_end_utc']) && $payload['availability_window_end_utc']) {
+            $payload['availability_window_end'] = Carbon::parse($payload['availability_window_end_utc'])
+                ->setTimezone(config('app.timezone', 'UTC'))
+                ->format('Y-m-d\TH:i');
+        } else {
+            $payload['availability_window_end'] = null;
+        }
+
+        return parent::from($payload);
     }
 }
