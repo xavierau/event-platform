@@ -69,7 +69,7 @@
 | ORD-003 | Implement Monetary Helper Functions (Integer amounts, rounding, tax calc) | Medium     | SU-001       | Pending | Crucial for financial accuracy. Tax rounding up (ceiling).         |
 | ORD-004 | Implement Transaction & Booking DTOs, Actions/Services for Booking Process | High       | ORD-003, ORD-002 | Processing | Core booking logic. Includes QR code generation. Current implementation in BookingService. Refactor to Actions (TRX-003, TRX-004) pending. DTOs partially covered by InitiateBookingData (TRX-001, TRX-002). |
 | ORD-005 | Implement "My Bookings" page for General Users | Medium     | ORD-004      | Pending | Display purchased tickets/bookings.                                  |
-| ORD-006 | Develop Admin/Organizer UI for viewing Orders & Bookings | Medium     | ORD-004      | Processing | Search, filter, view details.                                        |
+| ORD-006 | Develop Admin/Organizer UI for viewing Orders & Bookings | Medium     | ORD-004      | Done       | Search, filter, view details.                                        |
 | **CHECK-IN** | | | | | |
 | CHK-001 | Create CheckInLog Entity (Model, Migration) | Medium     | ORD-002      | Done | All fields as per overview.                                          |
 | CHK-002 | Implement Check-in Logic (Action/Service) (Epic) | High       | CHK-001, ORD-002 | Decomposed | Validate QR, check `max_allowed_check_ins`, log to `CheckInLog`. Broken down into subtasks. |
