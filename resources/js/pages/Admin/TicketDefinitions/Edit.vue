@@ -31,32 +31,40 @@ const props = defineProps<{
 const currentLocaleForDisplay = ref(importedCurrentLocale.value || Object.keys(props.availableLocales)[0] || 'en');
 const activeLocaleTab = ref(currentLocaleForDisplay.value);
 
-const form = useForm<TicketDefinitionEditFormData>({
+const form = useForm({
     _method: 'PUT',
     name: {} as Record<string, string>,
     description: {} as Record<string, string>,
     price: typeof props.ticketDefinition?.price === 'number' && props.ticketDefinition.price !== null
         ? props.ticketDefinition.price / 100
-        : undefined,
-    total_quantity: props.ticketDefinition?.total_quantity ?? undefined,
+        : null,
+    currency: 'HKD', // Default currency for Hong Kong
+    total_quantity: props.ticketDefinition?.total_quantity || null,
     status: props.ticketDefinition?.status ?? (props.statuses?.[0]?.value || 'draft'),
-    availability_window_start: props.ticketDefinition?.availabilityWindowStart || '',
-    availability_window_end: props.ticketDefinition?.availabilityWindowEnd || '',
+    availability_window_start: props.ticketDefinition?.availability_window_start || '',
+    availability_window_end: props.ticketDefinition?.availability_window_end || '',
     min_per_order: props.ticketDefinition?.min_per_order ?? 1,
-    max_per_order: props.ticketDefinition?.max_per_order ?? undefined,
-    metadata: props.ticketDefinition?.metadata ?? undefined,
+    max_per_order: props.ticketDefinition?.max_per_order || null,
+    metadata: props.ticketDefinition?.metadata || null,
 });
 
 // Initialize and populate translatable fields
 if (props.availableLocales) {
     Object.keys(props.availableLocales).forEach(locale => {
-        form.name[locale] = getTranslation(props.ticketDefinition?.name, locale, '');
-        form.description[locale] = getTranslation(props.ticketDefinition?.description, locale, '');
+        form.name[locale] = getTranslation(props.ticketDefinition?.name, locale) || '';
+        form.description[locale] = getTranslation(props.ticketDefinition?.description, locale) || '';
     });
 }
 
 const statusOptions = computed(() => {
     return props.statuses?.map(status => ({ value: status.value, label: status.label })) ?? [];
+});
+
+const localeTabs = computed(() => {
+    return Object.entries(props.availableLocales || {}).map(([key, label]) => ({
+        key,
+        label,
+    }));
 });
 
 const submit = () => {

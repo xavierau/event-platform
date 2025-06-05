@@ -66,15 +66,16 @@ export interface OccurrenceTicketAssignment {
 export interface TicketDefinitionCreateFormData {
     name: Record<string, string>; // Translatable name
     description: Record<string, string>; // Translatable description
-    price: number | null;
+    price: number | null | undefined;
     currency: string;
-    total_quantity: number | null;
-    availability_window_start: string | null;
-    availability_window_end: string | null;
-    min_per_order: number | null;
-    max_per_order: number | null;
+    total_quantity: number | null | undefined;
+    availability_window_start: string | null | undefined;
+    availability_window_end: string | null | undefined;
+    min_per_order: number | null | undefined;
+    max_per_order: number | null | undefined;
     status: string;
-    metadata: Record<string, any> | null;
+    metadata: Record<string, any> | null | undefined;
+    [key: string]: any; // Index signature for form compatibility
 }
 
 /**

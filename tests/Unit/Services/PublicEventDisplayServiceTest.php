@@ -413,4 +413,106 @@ class PublicEventDisplayServiceTest extends TestCase
         // Assert
         $this->assertEquals('Primary Venue', $result);
     }
+
+    /** @test */
+    public function getEventDetailData_calculates_price_range_with_multiple_tickets_having_null_availability_window()
+    {
+        // Arrange
+        $category = Category::factory()->create(['name' => ['en' => 'Concert']]);
+        $venue = Venue::factory()->create([
+            'name' => ['en' => 'Music Hall'],
+            'address_line_1' => ['en' => '456 Concert Street']
+        ]);
+
+        $event = Event::factory()->create([
+            'name' => ['en' => 'Rock Concert'],
+            'description' => ['en' => 'Amazing rock concert'],
+            'event_status' => 'published',
+            'category_id' => $category->id
+        ]);
+
+        $occurrence = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+            'name' => ['en' => 'Friday Night Show'],
+            'start_at_utc' => '2024-02-16 20:00:00',
+            'status' => 'scheduled',
+            'timezone' => 'Asia/Hong_Kong'
+        ]);
+
+        // Create multiple ticket definitions with null availability_window
+        $ticketGeneral = TicketDefinition::factory()->create([
+            'name' => ['en' => 'General Admission'],
+            'description' => ['en' => 'Standard seating'],
+            'price' => 8000, // $80.00
+            'currency' => 'HKD',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null,
+        ]);
+
+        $ticketVip = TicketDefinition::factory()->create([
+            'name' => ['en' => 'VIP Package'],
+            'description' => ['en' => 'Premium experience'],
+            'price' => 15000, // $150.00
+            'currency' => 'HKD',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null,
+        ]);
+
+        $ticketStudent = TicketDefinition::factory()->create([
+            'name' => ['en' => 'Student Discount'],
+            'description' => ['en' => 'Discounted price for students'],
+            'price' => 5000, // $50.00
+            'currency' => 'HKD',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null,
+        ]);
+
+        // Attach all tickets to the occurrence
+        $occurrence->ticketDefinitions()->attach([
+            $ticketGeneral->id => [
+                'quantity_for_occurrence' => 100,
+                'price_override' => null,
+            ],
+            $ticketVip->id => [
+                'quantity_for_occurrence' => 20,
+                'price_override' => null,
+            ],
+            $ticketStudent->id => [
+                'quantity_for_occurrence' => 50,
+                'price_override' => 6000, // Override to $60.00
+            ],
+        ]);
+
+        // Act
+        $result = $this->service->getEventDetailData($event->id);
+
+        // Assert
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('price_range', $result);
+
+        // Should calculate price range from $60.00 (student override) to $150.00 (VIP)
+        // Since all tickets have null availability_window, they should all be considered available
+        $this->assertEquals('HK$60.00-150.00', $result['price_range']);
+
+        // Verify the event structure is correct
+        $this->assertEquals($event->id, $result['id']);
+        $this->assertEquals('Rock Concert', $result['name']);
+        $this->assertEquals('Concert', $result['category_tag']);
+        $this->assertEquals('Music Hall', $result['venue_name']);
+        // Check that venue_address contains our specified address_line_1
+        $this->assertStringContainsString('456 Concert Street', $result['venue_address']);
+
+        // Check that all tickets are included in the occurrence data
+        $this->assertCount(1, $result['occurrences']);
+        $occurrence = $result['occurrences'][0];
+        $this->assertEquals('Friday Night Show', $occurrence['name']);
+        $this->assertCount(3, $occurrence['tickets']);
+
+        // Verify ticket names are present
+        $ticketNames = array_column($occurrence['tickets'], 'name');
+        $this->assertContains('General Admission', $ticketNames);
+        $this->assertContains('VIP Package', $ticketNames);
+        $this->assertContains('Student Discount', $ticketNames);
+    }
 }
