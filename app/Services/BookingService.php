@@ -360,7 +360,7 @@ class BookingService
     public function getAllBookingsWithFilters(array $filters = []): \Illuminate\Pagination\LengthAwarePaginator
     {
         $query = Booking::with([
-            'user:id,name,email',
+            'user', // Remove column selection to avoid hasOneThrough ambiguity
             'event:id,name',
             'ticketDefinition:id,name,price,currency',
             'transaction:id,total_amount,currency,status,created_at'
@@ -429,7 +429,7 @@ class BookingService
         $organizerEventIds = Event::where('organizer_id', $organizer->id)->pluck('id');
 
         $query = Booking::with([
-            'user:id,name,email',
+            'user', // Remove column selection to avoid hasOneThrough ambiguity
             'event:id,name',
             'ticketDefinition:id,name,price,currency',
             'transaction:id,total_amount,currency,status,created_at'
@@ -464,8 +464,13 @@ class BookingService
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 
-        if (!empty($filters['event_id']) && in_array($filters['event_id'], $organizerEventIds->toArray())) {
-            $query->where('event_id', $filters['event_id']);
+        if (!empty($filters['event_id'])) {
+            if (in_array($filters['event_id'], $organizerEventIds->toArray())) {
+                $query->where('event_id', $filters['event_id']);
+            } else {
+                // If organizer tries to filter by an event they don't own, return no results
+                $query->where('event_id', -1); // Impossible condition to return empty results
+            }
         }
 
         $sortBy = $filters['sort_by'] ?? 'created_at';
@@ -484,7 +489,7 @@ class BookingService
     public function getDetailedBooking(int $bookingId): ?Booking
     {
         return Booking::with([
-            'user:id,name,email,created_at',
+            'user', // Remove column selection to avoid hasOneThrough ambiguity
             'event:id,name,description,start_date,end_date',
             'ticketDefinition:id,name,description,price,currency,total_quantity',
             'transaction:id,total_amount,currency,status,created_at,updated_at',
@@ -546,7 +551,7 @@ class BookingService
                 ->where('transactions.status', TransactionStatusEnum::CONFIRMED)
                 ->sum('transactions.total_amount'),
             'recent_bookings' => (clone $baseQuery)
-                ->with(['user:id,name', 'event:id,name'])
+                ->with(['user', 'event:id,name']) // Remove column selection from user relationship
                 ->latest()
                 ->limit(5)
                 ->get()
