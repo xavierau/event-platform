@@ -204,12 +204,12 @@ watch(() => filterForm.per_page, () => {
                             Scan QR
                         </Link>
                     </Button>
-                    <Button as-child>
+                    <!-- <Button as-child>
                         <Link :href="route('admin.bookings.create')">
                             <Plus class="h-4 w-4 mr-2" />
                             Create Booking
                         </Link>
-                    </Button>
+                    </Button> -->
                 </div>
             </div>
 
@@ -532,11 +532,11 @@ watch(() => filterForm.per_page, () => {
                                                 <Eye class="h-4 w-4" />
                                             </Link>
                                         </Button>
-                                        <Button variant="ghost" size="sm" as-child>
+                                        <!-- <Button variant="ghost" size="sm" as-child>
                                             <Link :href="route('admin.bookings.edit', booking.id)">
                                                 <Edit class="h-4 w-4" />
-                                            </Link>
-                                        </Button>
+                                            </Link> -->
+                                        <!-- </Button> -->
                                     </td>
                                 </tr>
                             </tbody>
