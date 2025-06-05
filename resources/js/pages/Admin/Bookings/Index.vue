@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
+import { getTranslation, currentLocale } from '@/Utils/i18n'
 
 // Define interfaces for type safety
 interface BookingItem {
@@ -23,9 +24,9 @@ interface BookingItem {
     quantity: number
     price_at_booking: number
     created_at: string
-    event?: { id: number; name: string }
+    event?: { id: number; name: Record<string, string> | string }
     user?: { id: number; name: string; email: string }
-    ticket_definition?: { id: number; name: string }
+    ticket_definition?: { id: number; name: Record<string, string> | string }
 }
 
 interface BookingsData {

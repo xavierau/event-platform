@@ -493,7 +493,8 @@ class BookingService
             'event:id,name,description',
             'ticketDefinition:id,name,description,price,currency,total_quantity',
             'transaction:id,total_amount,currency,status,created_at,updated_at',
-            'checkInLogs:id,booking_id,method,checked_in_at,operator_name,device_info,location_info,status'
+            'checkInLogs:id,booking_id,method,check_in_timestamp,operator_user_id,device_identifier,location_description,status',
+            'checkInLogs.operator:id,name'
         ])->find($bookingId);
     }
 
