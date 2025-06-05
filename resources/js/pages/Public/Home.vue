@@ -133,7 +133,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
       <!-- Upcoming Events Section (FE-LP-005) -->
       <section id="upcoming-events" class="mb-6">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-            <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-0">Upcoming Events</h2>
+            <!-- <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-0">Upcoming Events</h2> -->
             <div class="flex space-x-2 text-sm flex-wrap">
               <!-- <button
                 @click="showTodayEvents"
