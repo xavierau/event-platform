@@ -194,7 +194,7 @@ watch(() => filterForm.per_page, () => {
                         Export
                     </Button>
                     <Button variant="secondary" as-child>
-                        <Link :href="route('admin.check-in.scan')">
+                        <Link :href="route('admin.qr-scanner.index')">
                             <QrCode class="h-4 w-4 mr-2" />
                             Scan QR
                         </Link>
