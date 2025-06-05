@@ -75,34 +75,14 @@ const displayedEvents = computed(() => {
 // Placeholder data for more events - this would also come from props eventually
 const moreEventsData = ref(props.moreEvents);
 
-// Convert single featured event to array for carousel component
-const featuredEvents = computed(() => {
-  return props.featuredEvent ? [props.featuredEvent] : [];
-});
-
 onMounted(() => {
     console.log('Today events:', props.todayEvents);
     console.log('Upcoming events:', props.upcomingEvents);
     console.log('More events:', moreEventsData.value);
 });
 
-function showTodayEvents() {
-  activeFilter.value = 'today';
-}
-
 function showUpcomingEvents() {
   activeFilter.value = 'upcoming';
-}
-
-function goToTomorrow() {
-  const tomorrow = dayjs().utc().add(1, 'day').format('YYYY-MM-DD')
-  window.location.href = `/events?start=${tomorrow}&end=${tomorrow}`
-}
-
-function goToThisWeek() {
-  const startOfWeek = dayjs().utc().startOf('week').format('YYYY-MM-DD')
-  const endOfWeek = dayjs().utc().endOf('week').format('YYYY-MM-DD')
-  window.location.href = `/events?start=${startOfWeek}&end=${endOfWeek}`
 }
 
 const showCalendar = ref(false)
