@@ -84,15 +84,18 @@ class TicketDefinitionAssociationTest extends TestCase
             id: null,
             name: ['en' => 'Early Bird Ticket', 'zh-TW' => '早鳥票'],
             description: ['en' => 'Limited early bird tickets', 'zh-TW' => '限量早鳥票'],
-            price: 1000, // e.g., cents
-            totalQuantity: 100,
-            availabilityWindowStart: null,
-            availabilityWindowEnd: null,
-            minPerOrder: 1,
-            maxPerOrder: 5,
+            price: 1000,
+            currency: 'USD',
+            availability_window_start: null,
+            availability_window_end: null,
+            availability_window_start_utc: null,
+            availability_window_end_utc: null,
+            total_quantity: 100,
+            min_per_order: 1,
+            max_per_order: 5,
             status: TicketDefinitionStatus::ACTIVE,
-            metadata: null,
-            eventOccurrenceIds: [$occurrence1->id, $occurrence2->id]
+            event_occurrence_ids: [$occurrence1->id, $occurrence2->id],
+            timezone: 'America/New_York'
         );
 
         $ticketDefinition = $this->upsertAction->execute($ticketData);
@@ -100,6 +103,8 @@ class TicketDefinitionAssociationTest extends TestCase
         $this->assertDatabaseHas('ticket_definitions', [
             'id' => $ticketDefinition->id,
             'price' => 1000,
+            'currency' => 'USD',
+            'timezone' => 'America/New_York'
         ]);
         // Check for one of the translatable names
         $this->assertEquals('Early Bird Ticket', $ticketDefinition->getTranslation('name', 'en'));
@@ -131,20 +136,24 @@ class TicketDefinitionAssociationTest extends TestCase
             name: ['en' => 'Initial Ticket'],
             description: ['en' => 'Initial description'],
             price: 1500,
-            totalQuantity: 50,
-            availabilityWindowStart: null,
-            availabilityWindowEnd: null,
-            minPerOrder: 1,
-            maxPerOrder: 10,
+            currency: 'EUR',
+            availability_window_start: null,
+            availability_window_end: null,
+            availability_window_start_utc: null,
+            availability_window_end_utc: null,
+            total_quantity: 50,
+            min_per_order: 1,
+            max_per_order: 10,
             status: TicketDefinitionStatus::ACTIVE,
-            metadata: null,
-            eventOccurrenceIds: [$initialOccurrence1->id, $initialOccurrence2->id]
+            event_occurrence_ids: [$initialOccurrence1->id, $initialOccurrence2->id],
+            timezone: 'Europe/London'
         );
         $ticketDefinition = $this->upsertAction->execute($initialTicketData);
 
         $this->assertCount(2, $ticketDefinition->eventOccurrences, 'Initial association failed');
         $this->assertTrue($ticketDefinition->eventOccurrences->contains($initialOccurrence1));
         $this->assertTrue($ticketDefinition->eventOccurrences->contains($initialOccurrence2));
+        $this->assertEquals('Europe/London', $ticketDefinition->timezone);
 
         // 2. Create new occurrences for updating
         $newOccurrence3 = EventOccurrence::factory()->create([
@@ -166,24 +175,28 @@ class TicketDefinitionAssociationTest extends TestCase
 
         // 3. Update ticket definition to associate with newOccurrence3 and newOccurrence4
         $updateTicketData = new TicketDefinitionData(
-            id: $ticketDefinition->id, // Crucial: provide the ID for update
-            name: ['en' => 'Updated Ticket Name'], // Also update another field
-            description: $ticketDefinition->getTranslation('description', 'en') ? ['en' => $ticketDefinition->getTranslation('description', 'en')] : null, // Preserve or use a new one
+            id: $ticketDefinition->id,
+            name: ['en' => 'Updated Ticket Name'],
+            description: $ticketDefinition->getTranslation('description', 'en') ? ['en' => $ticketDefinition->getTranslation('description', 'en')] : null,
             price: 1600,
-            totalQuantity: $ticketDefinition->total_quantity, // Preserve or update
-            availabilityWindowStart: $ticketDefinition->availability_window_start, // Preserve or update
-            availabilityWindowEnd: $ticketDefinition->availability_window_end, // Preserve or update
-            minPerOrder: $ticketDefinition->min_per_order, // Preserve or update
-            maxPerOrder: $ticketDefinition->max_per_order, // Preserve or update
-            status: $ticketDefinition->status, // Preserve or update
-            metadata: $ticketDefinition->metadata, // Preserve or update
-            eventOccurrenceIds: [$newOccurrence3->id, $newOccurrence4->id]
+            currency: $ticketDefinition->currency,
+            availability_window_start: $ticketDefinition->availability_window_start,
+            availability_window_end: $ticketDefinition->availability_window_end,
+            availability_window_start_utc: $ticketDefinition->availability_window_start_utc,
+            availability_window_end_utc: $ticketDefinition->availability_window_end_utc,
+            total_quantity: $ticketDefinition->total_quantity,
+            min_per_order: $ticketDefinition->min_per_order,
+            max_per_order: $ticketDefinition->max_per_order,
+            status: $ticketDefinition->status,
+            event_occurrence_ids: [$newOccurrence3->id, $newOccurrence4->id],
+            timezone: 'America/Chicago'
         );
 
         $updatedTicketDefinition = $this->upsertAction->execute($updateTicketData, $ticketDefinition->id);
 
         $this->assertEquals('Updated Ticket Name', $updatedTicketDefinition->getTranslation('name', 'en'));
         $this->assertEquals(1600, $updatedTicketDefinition->price);
+        $this->assertEquals('America/Chicago', $updatedTicketDefinition->timezone);
 
         $this->assertDatabaseHas('event_occurrence_ticket_definition', [
             'ticket_definition_id' => $updatedTicketDefinition->id,
@@ -221,17 +234,21 @@ class TicketDefinitionAssociationTest extends TestCase
             name: ['en' => 'Ticket to Detach'],
             description: ['en' => 'This ticket will have its occurrences detached'],
             price: 2000,
-            totalQuantity: 20,
-            availabilityWindowStart: null,
-            availabilityWindowEnd: null,
-            minPerOrder: 1,
-            maxPerOrder: 2,
+            currency: 'CAD',
+            availability_window_start: null,
+            availability_window_end: null,
+            availability_window_start_utc: null,
+            availability_window_end_utc: null,
+            total_quantity: 20,
+            min_per_order: 1,
+            max_per_order: 2,
             status: TicketDefinitionStatus::ACTIVE,
-            metadata: null,
-            eventOccurrenceIds: [$initialOccurrence1->id, $initialOccurrence2->id]
+            event_occurrence_ids: [$initialOccurrence1->id, $initialOccurrence2->id],
+            timezone: null
         );
         $ticketDefinition = $this->upsertAction->execute($initialTicketData);
         $this->assertCount(2, $ticketDefinition->eventOccurrences, 'Initial association for detach test failed');
+        $this->assertNull($ticketDefinition->timezone);
 
         // 2. Update ticket definition with empty array for eventOccurrenceIds
         $updateTicketData = new TicketDefinitionData(
@@ -239,17 +256,21 @@ class TicketDefinitionAssociationTest extends TestCase
             name: $ticketDefinition->getTranslation('name', 'en') ? ['en' => $ticketDefinition->getTranslation('name', 'en')] : ['en' => 'Still Ticket to Detach'],
             description: $ticketDefinition->getTranslation('description', 'en') ? ['en' => $ticketDefinition->getTranslation('description', 'en')] : null,
             price: $ticketDefinition->price,
-            totalQuantity: $ticketDefinition->total_quantity,
-            availabilityWindowStart: $ticketDefinition->availability_window_start,
-            availabilityWindowEnd: $ticketDefinition->availability_window_end,
-            minPerOrder: $ticketDefinition->min_per_order,
-            maxPerOrder: $ticketDefinition->max_per_order,
+            currency: $ticketDefinition->currency,
+            availability_window_start: $ticketDefinition->availability_window_start,
+            availability_window_end: $ticketDefinition->availability_window_end,
+            availability_window_start_utc: $ticketDefinition->availability_window_start_utc,
+            availability_window_end_utc: $ticketDefinition->availability_window_end_utc,
+            total_quantity: $ticketDefinition->total_quantity,
+            min_per_order: $ticketDefinition->min_per_order,
+            max_per_order: $ticketDefinition->max_per_order,
             status: $ticketDefinition->status,
-            metadata: $ticketDefinition->metadata,
-            eventOccurrenceIds: [] // Empty array to detach all
+            event_occurrence_ids: [],
+            timezone: 'Asia/Tokyo'
         );
 
         $updatedTicketDefinition = $this->upsertAction->execute($updateTicketData, $ticketDefinition->id);
+        $this->assertEquals('Asia/Tokyo', $updatedTicketDefinition->timezone);
 
         $this->assertDatabaseMissing('event_occurrence_ticket_definition', [
             'ticket_definition_id' => $updatedTicketDefinition->id,
@@ -274,17 +295,21 @@ class TicketDefinitionAssociationTest extends TestCase
             name: ['en' => 'Ticket with Stable Associations'],
             description: ['en' => 'Associations should not change'],
             price: 2500,
-            totalQuantity: 30,
-            availabilityWindowStart: null,
-            availabilityWindowEnd: null,
-            minPerOrder: 1,
-            maxPerOrder: 3,
+            currency: 'AUD',
+            availability_window_start: null,
+            availability_window_end: null,
+            availability_window_start_utc: null,
+            availability_window_end_utc: null,
+            total_quantity: 30,
+            min_per_order: 1,
+            max_per_order: 3,
             status: TicketDefinitionStatus::ACTIVE,
-            metadata: null,
-            eventOccurrenceIds: [$initialOccurrence1->id, $initialOccurrence2->id]
+            event_occurrence_ids: [$initialOccurrence1->id, $initialOccurrence2->id],
+            timezone: 'Pacific/Auckland'
         );
         $ticketDefinition = $this->upsertAction->execute($initialTicketData);
         $this->assertCount(2, $ticketDefinition->eventOccurrences, 'Initial association for no-change test failed');
+        $this->assertEquals('Pacific/Auckland', $ticketDefinition->timezone);
 
         // 2. Update ticket definition details, setting eventOccurrenceIds to null (or omitting it)
         $updatedPrice = 2600;
@@ -295,14 +320,17 @@ class TicketDefinitionAssociationTest extends TestCase
             name: $updatedName,
             description: $ticketDefinition->getTranslation('description', 'en') ? ['en' => $ticketDefinition->getTranslation('description', 'en')] : null,
             price: $updatedPrice,
-            totalQuantity: $ticketDefinition->total_quantity,
-            availabilityWindowStart: $ticketDefinition->availability_window_start,
-            availabilityWindowEnd: $ticketDefinition->availability_window_end,
-            minPerOrder: $ticketDefinition->min_per_order,
-            maxPerOrder: $ticketDefinition->max_per_order,
+            currency: $ticketDefinition->currency,
+            availability_window_start: $ticketDefinition->availability_window_start,
+            availability_window_end: $ticketDefinition->availability_window_end,
+            availability_window_start_utc: $ticketDefinition->availability_window_start_utc,
+            availability_window_end_utc: $ticketDefinition->availability_window_end_utc,
+            total_quantity: $ticketDefinition->total_quantity,
+            min_per_order: $ticketDefinition->min_per_order,
+            max_per_order: $ticketDefinition->max_per_order,
             status: $ticketDefinition->status,
-            metadata: $ticketDefinition->metadata,
-            eventOccurrenceIds: null // Explicitly null to indicate no change to associations
+            event_occurrence_ids: null,
+            timezone: $ticketDefinition->timezone
         );
 
         $updatedTicketDefinition = $this->upsertAction->execute($updateTicketData, $ticketDefinition->id);
@@ -323,6 +351,7 @@ class TicketDefinitionAssociationTest extends TestCase
         $this->assertCount(2, $updatedTicketDefinition->eventOccurrences);
         $this->assertTrue($updatedTicketDefinition->eventOccurrences->contains($initialOccurrence1));
         $this->assertTrue($updatedTicketDefinition->eventOccurrences->contains($initialOccurrence2));
+        $this->assertEquals('Pacific/Auckland', $updatedTicketDefinition->timezone);
     }
 
     // Optional: Test for validation failure with non-existent occurrence IDs
@@ -353,5 +382,55 @@ class TicketDefinitionAssociationTest extends TestCase
 
         // The test will fail if ValidationException is not thrown before this point.
         // No need to call the action, as the DTO validation itself should fail.
+    }
+
+    // New test for UTC conversion
+    public function test_ticket_definition_uses_timezone_for_utc_conversion(): void
+    {
+        $localStartTimeString = '2025-12-01 10:00:00';
+        $localEndTimeString = '2025-12-10 18:00:00';
+        $ticketTimezone = 'America/New_York'; // EST is UTC-5, or UTC-4 during DST
+
+        // Manually calculate expected UTC, being mindful of Carbon's parsing
+        // DTO expects Carbon objects for availability_window_start/end if not null
+        $localStartTimeCarbon = \Carbon\Carbon::parse($localStartTimeString, $ticketTimezone);
+        $localEndTimeCarbon = \Carbon\Carbon::parse($localEndTimeString, $ticketTimezone);
+
+        $expectedStartUtc = $localStartTimeCarbon->clone()->utc()->format('Y-m-d H:i:s');
+        $expectedEndUtc = $localEndTimeCarbon->clone()->utc()->format('Y-m-d H:i:s');
+
+        $ticketData = new TicketDefinitionData(
+            id: null,
+            name: ['en' => 'Timezone Test Ticket'],
+            description: ['en' => 'Testing UTC conversion with timezone'],
+            price: 500,
+            currency: 'USD',
+            availability_window_start: $localStartTimeCarbon, // Pass Carbon instance
+            availability_window_end: $localEndTimeCarbon,     // Pass Carbon instance
+            availability_window_start_utc: null, // Will be derived by action
+            availability_window_end_utc: null,   // Will be derived by action
+            total_quantity: 50,
+            min_per_order: 1,
+            max_per_order: 5,
+            status: TicketDefinitionStatus::ACTIVE,
+            event_occurrence_ids: [],
+            timezone: $ticketTimezone
+        );
+
+        $ticketDefinition = $this->upsertAction->execute($ticketData);
+
+        $this->assertDatabaseHas('ticket_definitions', [
+            'id' => $ticketDefinition->id,
+            'timezone' => $ticketTimezone,
+            'availability_window_start_utc' => $expectedStartUtc,
+            'availability_window_end_utc' => $expectedEndUtc,
+        ]);
+
+        // Verify model attributes as well
+        $this->assertEquals($ticketTimezone, $ticketDefinition->timezone);
+        $this->assertNotNull($ticketDefinition->availability_window_start_utc);
+        $this->assertEquals($expectedStartUtc, $ticketDefinition->availability_window_start_utc->format('Y-m-d H:i:s'));
+        $this->assertNotNull($ticketDefinition->availability_window_end_utc);
+        $this->assertEquals($expectedEndUtc, $ticketDefinition->availability_window_end_utc->format('Y-m-d H:i:s'));
     }
 }

@@ -17,7 +17,8 @@ export interface TicketDefinition {
     min_per_order?: number | null;
     max_per_order?: number | null;
     status: string; // e.g., 'active', 'draft', 'inactive', 'archived'
-    metadata?: Record<string, any> | null;
+    timezone?: string | null;
+    event_occurrence_ids?: number[] | null; // Associated event occurrence IDs
     created_at?: string;
     updated_at?: string;
 }
@@ -61,6 +62,17 @@ export interface OccurrenceTicketAssignment {
 }
 
 /**
+ * Event occurrence option for selectors
+ */
+export interface EventOccurrenceOption {
+    id: number;
+    name: string; // Name (translated for current UI locale)
+    event_name: string; // Parent event name
+    start_at?: string; // Formatted datetime string
+    end_at?: string; // Formatted datetime string
+}
+
+/**
  * Form data for creating ticket definitions
  */
 export interface TicketDefinitionCreateFormData {
@@ -74,7 +86,6 @@ export interface TicketDefinitionCreateFormData {
     min_per_order: number | null | undefined;
     max_per_order: number | null | undefined;
     status: string;
-    metadata: Record<string, any> | null | undefined;
     [key: string]: any; // Index signature for form compatibility
 }
 

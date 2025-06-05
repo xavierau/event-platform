@@ -19,27 +19,32 @@ interface AvailableLocales {
 }
 
 import type { TicketDefinitionCreateFormData } from '@/types/ticket';
+import type { EventOccurrenceOption } from '@/types/ticket';
 
 const props = defineProps<{
     statuses: StatusOption[];
     availableLocales: AvailableLocales;
+    timezones: string[];
+    eventOccurrences: EventOccurrenceOption[];
     errors?: Record<string, string>;
 }>();
 
 const localeTabs = computed(() => Object.entries(props.availableLocales).map(([key, label]) => ({ key, label: label as string })));
 const activeLocaleTab = ref(currentLocale.value || (localeTabs.value.length > 0 ? localeTabs.value[0].key : 'en'));
 
-const form = useForm<TicketDefinitionCreateFormData>({
+const form = useForm<TicketDefinitionCreateFormData & { timezone: string | null; event_occurrence_ids: number[] } >({
     name: Object.fromEntries(Object.keys(props.availableLocales).map(locale => [locale, ''])) as Record<string, string>,
     description: Object.fromEntries(Object.keys(props.availableLocales).map(locale => [locale, ''])) as Record<string, string>,
     price: undefined,
+    currency: 'HKD',
     total_quantity: undefined,
     status: (props.statuses && props.statuses.length > 0 ? props.statuses.find(s => s.value === 'active')?.value || props.statuses[0].value : 'draft'),
     availability_window_start: '',
     availability_window_end: '',
     min_per_order: 1,
     max_per_order: undefined,
-    metadata: undefined,
+    timezone: 'Asia/Hong_Kong',
+    event_occurrence_ids: [],
 });
 
 const statusOptions = computed(() => {
@@ -139,6 +144,12 @@ const submit = () => {
                                     </div>
 
                                     <div>
+                                        <Label for="currency">Currency</Label>
+                                        <Input id="currency" type="text" v-model="form.currency" placeholder="e.g., USD" maxlength="3" />
+                                        <InputError :message="form.errors.currency" class="mt-1" />
+                                    </div>
+
+                                    <div>
                                         <Label for="total_quantity">Total Quantity Available (leave blank for unlimited)</Label>
                                         <Input id="total_quantity" type="number" v-model.number="form.total_quantity" placeholder="e.g., 100" />
                                         <InputError :message="form.errors.total_quantity" class="mt-1" />
@@ -155,14 +166,45 @@ const submit = () => {
                                         <InputError :message="form.errors.status" class="mt-1" />
                                     </div>
 
+                                    <div>
+                                        <Label for="timezone">Timezone</Label>
+                                        <select id="timezone" v-model="form.timezone" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                            <option :value="null">-- Select Timezone (uses server default) --</option>
+                                            <option v-for="tz in props.timezones" :key="tz" :value="tz">
+                                                {{ tz }}
+                                            </option>
+                                        </select>
+                                        <InputError :message="form.errors.timezone" class="mt-1" />
+                                    </div>
+
+                                    <div>
+                                        <Label for="event_occurrence_ids">Associated Event Occurrences (optional)</Label>
+                                        <select
+                                            id="event_occurrence_ids"
+                                            v-model="form.event_occurrence_ids"
+                                            multiple
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                            size="6"
+                                        >
+                                            <option v-for="occurrence in props.eventOccurrences" :key="occurrence.id" :value="occurrence.id">
+                                                {{ occurrence.event_name }} - {{ occurrence.name }}
+                                                <span v-if="occurrence.start_at">({{ occurrence.start_at }})</span>
+                                            </option>
+                                        </select>
+                                        <InputError :message="form.errors.event_occurrence_ids" class="mt-1" />
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            Hold Ctrl/Cmd to select multiple occurrences. Leave empty to make this ticket available for all events.
+                                        </p>
+                                    </div>
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <Label for="availability_window_start">Availability Window Start</Label>
+                                            <Label for="availability_window_start">Availability Window Start (Local Time)</Label>
                                             <Input id="availability_window_start" type="datetime-local" v-model="form.availability_window_start" />
                                             <InputError :message="form.errors.availability_window_start" class="mt-1" />
                                         </div>
                                         <div>
-                                            <Label for="availability_window_end">Availability Window End</Label>
+                                            <Label for="availability_window_end">Availability Window End (Local Time)</Label>
                                             <Input id="availability_window_end" type="datetime-local" v-model="form.availability_window_end" />
                                             <InputError :message="form.errors.availability_window_end" class="mt-1" />
                                         </div>

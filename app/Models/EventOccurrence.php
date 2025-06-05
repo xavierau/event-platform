@@ -43,8 +43,8 @@ class EventOccurrence extends Model implements HasMedia
     protected $casts = [
         'name' => 'array',
         'description' => 'array',
-        'start_at' => 'string',
-        'end_at' => 'string',
+        'start_at' => 'datetime',
+        'end_at' => 'datetime',
         'start_at_utc' => 'datetime',
         'end_at_utc' => 'datetime',
         'is_online' => 'boolean',

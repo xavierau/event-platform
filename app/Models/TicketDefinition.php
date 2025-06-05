@@ -18,14 +18,15 @@ class TicketDefinition extends Model
         'description',
         'price',
         'currency',
-        'total_quantity',
         'availability_window_start',
         'availability_window_end',
         'availability_window_start_utc',
         'availability_window_end_utc',
-        'min_per_order',
         'max_per_order',
+        'min_per_order',
         'status',
+        'timezone',
+        'total_quantity',
         'metadata',
     ];
 
@@ -39,8 +40,8 @@ class TicketDefinition extends Model
         'description' => 'array',
         'price' => 'integer',
         'total_quantity' => 'integer',
-        'availability_window_start' => 'string',
-        'availability_window_end' => 'string',
+        'availability_window_start' => 'datetime',
+        'availability_window_end' => 'datetime',
         'availability_window_start_utc' => 'datetime',
         'availability_window_end_utc' => 'datetime',
         'min_per_order' => 'integer',
@@ -118,20 +119,4 @@ class TicketDefinition extends Model
             'quantity_available' => $availableQuantity,
         ];
     }
-
-
-
-
-    // Removed eventOccurrence() belongsTo relationship
-    // Removed event() relationship
-
-    // public function creator() // Assuming these are handled by a global scope or trait if needed
-    // {
-    //     return $this->belongsTo(User::class, 'created_by');
-    // }
-
-    // public function updater() // Assuming these are handled by a global scope or trait if needed
-    // {
-    //     return $this->belongsTo(User::class, 'updated_by');
-    // }
 }

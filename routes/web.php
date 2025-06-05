@@ -51,6 +51,7 @@ Route::get('/events', [PublicEventController::class, 'index'])->name('events.ind
 
 // My Bookings route (requires authentication)
 Route::middleware(['auth'])->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/my-bookings', [MyBookingsController::class, 'index'])->name('my-bookings');
     Route::get('/my-wishlist', [\App\Http\Controllers\Public\MyWishlistController::class, 'index'])->name('my-wishlist');
     Route::get('/my-wallet', [\App\Http\Controllers\Public\MyWalletController::class, 'index'])->name('my-wallet');

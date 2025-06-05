@@ -35,6 +35,7 @@ class TicketDefinitionFactory extends Factory
                 TicketDefinitionStatus::INACTIVE->value,
                 TicketDefinitionStatus::ARCHIVED->value
             ]),
+            'timezone' => null, // Added timezone, defaulting to null
             'metadata' => $this->faker->optional(0.3)->randomElement([
                 ['info' => 'Some extra JSON data'],
                 ['restrictions' => 'Adults only'],

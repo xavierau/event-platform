@@ -55,7 +55,7 @@ const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A';
     try {
         const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        return new Date(dateString).toLocaleDateString(currentLocale.value, options);
+        return new Date(dateString).toLocaleString(currentLocale.value, options);
     } catch (e) {
         console.error("Error formatting date:", dateString, e);
         return dateString; // return original if formatting fails
@@ -128,7 +128,7 @@ const formatDate = (dateString: string | null | undefined): string => {
                                                         </span>
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                        {{ formatDate(definition.availabilityWindowStart) }} - {{ formatDate(definition.availabilityWindowEnd) }}
+                                                        {{ formatDate(definition.availability_window_start) }} - {{ formatDate(definition.availability_window_end) }}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                         <Link :href="route('admin.ticket-definitions.edit', definition.id)">

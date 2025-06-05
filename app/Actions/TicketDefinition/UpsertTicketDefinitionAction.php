@@ -14,28 +14,29 @@ class UpsertTicketDefinitionAction
     public function execute(TicketDefinitionData $ticketData, ?int $ticketDefinitionId = null): TicketDefinition
     {
         return DB::transaction(function () use ($ticketData, $ticketDefinitionId) {
+            $effectiveTimezone = $ticketData->timezone ?? config('app.timezone');
+
             $availabilityWindowStartUtc = null;
-            if ($ticketData->availabilityWindowStart) {
+            if ($ticketData->availability_window_start) {
                 try {
-                    // Assuming no specific timezone is provided with ticket definitions, use app default for parsing local time
-                    $availabilityWindowStartUtc = Carbon::parse($ticketData->availabilityWindowStart, config('app.timezone'))->utc();
+                    $availabilityWindowStartUtc = Carbon::parse($ticketData->availability_window_start, $effectiveTimezone)->utc();
                 } catch (\Exception $e) {
                     Log::error('Error parsing availabilityWindowStart for UTC conversion', [
-                        'availabilityWindowStart' => $ticketData->availabilityWindowStart,
-                        'app_timezone' => config('app.timezone'),
+                        'availabilityWindowStart' => $ticketData->availability_window_start,
+                        'effective_timezone' => $effectiveTimezone,
                         'error' => $e->getMessage(),
                     ]);
                 }
             }
 
             $availabilityWindowEndUtc = null;
-            if ($ticketData->availabilityWindowEnd) {
+            if ($ticketData->availability_window_end) {
                 try {
-                    $availabilityWindowEndUtc = Carbon::parse($ticketData->availabilityWindowEnd, config('app.timezone'))->utc();
+                    $availabilityWindowEndUtc = Carbon::parse($ticketData->availability_window_end, $effectiveTimezone)->utc();
                 } catch (\Exception $e) {
                     Log::error('Error parsing availabilityWindowEnd for UTC conversion', [
-                        'availabilityWindowEnd' => $ticketData->availabilityWindowEnd,
-                        'app_timezone' => config('app.timezone'),
+                        'availabilityWindowEnd' => $ticketData->availability_window_end,
+                        'effective_timezone' => $effectiveTimezone,
                         'error' => $e->getMessage(),
                     ]);
                 }
@@ -63,9 +64,9 @@ class UpsertTicketDefinitionAction
 
             // Sync event occurrences if IDs are explicitly provided (not null)
             // If eventOccurrenceIds is null, it means no change to associations is intended.
-            if ($ticketData->eventOccurrenceIds !== null) {
-                $ticketDefinition->eventOccurrences()->sync($ticketData->eventOccurrenceIds); // $ticketData->eventOccurrenceIds will be an array here (possibly empty)
-                Log::info('UpsertTicketDefinitionAction: Synced EventOccurrences for TicketDefinition ' . $ticketDefinition->id, ['event_occurrence_ids' => $ticketData->eventOccurrenceIds]);
+            if ($ticketData->event_occurrence_ids !== null) {
+                $ticketDefinition->eventOccurrences()->sync($ticketData->event_occurrence_ids);
+                Log::info('UpsertTicketDefinitionAction: Synced EventOccurrences for TicketDefinition ' . $ticketDefinition->id, ['event_occurrence_ids' => $ticketData->event_occurrence_ids]);
             }
 
             return $ticketDefinition->refresh();

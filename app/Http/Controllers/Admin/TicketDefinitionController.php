@@ -14,6 +14,8 @@ use Inertia\Response as InertiaResponse;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use DateTimeZone;
+use App\Models\EventOccurrence;
 
 class TicketDefinitionController extends Controller
 {
@@ -27,12 +29,13 @@ class TicketDefinitionController extends Controller
     {
         $filters = $request->only(['search', 'status']); // Example filters
         $perPage = $request->input('perPage', 15);
-
         $ticketDefinitionsPaginator = $this->ticketDefinitionService->getAllTicketDefinitions($filters, (int)$perPage);
 
         // Explicitly transform models to arrays before DTO hydration
         $dtoPaginator = $ticketDefinitionsPaginator->through(
-            fn(TicketDefinition $definition) => TicketDefinitionData::from($definition->toArray())
+            // fn(TicketDefinition $definition) => dd($definition->toArray())
+            // );
+            fn(TicketDefinition $definition) => TicketDefinitionData::fromModel($definition)
         );
 
         return inertia('Admin/TicketDefinitions/Index', [
@@ -43,9 +46,26 @@ class TicketDefinitionController extends Controller
 
     public function create(): InertiaResponse
     {
+        // Get available event occurrences for selection
+        $eventOccurrences = EventOccurrence::with('event:id,name')
+            ->select('id', 'name', 'event_id', 'start_at', 'end_at')
+            ->orderBy('start_at', 'asc')
+            ->get()
+            ->map(function ($occurrence) {
+                return [
+                    'id' => $occurrence->id,
+                    'name' => $occurrence->getTranslation('name', app()->getLocale()),
+                    'event_name' => $occurrence->event->getTranslation('name', app()->getLocale()),
+                    'start_at' => $occurrence->start_at?->format('Y-m-d H:i'),
+                    'end_at' => $occurrence->end_at?->format('Y-m-d H:i'),
+                ];
+            });
+
         return Inertia::render('Admin/TicketDefinitions/Create', [
             'statuses' => collect(TicketDefinitionStatus::cases())->map(fn($status) => ['value' => $status->value, 'label' => $status->getLabel()]),
             'availableLocales' => config('app.available_locales', ['en' => 'English']),
+            'timezones' => DateTimeZone::listIdentifiers(DateTimeZone::ALL),
+            'eventOccurrences' => $eventOccurrences,
         ]);
     }
 
@@ -64,10 +84,27 @@ class TicketDefinitionController extends Controller
 
     public function edit(TicketDefinition $ticketDefinition): InertiaResponse
     {
+        // Get available event occurrences for selection
+        $eventOccurrences = EventOccurrence::with('event:id,name')
+            ->select('id', 'name', 'event_id', 'start_at', 'end_at')
+            ->orderBy('start_at', 'asc')
+            ->get()
+            ->map(function ($occurrence) {
+                return [
+                    'id' => $occurrence->id,
+                    'name' => $occurrence->getTranslation('name', app()->getLocale()),
+                    'event_name' => $occurrence->event->getTranslation('name', app()->getLocale()),
+                    'start_at' => $occurrence->start_at?->format('Y-m-d H:i'),
+                    'end_at' => $occurrence->end_at?->format('Y-m-d H:i'),
+                ];
+            });
+
         return Inertia::render('Admin/TicketDefinitions/Edit', [
-            'ticketDefinition' => TicketDefinitionData::from($ticketDefinition->toArray()),
+            'ticketDefinition' => TicketDefinitionData::fromModel($ticketDefinition),
             'statuses' => collect(TicketDefinitionStatus::cases())->map(fn($status) => ['value' => $status->value, 'label' => $status->getLabel()]),
             'availableLocales' => config('app.available_locales', ['en' => 'English']),
+            'timezones' => DateTimeZone::listIdentifiers(DateTimeZone::ALL),
+            'eventOccurrences' => $eventOccurrences,
         ]);
     }
 

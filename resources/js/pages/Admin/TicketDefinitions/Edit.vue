@@ -19,33 +19,56 @@ interface AvailableLocales {
 }
 
 // For the incoming prop
-import type { TicketDefinitionProp, TicketDefinitionEditFormData } from '@/types/ticket';
+import type { TicketDefinitionProp } from '@/types/ticket'; // TicketDefinitionEditFormData removed as form structure defined directly
+import type { EventOccurrenceOption } from '@/types/ticket';
 
 const props = defineProps<{
     ticketDefinition: TicketDefinitionProp;
     statuses: StatusOption[];
     availableLocales: AvailableLocales;
+    timezones: string[]; // Added
+    eventOccurrences: EventOccurrenceOption[];
     errors?: Record<string, string>;
 }>();
 
 const currentLocaleForDisplay = ref(importedCurrentLocale.value || Object.keys(props.availableLocales)[0] || 'en');
 const activeLocaleTab = ref(currentLocaleForDisplay.value);
 
-const form = useForm({
+// Define a more specific type for the form, including timezone
+interface EditFormType {
+    _method: 'PUT';
+    name: Record<string, string>;
+    description: Record<string, string>;
+    price: number | string | undefined;
+    currency: string;
+    total_quantity: number | string | undefined;
+    status: string;
+    availability_window_start: string;
+    availability_window_end: string;
+    min_per_order: number;
+    max_per_order: number | string | undefined;
+    timezone: string | null;
+    event_occurrence_ids: number[] | null;
+    [key: string]: any; // Index signature to satisfy FormDataType constraint
+}
+
+const form = useForm<EditFormType>({
     _method: 'PUT',
     name: {} as Record<string, string>,
     description: {} as Record<string, string>,
     price: typeof props.ticketDefinition?.price === 'number' && props.ticketDefinition.price !== null
-        ? props.ticketDefinition.price / 100
-        : null,
-    currency: 'HKD', // Default currency for Hong Kong
-    total_quantity: props.ticketDefinition?.total_quantity || null,
+        ? props.ticketDefinition.price / 100 // Convert cents to display value
+        : undefined,
+    currency: props.ticketDefinition?.currency || 'HKD', // Initialize with prop or default
+    total_quantity: props.ticketDefinition?.total_quantity ?? undefined,
     status: props.ticketDefinition?.status ?? (props.statuses?.[0]?.value || 'draft'),
     availability_window_start: props.ticketDefinition?.availability_window_start || '',
     availability_window_end: props.ticketDefinition?.availability_window_end || '',
     min_per_order: props.ticketDefinition?.min_per_order ?? 1,
-    max_per_order: props.ticketDefinition?.max_per_order || null,
-    metadata: props.ticketDefinition?.metadata || null,
+    max_per_order: props.ticketDefinition?.max_per_order ?? undefined,
+    timezone: props.ticketDefinition?.timezone ?? null, // Added and initialized
+    event_occurrence_ids: props.ticketDefinition?.event_occurrence_ids ?? [],
+    // metadata: props.ticketDefinition?.metadata || null, // Removed
 });
 
 // Initialize and populate translatable fields
@@ -63,7 +86,7 @@ const statusOptions = computed(() => {
 const localeTabs = computed(() => {
     return Object.entries(props.availableLocales || {}).map(([key, label]) => ({
         key,
-        label,
+        label: label as string, // Cast label to string
     }));
 });
 
@@ -75,7 +98,7 @@ const submit = () => {
     form.transform(data => ({
         ...data,
         price: (typeof data.price === 'number' && data.price !== null)
-            ? Math.round(data.price * 100)
+            ? Math.round(data.price * 100) // Convert display value back to cents
             : data.price,
     })).post(route('admin.ticket-definitions.update', props.ticketDefinition.id), {
         onSuccess: () => {
@@ -111,61 +134,7 @@ const submit = () => {
                         </p>
 
                         <form @submit.prevent="submit">
-                            <Card class="mb-6">
-                                <CardHeader>
-                                    <CardTitle>Basic Information</CardTitle>
-                                </CardHeader>
-                                <CardContent class="space-y-6">
-                                    <div>
-                                        <Label for="price">Price</Label>
-                                        <Input id="price" type="number" step="0.01" v-model.number="form.price" placeholder="e.g., 10.00" />
-                                        <InputError :message="form.errors.price" class="mt-1" />
-                                    </div>
-
-                                    <div>
-                                        <Label for="total_quantity">Quantity Available (leave blank for unlimited)</Label>
-                                        <Input id="total_quantity" type="number" v-model.number="form.total_quantity" placeholder="e.g., 100" />
-                                        <InputError :message="form.errors.total_quantity" class="mt-1" />
-                                    </div>
-
-                                    <div>
-                                        <Label for="status">Status</Label>
-                                        <select id="status" v-model="form.status" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                            <option v-for="statusItem in statusOptions" :key="statusItem.value" :value="statusItem.value">
-                                                {{ statusItem.label }}
-                                            </option>
-                                        </select>
-                                        <InputError :message="form.errors.status" class="mt-1" />
-                                    </div>
-
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <Label for="availability_window_start">Availability Window Start</Label>
-                                            <Input id="availability_window_start" type="datetime-local" v-model="form.availability_window_start" />
-                                            <InputError :message="form.errors.availability_window_start" class="mt-1" />
-                                        </div>
-                                        <div>
-                                            <Label for="availability_window_end">Availability Window End</Label>
-                                            <Input id="availability_window_end" type="datetime-local" v-model="form.availability_window_end" />
-                                            <InputError :message="form.errors.availability_window_end" class="mt-1" />
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <Label for="min_per_order">Min Per Order</Label>
-                                            <Input id="min_per_order" type="number" v-model.number="form.min_per_order" placeholder="Default: 1" min="1"/>
-                                            <InputError :message="form.errors.min_per_order" class="mt-1" />
-                                        </div>
-                                        <div>
-                                            <Label for="max_per_order">Max Per Order (optional)</Label>
-                                            <Input id="max_per_order" type="number" v-model.number="form.max_per_order" placeholder="e.g., 10" min="1"/>
-                                            <InputError :message="form.errors.max_per_order" class="mt-1" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
+                             <Card class="mb-6">
                                 <CardHeader>
                                     <CardTitle>Translatable Information</CardTitle>
                                 </CardHeader>
@@ -201,6 +170,106 @@ const submit = () => {
                                                 <InputError :message="form.errors[`description.${tab.key}`]" class="mt-1" />
                                             </div>
                                         </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card class="mb-6">
+                                <CardHeader>
+                                    <CardTitle>Basic Information</CardTitle>
+                                </CardHeader>
+                                <CardContent class="space-y-6">
+                                    <div>
+                                        <Label for="price">Price</Label>
+                                        <Input id="price" type="number" step="0.01" v-model.number="form.price" placeholder="e.g., 10.00" />
+                                        <InputError :message="form.errors.price" class="mt-1" />
+                                    </div>
+
+                                    <div>
+                                        <Label for="currency">Currency</Label>
+                                        <Input id="currency" type="text" v-model="form.currency" placeholder="e.g., USD" maxlength="3" />
+                                        <InputError :message="form.errors.currency" class="mt-1" />
+                                    </div>
+
+                                    <div>
+                                        <Label for="total_quantity">Quantity Available (leave blank for unlimited)</Label>
+                                        <Input id="total_quantity" type="number" v-model.number="form.total_quantity" placeholder="e.g., 100" />
+                                        <InputError :message="form.errors.total_quantity" class="mt-1" />
+                                    </div>
+
+                                    <div>
+                                        <Label for="status">Status</Label>
+                                        <select id="status" v-model="form.status" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                            <option v-for="statusItem in statusOptions" :key="statusItem.value" :value="statusItem.value">
+                                                {{ statusItem.label }}
+                                            </option>
+                                        </select>
+                                        <InputError :message="form.errors.status" class="mt-1" />
+                                    </div>
+
+                                    <div>
+                                        <Label for="timezone">Timezone</Label>
+                                        <select id="timezone" v-model="form.timezone" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                            <option :value="null">-- Select Timezone (uses server default) --</option>
+                                            <option v-for="tz in props.timezones" :key="tz" :value="tz">
+                                                {{ tz }}
+                                            </option>
+                                        </select>
+                                        <InputError :message="form.errors.timezone" class="mt-1" />
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label for="availability_window_start">Availability Window Start (Local Time)</Label>
+                                            <Input id="availability_window_start" type="datetime-local" v-model="form.availability_window_start" />
+                                            <InputError :message="form.errors.availability_window_start" class="mt-1" />
+                                        </div>
+                                        <div>
+                                            <Label for="availability_window_end">Availability Window End (Local Time)</Label>
+                                            <Input id="availability_window_end" type="datetime-local" v-model="form.availability_window_end" />
+                                            <InputError :message="form.errors.availability_window_end" class="mt-1" />
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label for="min_per_order">Min Per Order</Label>
+                                            <Input id="min_per_order" type="number" v-model.number="form.min_per_order" placeholder="Default: 1" min="1"/>
+                                            <InputError :message="form.errors.min_per_order" class="mt-1" />
+                                        </div>
+                                        <div>
+                                            <Label for="max_per_order">Max Per Order (optional)</Label>
+                                            <Input id="max_per_order" type="number" v-model.number="form.max_per_order" placeholder="e.g., 10" min="1"/>
+                                            <InputError :message="form.errors.max_per_order" class="mt-1" />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+
+
+                            <Card class="mb-6">
+                                <CardHeader>
+                                    <CardTitle>Event Associations</CardTitle>
+                                </CardHeader>
+                                <CardContent class="space-y-6">
+                                    <div>
+                                        <Label for="event_occurrence_ids">Associated Event Occurrences (optional)</Label>
+                                        <select
+                                            id="event_occurrence_ids"
+                                            v-model="form.event_occurrence_ids"
+                                            multiple
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                            size="6"
+                                        >
+                                            <option v-for="occurrence in props.eventOccurrences" :key="occurrence.id" :value="occurrence.id">
+                                                {{ occurrence.event_name }} - {{ occurrence.name }}
+                                                <span v-if="occurrence.start_at">({{ occurrence.start_at }})</span>
+                                            </option>
+                                        </select>
+                                        <InputError :message="form.errors.event_occurrence_ids" class="mt-1" />
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            Hold Ctrl/Cmd to select multiple occurrences. Leave empty to make this ticket available for all events.
+                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>
