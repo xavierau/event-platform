@@ -216,7 +216,7 @@ watch(() => filterForm.per_page, () => {
             <!-- Statistics Cards -->
             <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <Card>
-                    <CardContent class="p-6">
+                    <CardContent class="py-6 px-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
                                 <Ticket class="h-8 w-8 text-blue-600" />
@@ -232,7 +232,7 @@ watch(() => filterForm.per_page, () => {
                 </Card>
 
                 <Card>
-                    <CardContent class="p-6">
+                    <CardContent class="py-6 px-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
                                 <CheckCircle class="h-8 w-8 text-green-600" />
@@ -248,7 +248,7 @@ watch(() => filterForm.per_page, () => {
                 </Card>
 
                 <Card>
-                    <CardContent class="p-6">
+                    <CardContent class="py-6 px-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
                                 <Clock class="h-8 w-8 text-yellow-600" />
@@ -264,7 +264,7 @@ watch(() => filterForm.per_page, () => {
                 </Card>
 
                 <Card>
-                    <CardContent class="p-6">
+                    <CardContent class="py-6 px-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
                                 <DollarSign class="h-8 w-8 text-green-600" />
