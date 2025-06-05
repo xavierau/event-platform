@@ -94,6 +94,11 @@ class Event extends Model implements HasMedia
         return $this->belongsToMany(Tag::class, 'event_tag');
     }
 
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
     public function eventOccurrences()
     {
         return $this->hasMany(EventOccurrence::class);

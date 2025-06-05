@@ -23,6 +23,7 @@ use App\Actions\Booking\UpsertBookingAction; // Assuming UpsertBookingAction wil
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth; // To get the authenticated user if needed directly
 use App\Helpers\QrCodeHelper; // Import the QrCodeHelper
+use App\Models\Event; // Assuming Event model exists
 
 class BookingService
 {
@@ -348,6 +349,206 @@ class BookingService
             return false; // Or throw an exception
         }
         return $booking->delete();
+    }
+
+    /**
+     * Get all bookings with enhanced filtering, searching, and pagination for admin interface.
+     *
+     * @param array $filters
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getAllBookingsWithFilters(array $filters = []): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        $query = Booking::with([
+            'user:id,name,email',
+            'event:id,name',
+            'ticketDefinition:id,name,price,currency',
+            'transaction:id,total_amount,currency,status,created_at'
+        ]);
+
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('booking_number', 'like', "%{$search}%")
+                    ->orWhere('qr_code_identifier', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('event', function ($eventQuery) use ($search) {
+                        $eventQuery->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Apply status filter
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Apply date range filter
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        // Apply event filter
+        if (!empty($filters['event_id'])) {
+            $query->where('event_id', $filters['event_id']);
+        }
+
+        // Apply user filter
+        if (!empty($filters['user_id'])) {
+            $query->whereHas('transaction', function ($transactionQuery) use ($filters) {
+                $transactionQuery->where('user_id', $filters['user_id']);
+            });
+        }
+
+        // Apply sorting
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortOrder = $filters['sort_order'] ?? 'desc';
+        $query->orderBy($sortBy, $sortOrder);
+
+        return $query->paginate($filters['per_page'] ?? 15);
+    }
+
+    /**
+     * Get bookings for organizer's events with enhanced filtering and pagination.
+     *
+     * @param User $organizer
+     * @param array $filters
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getBookingsForOrganizerEventsWithFilters(User $organizer, array $filters = []): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        // Get organizer's event IDs
+        $organizerEventIds = Event::where('organizer_id', $organizer->id)->pluck('id');
+
+        $query = Booking::with([
+            'user:id,name,email',
+            'event:id,name',
+            'ticketDefinition:id,name,price,currency',
+            'transaction:id,total_amount,currency,status,created_at'
+        ])
+            ->whereIn('event_id', $organizerEventIds);
+
+        // Apply the same filters as getAllBookingsWithFilters but scoped to organizer's events
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('booking_number', 'like', "%{$search}%")
+                    ->orWhere('qr_code_identifier', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('event', function ($eventQuery) use ($search) {
+                        $eventQuery->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        if (!empty($filters['event_id']) && in_array($filters['event_id'], $organizerEventIds->toArray())) {
+            $query->where('event_id', $filters['event_id']);
+        }
+
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortOrder = $filters['sort_order'] ?? 'desc';
+        $query->orderBy($sortBy, $sortOrder);
+
+        return $query->paginate($filters['per_page'] ?? 15);
+    }
+
+    /**
+     * Get detailed booking information including related models.
+     *
+     * @param int $bookingId
+     * @return Booking|null
+     */
+    public function getDetailedBooking(int $bookingId): ?Booking
+    {
+        return Booking::with([
+            'user:id,name,email,created_at',
+            'event:id,name,description,start_date,end_date',
+            'ticketDefinition:id,name,description,price,currency,total_quantity',
+            'transaction:id,total_amount,currency,status,created_at,updated_at',
+            'checkInLogs:id,booking_id,method,checked_in_at,operator_name,device_info,location_info,status'
+        ])->find($bookingId);
+    }
+
+    /**
+     * Get events list for filter dropdown (admin scope).
+     *
+     * @return Collection
+     */
+    public function getEventsForFilter(): Collection
+    {
+        return Event::select('id', 'name')
+            ->whereHas('bookings')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Get events list for filter dropdown (organizer scope).
+     *
+     * @param User $organizer
+     * @return Collection
+     */
+    public function getOrganizerEventsForFilter(User $organizer): Collection
+    {
+        return Event::select('id', 'name')
+            ->where('organizer_id', $organizer->id)
+            ->whereHas('bookings')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Get booking statistics for dashboard.
+     *
+     * @param User|null $organizer
+     * @return array
+     */
+    public function getBookingStatistics(?User $organizer = null): array
+    {
+        $query = Booking::query();
+
+        if ($organizer) {
+            $organizerEventIds = Event::where('organizer_id', $organizer->id)->pluck('id');
+            $query->whereIn('event_id', $organizerEventIds);
+        }
+
+        return [
+            'total_bookings' => $query->count(),
+            'confirmed_bookings' => $query->where('status', BookingStatusEnum::CONFIRMED)->count(),
+            'pending_bookings' => $query->where('status', BookingStatusEnum::PENDING_CONFIRMATION)->count(),
+            'used_bookings' => $query->where('status', BookingStatusEnum::USED)->count(),
+            'cancelled_bookings' => $query->where('status', BookingStatusEnum::CANCELLED)->count(),
+            'total_revenue' => $query->join('transactions', 'bookings.transaction_id', '=', 'transactions.id')
+                ->where('transactions.status', TransactionStatusEnum::CONFIRMED)
+                ->sum('transactions.total_amount'),
+            'recent_bookings' => $query->with(['user:id,name', 'event:id,name'])
+                ->latest()
+                ->limit(5)
+                ->get()
+        ];
     }
 
     // TODO: Add other methods like cancelBooking, updateBookingStatus, etc.
