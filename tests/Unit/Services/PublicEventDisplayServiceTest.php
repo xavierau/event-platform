@@ -197,7 +197,10 @@ class PublicEventDisplayServiceTest extends TestCase
             'price' => 10000,
             'currency' => 'HKD',
             'max_per_order' => 4,
-            'min_per_order' => 1
+            'min_per_order' => 1,
+            'status' => 'active',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null
         ]);
 
         $occurrence->ticketDefinitions()->attach($ticket->id);
@@ -344,8 +347,18 @@ class PublicEventDisplayServiceTest extends TestCase
             'status' => 'scheduled'
         ]);
 
-        $ticket1 = TicketDefinition::factory()->create(['price' => 5000]); // $50
-        $ticket2 = TicketDefinition::factory()->create(['price' => 3000]); // $30
+        $ticket1 = TicketDefinition::factory()->create([
+            'price' => 5000,
+            'status' => 'active',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null
+        ]); // $50
+        $ticket2 = TicketDefinition::factory()->create([
+            'price' => 3000,
+            'status' => 'active',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null
+        ]); // $30
 
         $occurrence->ticketDefinitions()->attach([$ticket1->id, $ticket2->id]);
 

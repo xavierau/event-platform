@@ -107,7 +107,10 @@ class PublicEventDisplayService
                 $query->orderBy('start_at_utc', 'asc');
             },
             'eventOccurrences.venue',
-            'eventOccurrences.ticketDefinitions',
+            'eventOccurrences.ticketDefinitions' => function ($query) {
+                // Apply the same availability filtering as EventService
+                $this->applyTicketAvailabilityFilter($query);
+            },
         ]);
 
         // Calculate price range using model method
@@ -129,6 +132,46 @@ class PublicEventDisplayService
             'venue_address' => $primaryVenue?->address,
             'occurrences' => $this->mapEventOccurrences($event->eventOccurrences),
         ];
+    }
+
+    /**
+     * Apply ticket availability window filtering to a query.
+     * This duplicates the logic from EventService to ensure consistency.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \Carbon\Carbon|null $currentTime
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function applyTicketAvailabilityFilter($query, ?\Carbon\Carbon $currentTime = null)
+    {
+        $nowUtc = $currentTime ? $currentTime->utc() : now()->utc();
+
+        return $query->where(function ($q) use ($nowUtc) {
+            // Case 1: No availability window (both start and end are null)
+            $q->where(function ($subQ) {
+                $subQ->whereNull('availability_window_start_utc')
+                    ->whereNull('availability_window_end_utc');
+            })
+                // Case 2: Only start time is set (available from start time onwards)
+                ->orWhere(function ($subQ) use ($nowUtc) {
+                    $subQ->whereNotNull('availability_window_start_utc')
+                        ->where('availability_window_start_utc', '<=', $nowUtc)
+                        ->whereNull('availability_window_end_utc');
+                })
+                // Case 3: Only end time is set (available until end time)
+                ->orWhere(function ($subQ) use ($nowUtc) {
+                    $subQ->whereNull('availability_window_start_utc')
+                        ->whereNotNull('availability_window_end_utc')
+                        ->where('availability_window_end_utc', '>=', $nowUtc);
+                })
+                // Case 4: Both start and end times are set (within availability window)
+                ->orWhere(function ($subQ) use ($nowUtc) {
+                    $subQ->whereNotNull('availability_window_start_utc')
+                        ->where('availability_window_start_utc', '<=', $nowUtc)
+                        ->whereNotNull('availability_window_end_utc')
+                        ->where('availability_window_end_utc', '>=', $nowUtc);
+                });
+        });
     }
 
     /**
@@ -205,21 +248,27 @@ class PublicEventDisplayService
 
     /**
      * Calculate minimum price from all event occurrences
-     *
-     * TODO: This method currently includes all ticket definitions regardless of their availability status.
-     * We should filter out tickets that are not currently available (e.g., sold out, not yet on sale, or past sale date)
-     * to ensure we only show relevant pricing information to users.
+     * Uses the Event model's getPriceRange method which applies availability filtering
      *
      * @param Event $event
      * @return int|null
      */
     protected function calculateMinimumPrice(Event $event): ?int
     {
-        $minPrice = $event->eventOccurrences->flatMap(function ($occurrence) {
-            return $occurrence->ticketDefinitions->pluck('price');
-        })->min();
+        $priceRange = $event->getPriceRange();
 
-        return $minPrice ? intval($minPrice / 100) : null;
+        if (! $priceRange) {
+            return null;
+        }
+
+        // More robust regex to find the first number (integer or decimal)
+        if (preg_match('/[\d,]+(?:\.\d+)?/', $priceRange, $matches)) {
+            // Remove commas, convert to float, then to int (to handle cents correctly)
+            $numericValue = floatval(str_replace(',', '', $matches[0]));
+            return intval($numericValue);
+        }
+
+        return null;
     }
 
     /**
