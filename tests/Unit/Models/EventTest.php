@@ -40,19 +40,26 @@ class EventTest extends TestCase
         ]);
 
         // Create ticket definitions with different prices
+        // Explicitly set availability windows to ensure all tickets are available
         $ticket1 = TicketDefinition::factory()->create([
             'price' => 5000, // $50.00
             'currency' => 'USD',
+            'availability_window_start_utc' => now()->subDay()->utc(),
+            'availability_window_end_utc' => now()->addDays(10)->utc(),
         ]);
 
         $ticket2 = TicketDefinition::factory()->create([
             'price' => 10000, // $100.00
             'currency' => 'USD',
+            'availability_window_start_utc' => now()->subDay()->utc(),
+            'availability_window_end_utc' => now()->addDays(10)->utc(),
         ]);
 
         $ticket3 = TicketDefinition::factory()->create([
             'price' => 7500, // $75.00
             'currency' => 'USD',
+            'availability_window_start_utc' => now()->subDay()->utc(),
+            'availability_window_end_utc' => now()->addDays(10)->utc(),
         ]);
 
         // Associate tickets with occurrences
@@ -99,6 +106,8 @@ class EventTest extends TestCase
         $ticket = TicketDefinition::factory()->create([
             'price' => 5000, // $50.00
             'currency' => 'USD',
+            'availability_window_start_utc' => now()->subDay()->utc(),
+            'availability_window_end_utc' => now()->addDays(10)->utc(),
         ]);
 
         $occurrence->ticketDefinitions()->attach($ticket->id, [
@@ -147,6 +156,8 @@ class EventTest extends TestCase
         $ticket = TicketDefinition::factory()->create([
             'price' => 5000, // $50.00 original
             'currency' => 'USD',
+            'availability_window_start_utc' => now()->subDay()->utc(),
+            'availability_window_end_utc' => now()->addDays(10)->utc(),
         ]);
 
         $occurrence->ticketDefinitions()->attach($ticket->id, [
@@ -423,5 +434,129 @@ class EventTest extends TestCase
         // Should not find partial matches
         $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
         Event::findPublishedByIdentifier('event-with_special');
+    }
+
+    #[Test]
+    public function it_only_includes_available_tickets_in_price_range()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+        $venue = Venue::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+        ]);
+
+        $occurrence = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+        ]);
+
+        // Available ticket
+        $availableTicket = TicketDefinition::factory()->create([
+            'price' => 5000, // $50.00
+            'currency' => 'USD',
+            'availability_window_start_utc' => now()->subDay()->utc(),
+            'availability_window_end_utc' => now()->addDays(10)->utc(),
+        ]);
+
+        // Unavailable ticket (future availability)
+        $futureTicket = TicketDefinition::factory()->create([
+            'price' => 10000, // $100.00
+            'currency' => 'USD',
+            'availability_window_start_utc' => now()->addDays(20)->utc(),
+            'availability_window_end_utc' => now()->addDays(30)->utc(),
+        ]);
+
+        // Unavailable ticket (past availability)
+        $pastTicket = TicketDefinition::factory()->create([
+            'price' => 2000, // $20.00
+            'currency' => 'USD',
+            'availability_window_start_utc' => now()->subDays(30)->utc(),
+            'availability_window_end_utc' => now()->subDay()->utc(),
+        ]);
+
+        // Attach all tickets
+        $occurrence->ticketDefinitions()->attach([
+            $availableTicket->id => ['price_override' => null],
+            $futureTicket->id => ['price_override' => null],
+            $pastTicket->id => ['price_override' => null],
+        ]);
+
+        $priceRange = $event->getPriceRange();
+
+        // Should only show the available ticket price ($50.00)
+        $this->assertEquals('$50.00', $priceRange);
+    }
+
+    #[Test]
+    public function it_returns_null_when_no_tickets_are_currently_available()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+        $venue = Venue::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+        ]);
+
+        $occurrence = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+        ]);
+
+        // Create ticket that's not available yet
+        $futureTicket = TicketDefinition::factory()->create([
+            'price' => 5000, // $50.00
+            'currency' => 'USD',
+            'availability_window_start_utc' => now()->addDays(10)->utc(),
+            'availability_window_end_utc' => now()->addDays(20)->utc(),
+        ]);
+
+        $occurrence->ticketDefinitions()->attach($futureTicket->id, [
+            'price_override' => null,
+        ]);
+
+        $priceRange = $event->getPriceRange();
+
+        // Should return null since no tickets are currently available
+        $this->assertNull($priceRange);
+    }
+
+    #[Test]
+    public function it_includes_tickets_with_no_availability_window()
+    {
+        $organizer = User::factory()->create();
+        $category = Category::factory()->create();
+        $venue = Venue::factory()->create();
+
+        $event = Event::factory()->create([
+            'organizer_id' => $organizer->id,
+            'category_id' => $category->id,
+        ]);
+
+        $occurrence = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+        ]);
+
+        // Ticket with no availability window (always available)
+        $alwaysAvailableTicket = TicketDefinition::factory()->create([
+            'price' => 7500, // $75.00
+            'currency' => 'USD',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null,
+        ]);
+
+        $occurrence->ticketDefinitions()->attach($alwaysAvailableTicket->id, [
+            'price_override' => null,
+        ]);
+
+        $priceRange = $event->getPriceRange();
+
+        // Should include the ticket with no availability window
+        $this->assertEquals('$75.00', $priceRange);
     }
 }

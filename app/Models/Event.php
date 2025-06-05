@@ -146,6 +146,7 @@ class Event extends Model implements HasMedia
 
     /**
      * Calculate the price range for this event across all occurrences and tickets
+     * Only considers tickets that are currently available within their availability window
      *
      * @return string|null Formatted price range or null if no tickets available
      */
@@ -156,9 +157,22 @@ class Event extends Model implements HasMedia
             $this->load('eventOccurrences.ticketDefinitions');
         }
 
+        $nowUtc = now()->utc();
+
         // Calculate price range across all occurrences and tickets
-        $allPrices = $this->eventOccurrences->flatMap(function ($occurrence) {
-            return $occurrence->ticketDefinitions->map(function ($ticket) {
+        // Only include tickets that are currently available
+        $allPrices = $this->eventOccurrences->flatMap(function ($occurrence) use ($nowUtc) {
+            return $occurrence->ticketDefinitions->filter(function ($ticket) use ($nowUtc) {
+                // Check if ticket is currently available based on availability window
+                if ($ticket->availability_window_start_utc === null && $ticket->availability_window_end_utc === null) {
+                    // No availability window set - ticket is available
+                    return true;
+                }
+
+                // Check if current time is within availability window
+                return $ticket->availability_window_start_utc <= $nowUtc &&
+                    $ticket->availability_window_end_utc >= $nowUtc;
+            })->map(function ($ticket) {
                 // Use price_override if available, otherwise use original price
                 return $ticket->pivot->price_override ?? $ticket->price;
             });
@@ -172,8 +186,17 @@ class Event extends Model implements HasMedia
         $maxPrice = $allPrices->max();
 
         // Get currency from first available ticket
-        $firstTicket = $this->eventOccurrences->flatMap->ticketDefinitions->first();
-        $currencyCode = $firstTicket ? $firstTicket->currency : CurrencyHelper::getDefault();
+        $firstAvailableTicket = $this->eventOccurrences->flatMap(function ($occurrence) use ($nowUtc) {
+            return $occurrence->ticketDefinitions->filter(function ($ticket) use ($nowUtc) {
+                if ($ticket->availability_window_start_utc === null && $ticket->availability_window_end_utc === null) {
+                    return true;
+                }
+                return $ticket->availability_window_start_utc <= $nowUtc &&
+                    $ticket->availability_window_end_utc >= $nowUtc;
+            });
+        })->first();
+
+        $currencyCode = $firstAvailableTicket ? $firstAvailableTicket->currency : CurrencyHelper::getDefault();
 
         // Format price range using helper
         return CurrencyHelper::formatRange($minPrice, $maxPrice, $currencyCode);

@@ -494,13 +494,16 @@ class EventService
      */
     private function mapEventToArray(Event $event, array $ticketData, array $additionalFields = []): array
     {
+        $minPrice = $ticketData['prices']->min();
+        $maxPrice = $ticketData['prices']->max();
+
         $baseData = [
             'id' => $event->id,
             'name' => $event->name,
             'href' => route('events.show', $event->id),
             'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: 'https://via.placeholder.com/400x300.png?text=Event',
-            'price_from' => $ticketData['prices']->min() / 100 ?? null,
-            'price_to' => $ticketData['prices']->max() / 100 ?? null,
+            'price_from' => $minPrice !== null ? $minPrice / 100 : null,
+            'price_to' => $maxPrice !== null ? $maxPrice / 100 : null,
             'currency' => $ticketData['currency'],
             'category_name' => $event->category ? $event->category->name : null,
         ];
