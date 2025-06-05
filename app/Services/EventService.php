@@ -356,7 +356,9 @@ class EventService
      *
      * Tickets are considered available if:
      * 1. No availability window is set (both start and end are null), OR
-     * 2. Current time is within the availability window (after start AND before end)
+     * 2. Current time is after the start time (when only start is set), OR
+     * 3. Current time is before the end time (when only end is set), OR
+     * 4. Current time is within the availability window (when both start and end are set)
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @param \Carbon\Carbon|null $currentTime
@@ -368,12 +370,25 @@ class EventService
 
         return $query->where(function ($q) use ($nowUtc) {
             // Case 1: No availability window (both start and end are null)
-            $q->whereNull('availability_window_start_utc')
-                ->whereNull('availability_window_end_utc');
-        })->orWhere(function ($q) use ($nowUtc) {
-            // Case 2: Within availability window (after start AND before end)
-            $q->where('availability_window_start_utc', '<=', $nowUtc)
-                ->where('availability_window_end_utc', '>=', $nowUtc);
+            $q->where(function ($subQ) {
+                $subQ->whereNull('availability_window_start_utc')
+                    ->whereNull('availability_window_end_utc');
+            })
+                // Case 2: Only start time is set (available from start time onwards)
+                ->orWhere(function ($subQ) use ($nowUtc) {
+                    $subQ->where('availability_window_start_utc', '<=', $nowUtc)
+                        ->whereNull('availability_window_end_utc');
+                })
+                // Case 3: Only end time is set (available until end time)
+                ->orWhere(function ($subQ) use ($nowUtc) {
+                    $subQ->whereNull('availability_window_start_utc')
+                        ->where('availability_window_end_utc', '>=', $nowUtc);
+                })
+                // Case 4: Both start and end times are set (within availability window)
+                ->orWhere(function ($subQ) use ($nowUtc) {
+                    $subQ->where('availability_window_start_utc', '<=', $nowUtc)
+                        ->where('availability_window_end_utc', '>=', $nowUtc);
+                });
         });
     }
 

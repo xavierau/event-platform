@@ -386,3 +386,129 @@ test('should filter tickets by complete availability window (start AND end)', fu
     expect($ticketNames)->not->toContain('Future Ticket');
     expect($ticketNames)->not->toContain('Expired Ticket'); // This should NOT be included!
 });
+
+test('should show tickets available when only start time is set (no end time)', function () {
+    $user = User::factory()->create();
+    $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
+    $venue = Venue::factory()->create();
+
+    // Create an event
+    $event = Event::factory()->create([
+        'organizer_id' => $user->id,
+        'category_id' => $category->id,
+        'name' => ['en' => 'Start Time Only Test Event'],
+        'event_status' => 'published',
+        'visibility' => 'public',
+    ]);
+
+    // Create occurrence for today
+    $occurrence = EventOccurrence::factory()->create([
+        'event_id' => $event->id,
+        'venue_id' => $venue->id,
+        'start_at_utc' => now()->utc()->addHours(2),
+        'end_at_utc' => now()->utc()->addHours(4),
+        'status' => 'scheduled',
+    ]);
+
+    // Create a ticket with only start time (no end time) - started 1 hour ago
+    $ticketWithStartOnly = TicketDefinition::factory()->create([
+        'name' => ['en' => 'Start Only Ticket'],
+        'price' => 1500,
+        'status' => 'active',
+        'availability_window_start_utc' => now()->utc()->subHour(),
+        'availability_window_end_utc' => null, // No end time - this is the key test case
+    ]);
+
+    // Create a ticket with only start time but in the future (should NOT be available)
+    $futureStartOnlyTicket = TicketDefinition::factory()->create([
+        'name' => ['en' => 'Future Start Only Ticket'],
+        'price' => 2500,
+        'status' => 'active',
+        'availability_window_start_utc' => now()->utc()->addHour(),
+        'availability_window_end_utc' => null,
+    ]);
+
+    // Attach tickets to the occurrence
+    $occurrence->ticketDefinitions()->attach($ticketWithStartOnly->id);
+    $occurrence->ticketDefinitions()->attach($futureStartOnlyTicket->id);
+
+    // Use EventService to get events (this applies the availability filter)
+    $eventService = app(EventService::class);
+    $eventsQuery = $eventService->getPublishedEventsWithFutureOccurrences(10);
+
+    // Execute the query to get actual events
+    $publishedEvents = $eventsQuery->get();
+
+    // Find our event in the results
+    $loadedEvent = $publishedEvents->firstWhere('id', $event->id);
+    expect($loadedEvent)->not->toBeNull();
+
+    // Verify that tickets are filtered correctly - load the event with filtered tickets
+    $loadedTickets = $loadedEvent->eventOccurrences->first()->ticketDefinitions;
+
+    // Should have 1 ticket (the one with start time in the past)
+    expect($loadedTickets)->toHaveCount(1);
+
+    // Extract ticket name properly
+    $ticketName = $loadedTickets->first()->getTranslation('name', 'en');
+    expect($ticketName)->toBe('Start Only Ticket');
+});
+
+test('event price range should include tickets with only start time set', function () {
+    $user = User::factory()->create();
+    $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
+    $venue = Venue::factory()->create();
+
+    // Create an event
+    $event = Event::factory()->create([
+        'organizer_id' => $user->id,
+        'category_id' => $category->id,
+        'name' => ['en' => 'Price Range Test Event'],
+        'event_status' => 'published',
+        'visibility' => 'public',
+    ]);
+
+    // Create occurrence
+    $occurrence = EventOccurrence::factory()->create([
+        'event_id' => $event->id,
+        'venue_id' => $venue->id,
+        'start_at_utc' => now()->utc()->addHours(2),
+        'end_at_utc' => now()->utc()->addHours(4),
+        'status' => 'scheduled',
+    ]);
+
+    // Create a ticket with only start time (available now)
+    $availableTicket = TicketDefinition::factory()->create([
+        'name' => ['en' => 'Available Start Only Ticket'],
+        'price' => 2000, // $20.00
+        'currency' => 'HKD',
+        'status' => 'active',
+        'availability_window_start_utc' => now()->utc()->subHour(),
+        'availability_window_end_utc' => null, // No end time
+    ]);
+
+    // Create a ticket with start time in the future (not available yet)
+    $futureTicket = TicketDefinition::factory()->create([
+        'name' => ['en' => 'Future Start Only Ticket'],
+        'price' => 5000, // $50.00
+        'currency' => 'HKD',
+        'status' => 'active',
+        'availability_window_start_utc' => now()->utc()->addHour(),
+        'availability_window_end_utc' => null,
+    ]);
+
+    // Attach tickets to the occurrence
+    $occurrence->ticketDefinitions()->attach($availableTicket->id);
+    $occurrence->ticketDefinitions()->attach($futureTicket->id);
+
+    // Load the event with relationships
+    $event->load('eventOccurrences.ticketDefinitions');
+
+    // Get price range - should only include the available ticket
+    $priceRange = $event->getPriceRange();
+
+    // Should return the price range for the available ticket only
+    expect($priceRange)->not->toBeNull();
+    expect($priceRange)->toContain('20'); // Should contain the price of the available ticket
+    expect($priceRange)->not->toContain('50'); // Should NOT contain the price of the future ticket
+});

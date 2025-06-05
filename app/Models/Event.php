@@ -170,8 +170,11 @@ class Event extends Model implements HasMedia
                 }
 
                 // Check if current time is within availability window
-                return $ticket->availability_window_start_utc <= $nowUtc &&
-                    $ticket->availability_window_end_utc >= $nowUtc;
+                // Handle cases where only start or only end time is set
+                $afterStart = $ticket->availability_window_start_utc === null || $ticket->availability_window_start_utc <= $nowUtc;
+                $beforeEnd = $ticket->availability_window_end_utc === null || $ticket->availability_window_end_utc >= $nowUtc;
+
+                return $afterStart && $beforeEnd;
             })->map(function ($ticket) {
                 // Use price_override if available, otherwise use original price
                 return $ticket->pivot->price_override ?? $ticket->price;
@@ -191,8 +194,11 @@ class Event extends Model implements HasMedia
                 if ($ticket->availability_window_start_utc === null && $ticket->availability_window_end_utc === null) {
                     return true;
                 }
-                return $ticket->availability_window_start_utc <= $nowUtc &&
-                    $ticket->availability_window_end_utc >= $nowUtc;
+                // Handle cases where only start or only end time is set
+                $afterStart = $ticket->availability_window_start_utc === null || $ticket->availability_window_start_utc <= $nowUtc;
+                $beforeEnd = $ticket->availability_window_end_utc === null || $ticket->availability_window_end_utc >= $nowUtc;
+
+                return $afterStart && $beforeEnd;
             });
         })->first();
 
