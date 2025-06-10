@@ -10,6 +10,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Cashier\Billable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -53,10 +56,9 @@ class User extends Authenticatable
     /**
      * Get the events that this user has wishlisted.
      */
-    public function wishlistedEvents()
+    public function wishlistedEvents(): BelongsToMany
     {
-        return $this->belongsToMany(Event::class, 'user_event_wishlists')
-            ->withTimestamps();
+        return $this->belongsToMany(Event::class, 'user_event_wishlists')->withTimestamps();
     }
 
     /**
@@ -150,5 +152,10 @@ class User extends Authenticatable
     public function hasEnoughKillPoints(int $amount): bool
     {
         return $this->getKillPointsBalance() >= $amount;
+    }
+
+    public function membership(): HasOne
+    {
+        return $this->hasOne(UserMembership::class)->ofMany('started_at', 'max');
     }
 }

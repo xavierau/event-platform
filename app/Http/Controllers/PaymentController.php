@@ -21,6 +21,8 @@ use Stripe\Exception\ApiErrorException;
 use Stripe\Checkout\Session as StripeCheckoutSession;
 use Stripe\Webhook;
 use Stripe\Event;
+use App\Modules\Membership\Actions\PurchaseMembershipAction;
+use App\Modules\Membership\DataTransferObjects\MembershipPurchaseData;
 
 class PaymentController extends Controller
 {
@@ -584,5 +586,40 @@ class PaymentController extends Controller
         } else {
             Log::warning('[PaymentController] Transaction not found for payment_intent.payment_failed.', ['payment_intent_id' => $paymentIntent->id, 'event_id' => $event->id]);
         }
+    }
+
+    /**
+     * Handle the logic for a successful membership purchase.
+     *
+     * @param \App\Models\Transaction $transaction
+     * @return void
+     */
+    protected function handleMembershipPurchase(Transaction $transaction): void
+    {
+        $user = $transaction->user;
+        $membershipLevelId = $transaction->metadata['membership_level_id'];
+
+        $purchaseData = MembershipPurchaseData::from([
+            'user_id' => $user->id,
+            'membership_level_id' => $membershipLevelId,
+            'payment_method' => 'stripe',
+            'auto_renew' => false, // or from metadata if you add it
+        ]);
+
+        app(PurchaseMembershipAction::class)->execute($user, $purchaseData);
+
+        Log::info('Membership purchase processed via webhook.', ['transaction_id' => $transaction->id, 'user_id' => $user->id]);
+    }
+
+    /**
+     * Handle the logic for a successful booking purchase.
+     *
+     * @param \App\Models\Transaction $transaction
+     * @return void
+     */
+    protected function handleBookingPurchase(Transaction $transaction): void
+    {
+        Booking::where('transaction_id', $transaction->id)->update(['status' => BookingStatusEnum::CONFIRMED]);
+        Log::info('Booking statuses updated to confirmed.', ['transaction_id' => $transaction->id]);
     }
 }

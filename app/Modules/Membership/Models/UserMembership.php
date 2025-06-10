@@ -46,9 +46,9 @@ class UserMembership extends Model
     /**
      * Get the membership level.
      */
-    public function membershipLevel(): BelongsTo
+    public function level(): BelongsTo
     {
-        return $this->belongsTo(MembershipLevel::class);
+        return $this->belongsTo(MembershipLevel::class, 'membership_level_id');
     }
 
     /**
@@ -148,7 +148,7 @@ class UserMembership extends Model
      */
     public function renew(int $months = null): void
     {
-        $months = $months ?? $this->membershipLevel->duration_months;
+        $months = $months ?? $this->level->duration_months;
 
         $this->expires_at = now()->addMonths($months);
         $this->status = MembershipStatus::ACTIVE;

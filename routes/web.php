@@ -26,6 +26,9 @@ use App\Http\Controllers\Admin\QrScannerController;
 use App\Http\Controllers\Public\EventController as PublicEventController;
 use App\Http\Controllers\Public\MyBookingsController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\Public\MyWishlistController;
+use App\Http\Controllers\Modules\Membership\MembershipPaymentController;
+use Illuminate\Foundation\Application;
 
 // Locale switching route
 Route::post('/locale/switch', [LocaleController::class, 'switch'])->name('locale.switch');
@@ -53,7 +56,7 @@ Route::get('/events', [PublicEventController::class, 'index'])->name('events.ind
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/my-bookings', [MyBookingsController::class, 'index'])->name('my-bookings');
-    Route::get('/my-wishlist', [\App\Http\Controllers\Public\MyWishlistController::class, 'index'])->name('my-wishlist');
+    Route::get('/my-wishlist', [MyWishlistController::class, 'index'])->name('my-wishlist.index');
     Route::get('/my-wallet', [\App\Http\Controllers\Public\MyWalletController::class, 'index'])->name('my-wallet');
 
     // Wishlist Routes - Session-based Authentication
@@ -147,5 +150,9 @@ require __DIR__ . '/auth.php';
 Route::get('/payment/success', [PaymentController::class, 'handlePaymentSuccess'])->name('payment.success');
 Route::get('/payment/cancel', [PaymentController::class, 'handlePaymentCancel'])->name('payment.cancel');
 
+// Membership Payment Gateway
+Route::get('/membership/payment/success', [MembershipPaymentController::class, 'handlePaymentSuccess'])->name('membership.payment.success');
+Route::get('/membership/payment/cancel', [MembershipPaymentController::class, 'handlePaymentCancel'])->name('membership.payment.cancel');
+
 // Stripe Webhook Route (must be outside middleware groups)
-Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook'])->name('stripe.webhook');
+Route::post('/webhook/stripe', [PaymentController::class, 'handleWebhook'])->name('webhook.stripe');
