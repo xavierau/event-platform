@@ -29,7 +29,7 @@ class ProfileController extends Controller
     /**
      * Show the user's profile settings page.
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request, MembershipService $membershipService): Response
     {
         $user = $request->user();
 
@@ -41,9 +41,13 @@ class ProfileController extends Controller
             ]);
         }
 
+        // Get user's membership information
+        $membership = $membershipService->checkMembershipStatus($user);
+
         // For non-admin users, show the simplified profile page
         return Inertia::render('Profile/MyProfile', [
             'user' => $user,
+            'membership' => $membership,
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
         ]);
