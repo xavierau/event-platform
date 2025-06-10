@@ -150,7 +150,7 @@ class UserMembership extends Model
     {
         $months = $months ?? $this->level->duration_months;
 
-        $this->expires_at = now()->addMonths($months);
+        $this->expires_at = ($this->isActive() ? $this->expires_at : now())->addMonths($months);
         $this->status = MembershipStatus::ACTIVE;
         $this->save();
     }
