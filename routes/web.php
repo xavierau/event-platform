@@ -1,65 +1,63 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use App\Http\Controllers\Admin\SiteSettingController;
-use App\Http\Controllers\Admin\VenueController;
+use App\Enums\RoleNameEnum;
+use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\EditorUploadController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\DevController;
-use App\Http\Controllers\Admin\TagController;
+use App\Http\Controllers\Admin\EditorUploadController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\EventOccurrenceController;
-use App\Http\Controllers\Admin\TicketDefinitionController;
-use App\Http\Controllers\Public\HomeController;
-use App\Services\CategoryService;
-use App\Actions\Categories\UpsertCategoryAction;
-use App\Services\EventService;
-use App\Actions\Events\UpsertEventAction;
-use App\Enums\RoleNameEnum;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\QrScannerController;
-
-use App\Http\Controllers\Public\EventController as PublicEventController;
-use App\Http\Controllers\Public\MyBookingsController;
+use App\Http\Controllers\Admin\SiteSettingController;
+use App\Http\Controllers\Admin\TagController;
+use App\Http\Controllers\Admin\TicketDefinitionController;
+use App\Http\Controllers\Admin\VenueController;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\LocaleController;
-use App\Http\Controllers\Public\MyWishlistController;
 use App\Http\Controllers\Modules\Membership\MembershipPaymentController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Public\EventController as PublicEventController;
+use App\Http\Controllers\Public\HomeController;
+use App\Http\Controllers\Public\MyBookingsController;
+use App\Http\Controllers\Public\MyWalletController;
+use App\Http\Controllers\Public\MyWishlistController;
+use App\Http\Controllers\Settings\ProfileController;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-// Locale switching route
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
+
+// --- PUBLIC ROUTES ---
 Route::post('/locale/switch', [LocaleController::class, 'switch'])->name('locale.switch');
-
 Route::get('/', HomeController::class)->name('home');
-// Route::get('/', function () {
-
-//     $service = new CategoryService(new UpsertCategoryAction());
-//     $categories = $service->getPublicCategories();
-
-//     dd($categories);
-// })->name('home');
-
-// Test route for wishlist authentication
-Route::get('/test/wishlist-auth', function () {
-    return Inertia::render('Test/WishlistAuth');
-})->name('test.wishlist-auth');
-
-// Route for Public Event Detail Page
-Route::get('/events/{event}', [\App\Http\Controllers\Public\EventController::class, 'show'])->name('events.show');
-
+Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('events.show');
 Route::get('/events', [PublicEventController::class, 'index'])->name('events.index');
 
-// My Bookings route (requires authentication)
-Route::middleware(['auth'])->group(function () {
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+// --- AUTHENTICATED USER ROUTES ---
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+    // Dashboard & Profile
+    Route::get('/dashboard', fn() => Inertia::render('Dashboard'))->name('dashboard');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // User-specific pages
     Route::get('/my-bookings', [MyBookingsController::class, 'index'])->name('my-bookings');
     Route::get('/my-wishlist', [MyWishlistController::class, 'index'])->name('my-wishlist.index');
-    Route::get('/my-wallet', [\App\Http\Controllers\Public\MyWalletController::class, 'index'])->name('my-wallet');
+    Route::get('/my-wallet', [MyWalletController::class, 'index'])->name('my-wallet');
+    Route::get('/my-membership', [ProfileController::class, 'myMembership'])->name('my-membership');
 
-    // Wishlist Routes - Session-based Authentication
+    // Wishlist API-like routes (session-based)
     Route::prefix('wishlist')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\WishlistController::class, 'index']);
         Route::post('/', [\App\Http\Controllers\Api\WishlistController::class, 'store']);
@@ -69,7 +67,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{event}/check', [\App\Http\Controllers\Api\WishlistController::class, 'check']);
     });
 
-    // Wallet Routes - Session-based Authentication
+    // Wallet API-like routes (session-based)
     Route::prefix('wallet')->group(function () {
         Route::get('/balance', [\App\Http\Controllers\Api\WalletController::class, 'balance']);
         Route::get('/transactions', [\App\Http\Controllers\Api\WalletController::class, 'transactions']);
@@ -79,53 +77,33 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/spend-kill-points', [\App\Http\Controllers\Api\WalletController::class, 'spendKillPoints']);
         Route::post('/transfer', [\App\Http\Controllers\Api\WalletController::class, 'transfer']);
     });
+
+    // Booking Initiation
+    Route::post('/bookings/initiate', [BookingController::class, 'initiateBooking'])->name('bookings.initiate');
 });
 
-// Admin Routes for Site Settings
-Route::prefix('admin')->name('admin.')->middleware(['auth', "role:" . RoleNameEnum::ADMIN->value])->group(function () {
-    // Example: Route::middleware(['auth', 'role:platform-admin'])->group(function () {
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+// --- ADMIN ROUTES ---
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value])->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
     Route::put('settings', [SiteSettingController::class, 'update'])->name('settings.update');
 
-    // Venues
-    // Explicitly define POST route for update to handle multipart/form-data with _method spoofing
-    // This MUST come BEFORE the Route::resource for venues to take precedence for POST requests to this URI pattern.
-    Route::post('venues/{venue}', [VenueController::class, 'update'])->name('admin.venues.update.post'); // Ensure it uses the admin. prefix from the group if that's how routes are named
+    // Explicit POST route for venue update must come before resource controller
+    Route::post('venues/{venue}', [VenueController::class, 'update'])->name('venues.update.post');
     Route::resource('venues', VenueController::class);
-
-    // Categories
     Route::resource('categories', CategoryController::class);
-
-    // Tags
     Route::resource('tags', TagController::class);
-
-    // Promotions
-    Route::resource('promotions', \App\Http\Controllers\Admin\PromotionController::class);
-
-    // Editor Image Upload
+    Route::resource('promotions', PromotionController::class);
     Route::post('editor/image-upload', [EditorUploadController::class, 'uploadImage'])->name('editor.image.upload');
-
-    // Event CRUD
     Route::resource('events', EventController::class)->except(['show']);
     Route::resource('events.occurrences', EventOccurrenceController::class)->shallow();
-
-    // Ticket Definitions CRUD
     Route::resource('ticket-definitions', TicketDefinitionController::class);
-
-    // Bookings CRUD (Admin)
     Route::resource('bookings', AdminBookingController::class);
-
-    // QR Scanner routes - MOVED OUTSIDE MAIN ADMIN GROUP
-    // Route::prefix('qr-scanner')->name('qr-scanner.')->group(function () {
-    //     Route::get('/', [QrScannerController::class, 'index'])->name('index');
-    //     Route::post('/validate', [QrScannerController::class, 'validateQrCode'])->name('validate');
-    //     Route::post('/check-in', [QrScannerController::class, 'checkIn'])->name('check-in');
-    // });
 });
 
-// Group for QR Scanner, accessible by admin OR organizer - ADDED
+
+// --- ROLE-BASED ROUTES (Admin or Organizer) ---
 Route::prefix('admin/qr-scanner')
     ->name('admin.qr-scanner.')
     ->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value . '|' . RoleNameEnum::ORGANIZER->value])
@@ -135,24 +113,18 @@ Route::prefix('admin/qr-scanner')
         Route::post('/check-in', [QrScannerController::class, 'checkIn'])->name('check-in');
     });
 
-Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::post('/bookings/initiate', [BookingController::class, 'initiateBooking'])->name('bookings.initiate');
-    // Route::get('/admin/dev/media-upload-test', [DevController::class, 'mediaUploadTest'])->name('admin.dev.media-upload-test');
-    // Route::post('/admin/dev/media-upload-test/post', [DevController::class, 'handleMediaPost'])->name('admin.dev.media-upload-test.post');
-    // Route::put('/admin/dev/media-upload-test/put', [DevController::class, 'handleMediaPut'])->name('admin.dev.media-upload-test.put');
-});
-
-require __DIR__ . '/settings.php';
+// --- AUTH & PAYMENT ROUTES ---
 require __DIR__ . '/auth.php';
+require __DIR__ . '/settings.php'; // Note: This file seems to be required but its purpose is not clear from the context.
 
-// Payment Routes
+// Payment Gateway Callbacks
 Route::get('/payment/success', [PaymentController::class, 'handlePaymentSuccess'])->name('payment.success');
 Route::get('/payment/cancel', [PaymentController::class, 'handlePaymentCancel'])->name('payment.cancel');
 
-// Membership Payment Gateway
+// Membership Payment Gateway Callbacks
 Route::get('/membership/payment/success', [MembershipPaymentController::class, 'handlePaymentSuccess'])->name('membership.payment.success');
 Route::get('/membership/payment/cancel', [MembershipPaymentController::class, 'handlePaymentCancel'])->name('membership.payment.cancel');
 
-// Stripe Webhook Route (must be outside middleware groups)
+// Stripe Webhook (must be outside CSRF protection)
 Route::post('/webhook/stripe', [PaymentController::class, 'handleWebhook'])->name('webhook.stripe');

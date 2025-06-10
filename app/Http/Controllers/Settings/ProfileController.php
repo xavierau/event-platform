@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Modules\Membership\Services\MembershipService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,18 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    /**
+     * Show the user's membership page.
+     */
+    public function myMembership(Request $request, MembershipService $membershipService): Response
+    {
+        $membership = $membershipService->checkMembershipStatus($request->user());
+
+        return Inertia::render('Profile/MyMembership', [
+            'membership' => $membership,
+        ]);
+    }
+
     /**
      * Show the user's profile settings page.
      */
