@@ -53,7 +53,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // User-specific pages
     Route::get('/my-bookings', [MyBookingsController::class, 'index'])->name('my-bookings');
-    Route::get('/my-wishlist', [MyWishlistController::class, 'index'])->name('my-wishlist.index');
+    Route::get('/my-wishlist', [MyWishlistController::class, 'index'])->name('my-wishlist');
     Route::get('/my-wallet', [MyWalletController::class, 'index'])->name('my-wallet');
     Route::get('/my-membership', [ProfileController::class, 'myMembership'])->name('my-membership');
 
