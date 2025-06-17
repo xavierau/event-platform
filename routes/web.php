@@ -55,7 +55,7 @@ Route::get('/pages', [PublicCmsPageController::class, 'index'])->name('cms.pages
 Route::post('/contact-us', [ContactUsController::class, 'store'])->name('contact.store');
 
 // --- AUTHENTICATED USER ROUTES ---
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard & Profile
     Route::get('/dashboard', fn() => Inertia::render('Dashboard'))->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

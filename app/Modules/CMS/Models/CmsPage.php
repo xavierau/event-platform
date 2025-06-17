@@ -66,11 +66,6 @@ class CmsPage extends Model implements HasMedia
         return $query->where('slug', $slug);
     }
 
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
-
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('featured_image')

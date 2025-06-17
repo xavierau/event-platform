@@ -156,4 +156,5 @@ export interface CmsPage {
     author: { name: string } | null;
     created_at: string;
     updated_at: string;
+    sort_order: number;
 }

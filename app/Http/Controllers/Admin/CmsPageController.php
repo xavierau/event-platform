@@ -58,6 +58,7 @@ class CmsPageController extends Controller
     {
         return Inertia::render('Admin/CmsPages/Edit', [
             'page' => $cmsPage,
+            'available_locales' => config('app.available_locales', ['en' => 'English']),
         ]);
     }
 
