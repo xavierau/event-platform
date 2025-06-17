@@ -3,6 +3,7 @@
 use App\Enums\RoleNameEnum;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CmsPageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EditorUploadController;
 use App\Http\Controllers\Admin\EventController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Modules\Membership\MembershipPaymentController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Public\CmsPageController as PublicCmsPageController;
 use App\Http\Controllers\Public\EventController as PublicEventController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\MyBookingsController;
@@ -42,6 +44,10 @@ Route::post('/locale/switch', [LocaleController::class, 'switch'])->name('locale
 Route::get('/', HomeController::class)->name('home');
 Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('events.show');
 Route::get('/events', [PublicEventController::class, 'index'])->name('events.index');
+
+// CMS Pages
+Route::get('/pages/{slug}', [PublicCmsPageController::class, 'show'])->name('cms.pages.show');
+Route::get('/pages', [PublicCmsPageController::class, 'index'])->name('cms.pages.index');
 
 // --- AUTHENTICATED USER ROUTES ---
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
@@ -100,6 +106,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:' . RoleNameEn
     Route::resource('events.occurrences', EventOccurrenceController::class)->shallow();
     Route::resource('ticket-definitions', TicketDefinitionController::class);
     Route::resource('bookings', AdminBookingController::class);
+
+    // CMS Routes
+    Route::resource('cms-pages', CmsPageController::class);
+    Route::patch('cms-pages/{cmsPage}/toggle-publish', [CmsPageController::class, 'togglePublish'])->name('cms-pages.toggle-publish');
+    Route::patch('cms-pages/sort-order', [CmsPageController::class, 'updateSortOrder'])->name('cms-pages.sort-order');
 });
 
 
