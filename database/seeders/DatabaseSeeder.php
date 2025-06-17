@@ -43,7 +43,9 @@ class DatabaseSeeder extends Seeder
             // Transaction and Booking Seeders
             TransactionSeeder::class, // Depends on Users
             BookingSeeder::class, // Depends on Transactions, Events, TicketDefinitions
-            // ... other seeders
+            PromotionSeeder::class,
+            CmsPageSeeder::class,
+            ContactSubmissionSeeder::class,
         ]);
 
         // If UserSeeder.php still exists and had other logic, decide if it needs to be deleted or its logic moved.

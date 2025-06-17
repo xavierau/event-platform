@@ -24,9 +24,9 @@ class CmsService
         return $this->upsertCmsPageAction->execute($data, $page);
     }
 
-    public function deletePage(CmsPage $page): bool
+    public function deletePage(CmsPage $page): void
     {
-        return $page->delete();
+        $page->delete();
     }
 
     public function findPageBySlug(string $slug): ?CmsPage
@@ -48,9 +48,7 @@ class CmsService
 
     public function getPaginatedPages(int $perPage = 15): LengthAwarePaginator
     {
-        return CmsPage::orderBy('sort_order', 'asc')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        return CmsPage::with('author')->latest()->paginate($perPage);
     }
 
     public function getPublishedPages(): Collection
@@ -69,15 +67,9 @@ class CmsService
             ->paginate($perPage);
     }
 
-    public function togglePublishStatus(CmsPage $page): CmsPage
+    public function togglePublish(CmsPage $page): CmsPage
     {
-        $page->is_published = !$page->is_published;
-
-        if ($page->is_published && !$page->published_at) {
-            $page->published_at = now();
-        }
-
-        $page->save();
+        $page->update(['is_published' => !$page->is_published]);
 
         return $page;
     }

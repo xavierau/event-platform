@@ -48,7 +48,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() ? $request->user()->loadMissing('roles') : null,
             ],
-            'ziggy' => [
+            'ziggy' => fn() => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
@@ -57,6 +57,8 @@ class HandleInertiaRequests extends Middleware
                 'roles' => collect(RoleNameEnum::cases())->mapWithKeys(fn($case) => [$case->name => $case->value])->all(),
             ],
             'currencySymbols' => CurrencyHelper::getAllSymbols(),
+            'available_locales' => config('app.available_locales'),
+            'current_locale' => app()->getLocale(),
         ];
     }
 }

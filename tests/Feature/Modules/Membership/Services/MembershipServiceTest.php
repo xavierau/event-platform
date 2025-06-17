@@ -31,7 +31,11 @@ class MembershipServiceTest extends TestCase
         $this->membershipService = $this->app->make(MembershipService::class);
         $this->walletService = $this->app->make(WalletService::class);
         $this->user = User::factory()->create();
-        $this->level = MembershipLevel::factory()->create(['price' => 1000, 'duration_months' => 1]);
+        $this->level = MembershipLevel::factory()->create([
+            'price' => 1000,
+            'points_cost' => 1000,
+            'duration_months' => 1
+        ]);
     }
 
     /** @test */

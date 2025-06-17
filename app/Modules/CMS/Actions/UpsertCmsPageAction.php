@@ -4,33 +4,41 @@ namespace App\Modules\CMS\Actions;
 
 use App\Modules\CMS\DataTransferObjects\CmsPageData;
 use App\Modules\CMS\Models\CmsPage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class UpsertCmsPageAction
 {
-    public function execute(CmsPageData $data, ?CmsPage $page = null): CmsPage
+    public function execute(CmsPageData $data, CmsPage $page = null): CmsPage
     {
-        $page = $page ?? new CmsPage();
+        $payload = $data->toArray();
 
-        // Fill basic attributes
-        $page->fill([
-            'title' => $data->title,
-            'slug' => $data->slug,
-            'content' => $data->content,
-            'meta_description' => $data->meta_description,
-            'meta_keywords' => $data->meta_keywords,
-            'is_published' => $data->is_published ?? false,
-            'published_at' => $data->published_at ? now()->parse($data->published_at) : null,
-            'author_id' => $data->author_id ?? auth()->id(),
-            'sort_order' => $data->sort_order ?? 0,
-        ]);
-
-        // Generate slug if not provided
-        if (empty($page->slug) && !empty($data->title['en'])) {
-            $page->slug = $this->generateUniqueSlug($data->title['en'], $page->getKey());
+        // If no slug is provided OR if the title was changed and the slug wasn't, regenerate the slug.
+        $newSlug = Str::slug($data->title['en']);
+        if (empty($payload['slug']) || ($page && $page->title['en'] !== $data->title['en'] && $page->slug === $payload['slug'])) {
+            $payload['slug'] = $newSlug;
         }
 
-        $page->save();
+        // Handle the published status
+        if ($data->is_published && (is_null($page) || !$page->published_at)) {
+            $payload['published_at'] = now();
+        } elseif (!$data->is_published) {
+            $payload['published_at'] = null;
+        }
+
+        // Set default sort_order if not provided
+        if (!isset($payload['sort_order'])) {
+            $payload['sort_order'] = 0;
+        }
+
+        if ($page) {
+            // Update
+            $page->update($payload);
+        } else {
+            // Create
+            $payload['author_id'] = Auth::id();
+            $page = CmsPage::create($payload);
+        }
 
         // Handle featured image
         if ($data->featured_image) {

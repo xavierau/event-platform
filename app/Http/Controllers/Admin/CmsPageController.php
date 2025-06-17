@@ -7,8 +7,10 @@ use App\Modules\CMS\DataTransferObjects\CmsPageData;
 use App\Modules\CMS\Models\CmsPage;
 use App\Modules\CMS\Services\CmsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
 class CmsPageController extends Controller
 {
@@ -37,117 +39,47 @@ class CmsPageController extends Controller
         return Inertia::render('Admin/CmsPages/Create');
     }
 
-    public function store(Request $request)
+    public function store(CmsPageData $data): RedirectResponse
     {
-        try {
-            $data = CmsPageData::from($request->all());
-            $page = $this->cmsService->createPage($data);
+        $this->cmsService->createPage($data);
 
-            return redirect()
-                ->route('admin.cms-pages.show', $page)
-                ->with('success', 'CMS page created successfully.');
-        } catch (\Exception $e) {
-            return back()
-                ->withErrors(['error' => $e->getMessage()])
-                ->withInput();
-        }
+        return redirect()->route('admin.cms-pages.index')->with('success', 'CMS Page created successfully.');
     }
 
     public function show(CmsPage $cmsPage): Response
     {
         $cmsPage->load('author');
-
         return Inertia::render('Admin/CmsPages/Show', [
-            'page' => [
-                'id' => $cmsPage->id,
-                'title' => $cmsPage->title,
-                'slug' => $cmsPage->slug,
-                'content' => $cmsPage->content,
-                'meta_description' => $cmsPage->meta_description,
-                'meta_keywords' => $cmsPage->meta_keywords,
-                'is_published' => $cmsPage->is_published,
-                'published_at' => $cmsPage->published_at?->format('Y-m-d H:i:s'),
-                'sort_order' => $cmsPage->sort_order,
-                'author' => $cmsPage->author ? [
-                    'id' => $cmsPage->author->id,
-                    'name' => $cmsPage->author->name,
-                    'email' => $cmsPage->author->email,
-                ] : null,
-                'featured_image_url' => $cmsPage->getFeaturedImageUrl(),
-                'featured_image_thumb_url' => $cmsPage->getFeaturedImageThumbUrl(),
-                'created_at' => $cmsPage->created_at->format('Y-m-d H:i:s'),
-                'updated_at' => $cmsPage->updated_at->format('Y-m-d H:i:s'),
-            ],
+            'page' => $cmsPage,
         ]);
     }
 
     public function edit(CmsPage $cmsPage): Response
     {
         return Inertia::render('Admin/CmsPages/Edit', [
-            'page' => [
-                'id' => $cmsPage->id,
-                'title' => $cmsPage->title,
-                'slug' => $cmsPage->slug,
-                'content' => $cmsPage->content,
-                'meta_description' => $cmsPage->meta_description,
-                'meta_keywords' => $cmsPage->meta_keywords,
-                'is_published' => $cmsPage->is_published,
-                'published_at' => $cmsPage->published_at?->format('Y-m-d\TH:i'),
-                'sort_order' => $cmsPage->sort_order,
-                'author_id' => $cmsPage->author_id,
-                'featured_image_url' => $cmsPage->getFeaturedImageUrl(),
-            ],
+            'page' => $cmsPage,
         ]);
     }
 
-    public function update(Request $request, CmsPage $cmsPage)
+    public function update(CmsPageData $data, CmsPage $cmsPage): RedirectResponse
     {
-        try {
-            $requestData = $request->all();
+        $this->cmsService->updatePage($cmsPage, $data);
 
-            // Handle unique slug validation for updates
-            $requestData['slug'] = $requestData['slug'] ?? $cmsPage->slug;
-
-            $data = CmsPageData::from($requestData);
-            $updatedPage = $this->cmsService->updatePage($cmsPage, $data);
-
-            return redirect()
-                ->route('admin.cms-pages.show', $updatedPage)
-                ->with('success', 'CMS page updated successfully.');
-        } catch (\Exception $e) {
-            return back()
-                ->withErrors(['error' => $e->getMessage()])
-                ->withInput();
-        }
+        return redirect()->route('admin.cms-pages.index')->with('success', 'CMS Page updated successfully.');
     }
 
-    public function destroy(CmsPage $cmsPage)
+    public function destroy(CmsPage $cmsPage): RedirectResponse
     {
-        try {
-            $this->cmsService->deletePage($cmsPage);
+        $this->cmsService->deletePage($cmsPage);
 
-            return redirect()
-                ->route('admin.cms-pages.index')
-                ->with('success', 'CMS page deleted successfully.');
-        } catch (\Exception $e) {
-            return back()
-                ->withErrors(['error' => $e->getMessage()]);
-        }
+        return redirect()->route('admin.cms-pages.index')->with('success', 'CMS Page deleted successfully.');
     }
 
-    public function togglePublish(CmsPage $cmsPage)
+    public function togglePublish(CmsPage $cmsPage): RedirectResponse
     {
-        try {
-            $updatedPage = $this->cmsService->togglePublishStatus($cmsPage);
+        $this->cmsService->togglePublish($cmsPage);
 
-            $message = $updatedPage->is_published
-                ? 'Page published successfully.'
-                : 'Page unpublished successfully.';
-
-            return back()->with('success', $message);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+        return back()->with('success', 'Page status updated.');
     }
 
     public function updateSortOrder(Request $request)

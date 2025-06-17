@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TicketDefinitionController;
 use App\Http\Controllers\Admin\VenueController;
+use App\Http\Controllers\Admin\ContactSubmissionController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Modules\Membership\MembershipPaymentController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\MyBookingsController;
 use App\Http\Controllers\Public\MyWalletController;
 use App\Http\Controllers\Public\MyWishlistController;
+use App\Http\Controllers\Public\ContactUsController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -48,6 +50,9 @@ Route::get('/events', [PublicEventController::class, 'index'])->name('events.ind
 // CMS Pages
 Route::get('/pages/{slug}', [PublicCmsPageController::class, 'show'])->name('cms.pages.show');
 Route::get('/pages', [PublicCmsPageController::class, 'index'])->name('cms.pages.index');
+
+// Contact Form
+Route::post('/contact-us', [ContactUsController::class, 'store'])->name('contact.store');
 
 // --- AUTHENTICATED USER ROUTES ---
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
@@ -111,6 +116,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:' . RoleNameEn
     Route::resource('cms-pages', CmsPageController::class);
     Route::patch('cms-pages/{cmsPage}/toggle-publish', [CmsPageController::class, 'togglePublish'])->name('cms-pages.toggle-publish');
     Route::patch('cms-pages/sort-order', [CmsPageController::class, 'updateSortOrder'])->name('cms-pages.sort-order');
+
+    // Contact Submissions
+    Route::resource('contact-submissions', ContactSubmissionController::class)->only(['index', 'show', 'destroy']);
+    Route::patch('contact-submissions/{submission}/toggle-read', [ContactSubmissionController::class, 'toggleRead'])->name('contact-submissions.toggle-read');
 });
 
 

@@ -125,3 +125,35 @@ export interface Booking {
     event?: Event; // Optional: for eager loaded event data
     user?: User; // Optional: for eager loaded user data
 }
+
+export interface Role {
+    id: number;
+    name: string;
+}
+
+export interface Permission {
+    id: number;
+    name: string;
+}
+
+export interface ContactSubmission {
+    id: number;
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CmsPage {
+    id: number;
+    title: Record<string, string>;
+    slug: string;
+    content: Record<string, string>;
+    is_published: boolean;
+    published_at: string | null;
+    author: { name: string } | null;
+    created_at: string;
+    updated_at: string;
+}
