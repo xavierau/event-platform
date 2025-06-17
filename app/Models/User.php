@@ -154,6 +154,140 @@ class User extends Authenticatable
         return $this->getKillPointsBalance() >= $amount;
     }
 
+    /**
+     * Get organizers that this user belongs to.
+     */
+    public function organizers(): BelongsToMany
+    {
+        return $this->belongsToMany(Organizer::class, 'organizer_users')
+            ->withPivot([
+                'role_in_organizer',
+                'permissions',
+                'joined_at',
+                'is_active',
+                'invited_by',
+                'invitation_accepted_at'
+            ])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get active organizer memberships.
+     */
+    public function activeOrganizers(): BelongsToMany
+    {
+        return $this->organizers()->wherePivot('is_active', true);
+    }
+
+    /**
+     * Get organizers where user has a specific role.
+     */
+    public function organizersByRole(\App\Enums\OrganizerRoleEnum $role): BelongsToMany
+    {
+        return $this->activeOrganizers()->wherePivot('role_in_organizer', $role->value);
+    }
+
+    /**
+     * Get organizers where user is an owner.
+     */
+    public function ownedOrganizers(): BelongsToMany
+    {
+        return $this->organizersByRole(\App\Enums\OrganizerRoleEnum::OWNER);
+    }
+
+    /**
+     * Get organizers where user is a manager.
+     */
+    public function managedOrganizers(): BelongsToMany
+    {
+        return $this->organizersByRole(\App\Enums\OrganizerRoleEnum::MANAGER);
+    }
+
+    /**
+     * Check if user belongs to any organizer.
+     */
+    public function hasOrganizerMembership(): bool
+    {
+        return $this->activeOrganizers()->exists();
+    }
+
+    /**
+     * Check if user has a specific role in any organizer.
+     */
+    public function hasOrganizerRole(\App\Enums\OrganizerRoleEnum $role): bool
+    {
+        return $this->organizersByRole($role)->exists();
+    }
+
+    /**
+     * Check if user is an organizer owner.
+     */
+    public function isOrganizerOwner(): bool
+    {
+        return $this->hasOrganizerRole(\App\Enums\OrganizerRoleEnum::OWNER);
+    }
+
+    /**
+     * Check if user is an organizer member (any role).
+     */
+    public function isOrganizerMember(): bool
+    {
+        return $this->hasOrganizerMembership();
+    }
+
+    /**
+     * Get user's role in a specific organizer.
+     */
+    public function getOrganizerRole(Organizer $organizer): ?\App\Enums\OrganizerRoleEnum
+    {
+        $pivot = $this->organizers()->where('organizer_id', $organizer->id)->first()?->pivot;
+
+        if (!$pivot || !$pivot->is_active) {
+            return null;
+        }
+
+        return \App\Enums\OrganizerRoleEnum::tryFrom($pivot->role_in_organizer);
+    }
+
+    /**
+     * Check if user can manage a specific organizer.
+     */
+    public function canManageOrganizer(Organizer $organizer): bool
+    {
+        $role = $this->getOrganizerRole($organizer);
+        return $role && $role->canManageOrganizer();
+    }
+
+    /**
+     * Check if user can manage users in a specific organizer.
+     */
+    public function canManageOrganizerUsers(Organizer $organizer): bool
+    {
+        $role = $this->getOrganizerRole($organizer);
+        return $role && $role->canManageUsers();
+    }
+
+    /**
+     * Check if user can manage events for a specific organizer.
+     */
+    public function canManageOrganizerEvents(Organizer $organizer): bool
+    {
+        $role = $this->getOrganizerRole($organizer);
+        return $role && $role->canManageEvents();
+    }
+
+    /**
+     * Get all organizers that user can manage events for.
+     */
+    public function getEventManageableOrganizers(): BelongsToMany
+    {
+        return $this->activeOrganizers()->whereIn('organizer_users.role_in_organizer', [
+            \App\Enums\OrganizerRoleEnum::OWNER->value,
+            \App\Enums\OrganizerRoleEnum::MANAGER->value,
+            \App\Enums\OrganizerRoleEnum::STAFF->value,
+        ]);
+    }
+
     public function membership(): HasOne
     {
         return $this->hasOne(UserMembership::class)->ofMany('started_at', 'max');
