@@ -1,0 +1,27 @@
+
+  GET|HEAD   api/user ................................................................................................................................................................ 
+             ⇂ Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful
+             ⇂ Illuminate\Auth\Middleware\Authenticate:sanctum
+             ⇂ Illuminate\Routing\Middleware\SubstituteBindings
+  GET|HEAD   api/v1/membership-levels ................................................................................................ Api\V1\MembershipController@getMembershipLevels
+             ⇂ Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful
+             ⇂ Illuminate\Routing\Middleware\SubstituteBindings
+  DELETE     api/v1/memberships/cancel .................................................................................................. Api\V1\MembershipController@cancelMembership
+             ⇂ Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful
+             ⇂ Illuminate\Auth\Middleware\Authenticate:sanctum
+             ⇂ Illuminate\Routing\Middleware\SubstituteBindings
+  POST       api/v1/memberships/purchase .............................................................................................. Api\V1\MembershipController@purchaseMembership
+             ⇂ Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful
+             ⇂ Illuminate\Auth\Middleware\Authenticate:sanctum
+             ⇂ Illuminate\Routing\Middleware\SubstituteBindings
+  POST       api/v1/memberships/renew .................................................................................................... Api\V1\MembershipController@renewMembership
+             ⇂ Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful
+             ⇂ Illuminate\Auth\Middleware\Authenticate:sanctum
+             ⇂ Illuminate\Routing\Middleware\SubstituteBindings
+  GET|HEAD   api/v1/my-membership ........................................................................................................ Api\V1\MembershipController@getMyMembership
+             ⇂ Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful
+             ⇂ Illuminate\Auth\Middleware\Authenticate:sanctum
+             ⇂ Illuminate\Routing\Middleware\SubstituteBindings
+
+                                                                                                                                                                    Showing [6] routes
+

@@ -9,6 +9,7 @@ use App\Modules\Membership\Actions\PurchaseMembershipAction;
 use App\Modules\Membership\DataTransferObjects\MembershipPurchaseData;
 use App\Modules\Membership\Enums\MembershipStatus;
 use App\Modules\Membership\Enums\PaymentMethod;
+use App\Modules\Membership\Exceptions\PaymentMethodNotAllowedException;
 use App\Modules\Membership\Models\MembershipLevel;
 use App\Modules\Membership\Models\UserMembership;
 use App\Modules\Wallet\Exceptions\InsufficientKillPointsException;
@@ -66,6 +67,7 @@ class MembershipService
     /**
      * @throws InsufficientPointsException
      * @throws InsufficientKillPointsException
+     * @throws PaymentMethodNotAllowedException
      */
     private function purchaseWithWallet(User $user, MembershipPurchaseData $data, MembershipLevel $level): UserMembership
     {
@@ -73,8 +75,8 @@ class MembershipService
             $description = "Purchase of {$level->name} membership";
 
             $transaction = match ($data->payment_method) {
-                PaymentMethod::POINTS => $this->walletService->spendPoints($user, $level->price, $description, MembershipLevel::class, $level->id),
-                PaymentMethod::KILL_POINTS => $this->walletService->spendKillPoints($user, $level->price, $description, MembershipLevel::class, $level->id),
+                PaymentMethod::POINTS => $this->processPointsPayment($user, $level, $description),
+                PaymentMethod::KILL_POINTS => $this->processKillPointsPayment($user, $level, $description),
                 default => throw new \InvalidArgumentException('Unsupported wallet payment method.'),
             };
 
@@ -85,6 +87,29 @@ class MembershipService
         });
     }
 
+    /**
+     * @throws PaymentMethodNotAllowedException
+     * @throws InsufficientPointsException
+     */
+    private function processPointsPayment(User $user, MembershipLevel $level, string $description)
+    {
+        if (is_null($level->points_cost)) {
+            throw new PaymentMethodNotAllowedException("This membership level cannot be purchased with points.");
+        }
+        return $this->walletService->spendPoints($user, $level->points_cost, $description, MembershipLevel::class, $level->id);
+    }
+
+    /**
+     * @throws PaymentMethodNotAllowedException
+     * @throws InsufficientKillPointsException
+     */
+    private function processKillPointsPayment(User $user, MembershipLevel $level, string $description)
+    {
+        if (is_null($level->kill_points_cost)) {
+            throw new PaymentMethodNotAllowedException("This membership level cannot be purchased with kill points.");
+        }
+        return $this->walletService->spendKillPoints($user, $level->kill_points_cost, $description, MembershipLevel::class, $level->id);
+    }
 
     /**
      * @throws ApiErrorException
