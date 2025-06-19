@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Event;
 use App\Models\User;
 use App\Models\Category;
+use App\Models\Organizer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -23,7 +24,7 @@ class EventFactory extends Factory
     {
         $nameEn = $this->faker->sentence(3);
         $attributes = [
-            'organizer_id' => User::factory(), // Assumes UserFactory exists
+            'organizer_id' => Organizer::factory(), // References Organizer entity instead of User
             'category_id' => Category::factory(), // Assumes CategoryFactory exists and is defined
             'name' => ['en' => $nameEn],
             'slug' => ['en' => $this->faker->slug(3)],

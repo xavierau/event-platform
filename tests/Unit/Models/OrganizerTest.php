@@ -162,12 +162,15 @@ class OrganizerTest extends TestCase
     /** @test */
     public function it_can_scope_active_organizers()
     {
+        // Get initial count of active organizers (may include migration-created organizers)
+        $initialActiveCount = Organizer::active()->count();
+
         $activeOrganizer = Organizer::factory()->create(['is_active' => true]);
         $inactiveOrganizer = Organizer::factory()->create(['is_active' => false]);
 
         $activeOrganizers = Organizer::active()->get();
 
-        $this->assertCount(1, $activeOrganizers);
+        $this->assertCount($initialActiveCount + 1, $activeOrganizers);
         $this->assertTrue($activeOrganizers->contains($activeOrganizer));
         $this->assertFalse($activeOrganizers->contains($inactiveOrganizer));
     }
