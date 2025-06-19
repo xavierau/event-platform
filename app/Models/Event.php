@@ -10,6 +10,8 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Helpers\CurrencyHelper;
+use App\Models\User;
+use App\Models\Organizer;
 
 class Event extends Model implements HasMedia
 {
@@ -81,7 +83,7 @@ class Event extends Model implements HasMedia
 
     public function organizer()
     {
-        return $this->belongsTo(User::class, 'organizer_id');
+        return $this->belongsTo(Organizer::class, 'organizer_id');
     }
 
     public function category()
@@ -118,6 +120,43 @@ class Event extends Model implements HasMedia
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get the organizer entity for this event.
+     * Alias for organizer() for clarity.
+     */
+    public function organizerEntity()
+    {
+        return $this->organizer();
+    }
+
+    /**
+     * Check if the event has an organizer.
+     */
+    public function hasOrganizer(): bool
+    {
+        return !is_null($this->organizer_id);
+    }
+
+    /**
+     * Get the organizer name in the current locale.
+     */
+    public function getOrganizerName(): ?string
+    {
+        return $this->organizer?->getTranslation('name', app()->getLocale());
+    }
+
+    /**
+     * Check if a user can manage this event through their organizer membership.
+     */
+    public function canBeEditedByUser(User $user): bool
+    {
+        if (!$this->organizer) {
+            return false;
+        }
+
+        return $this->organizer->userCanManageEvents($user);
     }
 
     public function registerMediaCollections(): void
