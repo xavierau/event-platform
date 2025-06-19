@@ -2,7 +2,9 @@
 
 namespace App\DataTransferObjects\Organizer;
 
+use App\Casts\SocialMediaLinksCaster;
 use Illuminate\Http\UploadedFile;
+use Spatie\LaravelData\Attributes\WithCast;
 use Spatie\LaravelData\Data;
 use App\Rules\RequiredTranslation;
 use App\Rules\EnsureAtLeastOneTranslationIsFilled;
@@ -16,6 +18,7 @@ class OrganizerData extends Data
         public readonly ?string $contact_email,
         public readonly ?string $contact_phone,
         public readonly ?string $website_url,
+        #[WithCast(SocialMediaLinksCaster::class)]
         public readonly ?array $social_media_links,
         public readonly ?string $address_line_1,
         public readonly ?string $address_line_2,
