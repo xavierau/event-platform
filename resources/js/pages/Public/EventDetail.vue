@@ -245,39 +245,39 @@ onMounted(() => {
 
     <!-- Event Description Section  -->
     <section class="bg-white dark:bg-gray-800 p-4 mt-1 shadow-sm">
-      <div class="container mx-auto">
+      <div class="container mx-auto max-w-full">
         <h2 class="text-md font-semibold mb-3 text-gray-900 dark:text-gray-100">Event Description</h2>
-        <div class="prose dark:prose-invert max-w-none" v-html="event.description_html"></div>
+        <div class="prose dark:prose-invert max-w-full prose-img:max-w-full prose-img:h-auto break-words event-description" v-html="event.description_html"></div>
         <!-- Placeholder for more images/media -->
       </div>
     </section>
 
     <!-- Fixed Footer/Bottom Bar -->
-    <footer class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 shadow-top-lg z-50">
-      <div class="container mx-auto flex justify-between items-center">
-        <div class="flex space-x-4 text-center">
+    <footer class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 shadow-top-lg z-50 max-w-[100vw] overflow-hidden">
+      <div class="container mx-auto flex justify-between items-center min-w-0">
+        <div class="flex space-x-2 sm:space-x-4 text-center flex-shrink-0">
           <Link href="/" class="text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
             <!-- Placeholder for Home Icon -->
             <span class="block text-xl">🏠</span>
-            <span>Home</span>
+            <span class="hidden sm:inline">Home</span>
           </Link>
           <Link href="/my-bookings" class="text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
             <!-- Placeholder for My Orders Icon -->
             <span class="block text-xl">🎫</span>
-            <span>My Bookings</span>
+            <span class="hidden sm:inline">My Bookings</span>
           </Link>
         </div>
-        <div class="flex space-x-2">
+        <div class="flex space-x-1 sm:space-x-2 flex-shrink-0 min-w-0">
           <WishlistButton
             :event-id="Number(event.id)"
             variant="button"
             size="sm"
-            :show-text="true"
+            :show-text="false"
             @wishlist-changed="handleWishlistChanged"
             @error="handleWishlistError"
           />
           <button
-            class="px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold"
+            class="px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap"
             @click="openPurchaseModal"
           >
             Purchase
@@ -304,6 +304,42 @@ onMounted(() => {
     margin-top: 0;
     margin-bottom: 0;
 }
+
+/* Responsive YouTube and video embeds */
+.event-description :deep(iframe) {
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+}
+
+.event-description :deep(iframe[src*="youtube.com"]),
+.event-description :deep(iframe[src*="youtu.be"]),
+.event-description :deep(iframe[src*="vimeo.com"]) {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+}
+
+/* Responsive video containers */
+.event-description :deep(.video-container),
+.event-description :deep(.embed-responsive) {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+
+.event-description :deep(.video-container iframe),
+.event-description :deep(.embed-responsive iframe) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .shadow-top-lg {
   box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.05), 0 -2px 4px -2px rgb(0 0 0 / 0.05);
 }
