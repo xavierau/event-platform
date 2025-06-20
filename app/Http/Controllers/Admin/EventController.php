@@ -22,11 +22,8 @@ class EventController extends Controller
     public function __construct(EventService $eventService)
     {
         $this->eventService = $eventService;
-        // Optional: Add middleware for authorization (e.g., using Spatie/laravel-permission)
-        // $this->middleware('can:view events')->only(['index', 'show']);
-        // $this->middleware('can:create events')->only(['create', 'store']);
-        // $this->middleware('can:edit events')->only(['edit', 'update']);
-        // $this->middleware('can:delete events')->only(['destroy']);
+        // Use the EventPolicy for authorization
+        $this->authorizeResource(Event::class, 'event');
     }
 
     /**

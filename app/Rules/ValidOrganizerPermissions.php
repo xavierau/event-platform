@@ -2,31 +2,12 @@
 
 namespace App\Rules;
 
+use App\Enums\OrganizerPermissionEnum;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 class ValidOrganizerPermissions implements ValidationRule
 {
-    /**
-     * The list of valid organizer permissions
-     */
-    private const VALID_PERMISSIONS = [
-        'create_events',
-        'edit_events',
-        'delete_events',
-        'view_events',
-        'manage_team',
-        'invite_users',
-        'remove_users',
-        'edit_team_roles',
-        'view_analytics',
-        'manage_finances',
-        'edit_organizer_profile',
-        'manage_settings',
-        'view_bookings',
-        'export_data',
-    ];
-
     /**
      * Run the validation rule.
      */
@@ -44,11 +25,12 @@ class ValidOrganizerPermissions implements ValidationRule
         }
 
         // Check each permission against the valid list
-        $invalidPermissions = array_diff($value, self::VALID_PERMISSIONS);
+        $validPermissions = OrganizerPermissionEnum::all();
+        $invalidPermissions = array_diff($value, $validPermissions);
 
         if (!empty($invalidPermissions)) {
             $invalidList = implode(', ', $invalidPermissions);
-            $fail("The {$attribute} contains invalid permissions: {$invalidList}. Valid permissions are: " . implode(', ', self::VALID_PERMISSIONS));
+            $fail("The {$attribute} contains invalid permissions: {$invalidList}. Valid permissions are: " . implode(', ', $validPermissions));
         }
     }
 
@@ -57,6 +39,6 @@ class ValidOrganizerPermissions implements ValidationRule
      */
     public static function getValidPermissions(): array
     {
-        return self::VALID_PERMISSIONS;
+        return OrganizerPermissionEnum::all();
     }
 }

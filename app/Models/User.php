@@ -13,11 +13,12 @@ use Laravel\Cashier\Billable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\HasOrganizerPermissions;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles, Billable;
+    use HasFactory, Notifiable, HasRoles, Billable, HasOrganizerPermissions;
 
     /**
      * The attributes that are mass assignable.
@@ -267,25 +268,18 @@ class User extends Authenticatable
         return $role && $role->canManageUsers();
     }
 
-    /**
-     * Check if user can manage events for a specific organizer.
-     */
-    public function canManageOrganizerEvents(Organizer $organizer): bool
-    {
-        $role = $this->getOrganizerRole($organizer);
-        return $role && $role->canManageEvents();
-    }
+
 
     /**
      * Get all organizers that user can manage events for.
+     * Uses the HasOrganizerPermissions trait method for fine-grained permission checking.
      */
     public function getEventManageableOrganizers(): BelongsToMany
     {
-        return $this->activeOrganizers()->whereIn('organizer_users.role_in_organizer', [
-            \App\Enums\OrganizerRoleEnum::OWNER->value,
-            \App\Enums\OrganizerRoleEnum::MANAGER->value,
-            \App\Enums\OrganizerRoleEnum::STAFF->value,
-        ]);
+        // Get organizers where user has event management permissions
+        $organizerIds = $this->getOrganizersWhereCanManageEvents()->pluck('id');
+
+        return $this->activeOrganizers()->whereIn('organizer_id', $organizerIds);
     }
 
     public function membership(): HasOne

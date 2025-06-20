@@ -27,7 +27,8 @@ class EventOccurrenceController extends Controller
     public function __construct(EventOccurrenceService $eventOccurrenceService)
     {
         $this->eventOccurrenceService = $eventOccurrenceService;
-        // $this->authorizeResource(EventOccurrence::class, 'occurrence'); // TODO: Setup policy
+        // Event occurrences are managed through the Event policy's manageOccurrences permission
+        $this->middleware('auth');
     }
 
     /**
@@ -35,6 +36,8 @@ class EventOccurrenceController extends Controller
      */
     public function index(Event $event): InertiaResponse
     {
+        $this->authorize('manageOccurrences', $event);
+
         $occurrences = $this->eventOccurrenceService->getAllOccurrencesForEvent($event->id, 15, ['venue']);
         return Inertia::render('Admin/EventOccurrences/Index', [
             'event' => [
@@ -57,6 +60,8 @@ class EventOccurrenceController extends Controller
      */
     public function create(Event $event): InertiaResponse
     {
+        $this->authorize('manageOccurrences', $event);
+
         $venues = Venue::select('id', 'name')->get()->map(function ($venue) {
             return [
                 'id' => $venue->id,
@@ -94,6 +99,8 @@ class EventOccurrenceController extends Controller
      */
     public function store(Request $request, Event $event): RedirectResponse
     {
+        $this->authorize('manageOccurrences', $event);
+
         Log::info('EventOccurrenceController@store request data: ', $request->all());
 
         try {
@@ -122,6 +129,7 @@ class EventOccurrenceController extends Controller
     public function edit(EventOccurrence $occurrence): InertiaResponse // Route model binding (shallow)
     {
         $event = $occurrence->event; // Get parent event
+        $this->authorize('manageOccurrences', $event);
         $occurrence->load(['venue', 'ticketDefinitions']); // Load venue and existing ticket definitions
 
         $venues = Venue::select('id', 'name')->get()->map(function ($venue) {
@@ -202,6 +210,8 @@ class EventOccurrenceController extends Controller
      */
     public function update(Request $request, EventOccurrence $occurrence): RedirectResponse // Route model binding (shallow)
     {
+        $this->authorize('manageOccurrences', $occurrence->event);
+
         try {
             Log::info('EventOccurrenceController@update request data: ', $request->all());
 
@@ -228,6 +238,8 @@ class EventOccurrenceController extends Controller
      */
     public function destroy(EventOccurrence $occurrence): RedirectResponse // Route model binding (shallow)
     {
+        $this->authorize('manageOccurrences', $occurrence->event);
+
         try {
             $eventId = $occurrence->event_id;
             $this->eventOccurrenceService->deleteOccurrence($occurrence->id);

@@ -53,8 +53,9 @@ class VenuePolicy
 
         // Organizer-specific venues can only be viewed by their organizer's members
         if ($venue->isOrganizerSpecific() && $venue->organizer) {
-            return $user->canManageOrganizer($venue->organizer) ||
-                $user->organizersByRole(OrganizerRoleEnum::STAFF)->contains($venue->organizer);
+            // Check if user has specific venue view permissions or is an active member
+            return $user->canViewOrganizerVenues($venue->organizer) ||
+                $venue->organizer->hasMember($user);
         }
 
         return false;
@@ -91,9 +92,9 @@ class VenuePolicy
             return false;
         }
 
-        // Organizer-specific venues can be updated by their organizer's owners/managers
+        // Organizer-specific venues can be updated by users with edit venue permissions
         if ($venue->isOrganizerSpecific() && $venue->organizer) {
-            return $user->canManageOrganizer($venue->organizer);
+            return $user->canEditOrganizerVenues($venue->organizer);
         }
 
         return false;
@@ -151,7 +152,7 @@ class VenuePolicy
 
         // Organizer-specific venues can only be used by their organizer's members
         if ($venue->isOrganizerSpecific() && $venue->organizer) {
-            return $user->organizers()->contains($venue->organizer);
+            return $venue->organizer->hasMember($user);
         }
 
         return false;

@@ -246,6 +246,12 @@ class Organizer extends Model implements HasMedia
      */
     public function userCanManageEvents(User $user): bool
     {
+        // First check if user has the capability through their trait method (includes permissions check)
+        if ($user->canManageOrganizerEvents($this)) {
+            return true;
+        }
+
+        // Fallback to role-based check for compatibility
         $role = $this->getUserRole($user);
         return $role && $role->canManageEvents();
     }

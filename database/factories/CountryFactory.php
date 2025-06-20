@@ -20,10 +20,10 @@ class CountryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => ['en' => $this->faker->country],
-            'iso_code_2' => $this->faker->unique()->countryCode,
-            'iso_code_3' => $this->faker->unique()->countryISOAlpha3,
-            'phone_code' => $this->faker->numerify('+###'),
+            'name' => ['en' => 'Test Country'],
+            'iso_code_2' => 'TC',
+            'iso_code_3' => 'TCY',
+            'phone_code' => '+123',
             'is_active' => true,
         ];
     }

@@ -36,43 +36,43 @@ class OrganizerFactory extends Factory
             'Prestige Event Solutions',
         ];
 
-        $name = $this->faker->randomElement($companyNames);
-        $slug = Str::slug($name) . '-' . $this->faker->randomNumber(4);
+        $name = fake()->randomElement($companyNames);
+        $slug = Str::slug($name) . '-' . fake()->randomNumber(4);
 
         return [
             'name' => [
                 'en' => $name,
-                'zh-TW' => $this->faker->company(),
-                'zh-CN' => $this->faker->company(),
+                'zh-TW' => fake()->company(),
+                'zh-CN' => fake()->company(),
             ],
             'slug' => $slug,
             'description' => [
-                'en' => $this->faker->paragraph(3),
-                'zh-TW' => $this->faker->realText(200),
-                'zh-CN' => $this->faker->realText(200),
+                'en' => fake()->paragraph(3),
+                'zh-TW' => fake()->realText(200),
+                'zh-CN' => fake()->realText(200),
             ],
             'logo_path' => null, // Will be handled by media library
-            'website_url' => $this->faker->optional()->url(),
-            'contact_email' => $this->faker->companyEmail(),
-            'contact_phone' => $this->faker->phoneNumber(),
+            'website_url' => fake()->optional()->url(),
+            'contact_email' => fake()->companyEmail(),
+            'contact_phone' => fake()->phoneNumber(),
             'social_media_links' => [
-                'facebook' => $this->faker->optional()->url(),
-                'twitter' => $this->faker->optional()->url(),
-                'instagram' => $this->faker->optional()->url(),
-                'linkedin' => $this->faker->optional()->url(),
+                'facebook' => fake()->optional()->url(),
+                'twitter' => fake()->optional()->url(),
+                'instagram' => fake()->optional()->url(),
+                'linkedin' => fake()->optional()->url(),
             ],
-            'address_line_1' => $this->faker->streetAddress(),
-            'address_line_2' => $this->faker->optional()->secondaryAddress(),
-            'city' => $this->faker->city(),
-            'postal_code' => $this->faker->postcode(),
+            'address_line_1' => fake()->streetAddress(),
+            'address_line_2' => fake()->optional()->secondaryAddress(),
+            'city' => fake()->city(),
+            'postal_code' => fake()->postcode(),
             'country_id' => Country::factory(),
             'state_id' => State::factory(),
-            'is_active' => $this->faker->boolean(90), // 90% active
+            'is_active' => fake()->boolean(90), // 90% active
             'contract_details' => [
-                'contract_type' => $this->faker->randomElement(['standard', 'premium', 'enterprise']),
-                'commission_rate' => $this->faker->randomFloat(2, 5, 15),
-                'payment_terms' => $this->faker->randomElement(['net30', 'net15', 'immediate']),
-                'special_conditions' => $this->faker->optional()->sentence(),
+                'contract_type' => fake()->randomElement(['standard', 'premium', 'enterprise']),
+                'commission_rate' => fake()->randomFloat(2, 5, 15),
+                'payment_terms' => fake()->randomElement(['net30', 'net15', 'immediate']),
+                'special_conditions' => fake()->optional()->sentence(),
             ],
             'created_by' => User::factory(),
         ];
@@ -111,7 +111,7 @@ class OrganizerFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'contract_details' => [
                 'contract_type' => 'premium',
-                'commission_rate' => $this->faker->randomFloat(2, 3, 8),
+                'commission_rate' => fake()->randomFloat(2, 3, 8),
                 'payment_terms' => 'net15',
                 'special_conditions' => 'Premium support and priority listing',
                 'features' => ['priority_support', 'custom_branding', 'analytics_access'],
