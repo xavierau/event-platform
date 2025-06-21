@@ -65,8 +65,14 @@ class OrganizerFactory extends Factory
             'address_line_2' => fake()->optional()->secondaryAddress(),
             'city' => fake()->city(),
             'postal_code' => fake()->postcode(),
-            'country_id' => Country::factory(),
-            'state_id' => State::factory(),
+            'country_id' => function () {
+                // Use existing country or create one if none exist
+                return Country::inRandomOrder()->first()?->id ?? Country::factory()->create()->id;
+            },
+            'state_id' => function () {
+                // Use existing state or create one if none exist
+                return State::inRandomOrder()->first()?->id ?? State::factory()->create()->id;
+            },
             'is_active' => fake()->boolean(90), // 90% active
             'contract_details' => [
                 'contract_type' => fake()->randomElement(['standard', 'premium', 'enterprise']),

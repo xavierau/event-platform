@@ -99,11 +99,24 @@ return new class extends Migration
             throw new \Exception('Organizer users pivot table does not exist');
         }
 
-        // Check for foreign key constraints
-        $eventsTableInfo = DB::select("PRAGMA foreign_key_list(events)");
-        $hasOrganizerConstraint = collect($eventsTableInfo)->contains(function ($constraint) {
-            return $constraint->table === 'organizers' && $constraint->from === 'organizer_id';
-        });
+        // Check for foreign key constraints (MySQL version)
+        $hasOrganizerConstraint = false;
+        try {
+            $constraints = DB::select("
+                SELECT CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = 'events'
+                AND COLUMN_NAME = 'organizer_id'
+                AND REFERENCED_TABLE_NAME IS NOT NULL
+            ");
+
+            $hasOrganizerConstraint = collect($constraints)->contains(function ($constraint) {
+                return $constraint->REFERENCED_TABLE_NAME === 'organizers' && $constraint->COLUMN_NAME === 'organizer_id';
+            });
+        } catch (\Exception $e) {
+            $this->logMessage('Could not check foreign key constraints: ' . $e->getMessage());
+        }
 
         if (!$hasOrganizerConstraint) {
             $this->logMessage('WARNING: Events table does not have organizer foreign key constraint to organizers table');

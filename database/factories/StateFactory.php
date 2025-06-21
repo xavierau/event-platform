@@ -16,7 +16,10 @@ class StateFactory extends Factory
     public function definition(): array
     {
         return [
-            'country_id' => Country::factory(),
+            'country_id' => function () {
+                // Use existing country or create one if none exist
+                return Country::inRandomOrder()->first()?->id ?? Country::factory()->create()->id;
+            },
             'name' => ['en' => $this->faker->state],
             'code' => $this->faker->stateAbbr,
             'is_active' => true,
