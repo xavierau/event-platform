@@ -13,7 +13,7 @@
 
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature', 'Pest', 'Unit');
+    ->in('Feature', 'Pest', 'Unit/Actions', 'Unit/Services', 'Unit/Policies', 'Unit/Traits', 'Unit/Enums');
 
 /*
 |--------------------------------------------------------------------------
