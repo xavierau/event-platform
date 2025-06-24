@@ -19,6 +19,7 @@ test('new users can register', function () {
     $response = $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
+        'mobile_number' => '+1234567890',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);
@@ -31,4 +32,28 @@ test('new users can register', function () {
     expect($user)->not->toBeNull();
     expect($user->hasRole(RoleNameEnum::USER->value))->toBeTrue();
     expect($user->roles)->toHaveCount(1);
+    expect($user->mobile_number)->toBe('+1234567890');
+});
+
+test('mobile number is required for registration', function () {
+    $response = $this->post('/register', [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertSessionHasErrors(['mobile_number']);
+});
+
+test('mobile number must be valid format for registration', function () {
+    $response = $this->post('/register', [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'mobile_number' => 'invalid-phone',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertSessionHasErrors(['mobile_number']);
 });

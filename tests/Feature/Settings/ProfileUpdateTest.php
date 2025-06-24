@@ -22,6 +22,7 @@ test('profile information can be updated', function () {
         ->patch('/settings/profile', [
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'mobile_number' => '+1234567890',
         ]);
 
     $response
@@ -32,6 +33,7 @@ test('profile information can be updated', function () {
 
     expect($user->name)->toBe('Test User');
     expect($user->email)->toBe('test@example.com');
+    expect($user->mobile_number)->toBe('+1234567890');
     expect($user->email_verified_at)->toBeNull();
 });
 
@@ -43,6 +45,7 @@ test('email verification status is unchanged when the email address is unchanged
         ->patch('/settings/profile', [
             'name' => 'Test User',
             'email' => $user->email,
+            'mobile_number' => '+1234567890',
         ]);
 
     $response
@@ -50,6 +53,33 @@ test('email verification status is unchanged when the email address is unchanged
         ->assertRedirect('/settings/profile');
 
     expect($user->refresh()->email_verified_at)->not->toBeNull();
+});
+
+test('mobile number is required for profile update', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->patch('/settings/profile', [
+            'name' => 'Updated Name',
+            'email' => 'updated@example.com',
+        ]);
+
+    $response->assertSessionHasErrors(['mobile_number']);
+});
+
+test('mobile number must be valid format for profile update', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->patch('/settings/profile', [
+            'name' => 'Updated Name',
+            'email' => 'updated@example.com',
+            'mobile_number' => 'invalid-phone',
+        ]);
+
+    $response->assertSessionHasErrors(['mobile_number']);
 });
 
 test('user can delete their account', function () {
