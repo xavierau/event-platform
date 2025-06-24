@@ -153,7 +153,7 @@ describe('IssueBulkCouponsAction', function () {
     });
 
     test('throws exception for single-use coupon when user already has one', function () {
-        $coupon = Coupon::factory()->create([
+        $coupon = Coupon::factory()->withValidPeriod()->create([
             'organizer_id' => $this->organizer->id,
             'type' => CouponTypeEnum::SINGLE_USE,
         ]);
@@ -170,12 +170,12 @@ describe('IssueBulkCouponsAction', function () {
             'times_can_be_used' => 1,
         ]);
 
-        expect(fn() => $this->action->execute($issuanceData, 2))
+        expect(fn() => $this->action->execute($issuanceData, 1))
             ->toThrow(\InvalidArgumentException::class, 'User already has this single-use coupon');
     });
 
     test('throws exception when trying to issue single-use coupon multiple times', function () {
-        $coupon = Coupon::factory()->create([
+        $coupon = Coupon::factory()->withValidPeriod()->create([
             'organizer_id' => $this->organizer->id,
             'type' => CouponTypeEnum::SINGLE_USE,
         ]);
@@ -192,7 +192,7 @@ describe('IssueBulkCouponsAction', function () {
     });
 
     test('allows single-use coupon bulk issuance of quantity 1', function () {
-        $coupon = Coupon::factory()->create([
+        $coupon = Coupon::factory()->withValidPeriod()->create([
             'organizer_id' => $this->organizer->id,
             'type' => CouponTypeEnum::SINGLE_USE,
         ]);
