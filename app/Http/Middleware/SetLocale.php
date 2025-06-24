@@ -18,13 +18,13 @@ class SetLocale
     public function handle(Request $request, Closure $next): Response
     {
         if (Session::has('locale')) {
-            App::setLocale(Session::get('locale'));
+            $locale = Session::get('locale');
+            // Check if the locale from the session is in the list of available locales
+            if (array_key_exists($locale, config('app.available_locales'))) {
+                App::setLocale($locale);
+            }
         }
-        // Optionally, you could add more logic here:
-        // 1. Check for locale in URL parameter
-        // 2. Check for locale in user profile settings
-        // 3. Check 'Accept-Language' header
-        // For now, it defaults to config('app.locale') if no session is set.
+        // If no valid locale in session, Laravel will use the default from config('app.locale').
 
         return $next($request);
     }

@@ -350,6 +350,31 @@ Several key libraries are utilized in this project, each influencing design and 
         - `mcp_context7_get-library-docs`: Fetches the documentation content for a given Context7-compatible library ID. It can be focused on specific topics within the library's documentation.
     - **Design Implication**: Encourages reliance on the latest official documentation, potentially reducing errors from outdated information. Facilitates learning and correct implementation of library features.
 
+- **`Zen MCP Server - AI Coding Companion`**:
+    - **Purpose**: Provides comprehensive AI-powered coding assistance through specialized tools for code review, debugging, analysis, and collaborative thinking. Acts as your intelligent coding partner when you need a second opinion or get stuck on complex problems.
+    - **Core Tools Available**:
+        - `mcp_zen_codereview`: Professional code review with bug detection, security analysis, and quality assessment
+        - `mcp_zen_debug`: Expert debugging and root cause analysis for complex issues
+        - `mcp_zen_analyze`: General-purpose code and file analysis for understanding codebases
+        - `mcp_zen_chat`: Collaborative thinking partner for brainstorming, explanations, and second opinions
+        - `mcp_zen_thinkdeep`: Extended reasoning for complex architectural decisions and problem-solving
+        - `mcp_zen_testgen`: Comprehensive test generation with edge case coverage
+        - `mcp_zen_refactor`: Intelligent code refactoring with actionable recommendations
+        - `mcp_zen_precommit`: Pre-commit validation to catch bugs and ensure code quality before commits
+    - **When to Use Zen**:
+        - **Stuck on a Problem**: When facing complex bugs, architectural decisions, or implementation challenges
+        - **Need Second Opinion**: To validate your approach, review your code, or explore alternative solutions
+        - **Code Quality**: For comprehensive code reviews, refactoring suggestions, or test coverage improvements
+        - **Debugging**: When troubleshooting difficult issues that require deep analysis and root cause investigation
+        - **Learning & Exploration**: To understand complex codebases, explore best practices, or brainstorm solutions
+        - **Pre-Commit Safety**: Always use `mcp_zen_precommit` before committing to catch potential issues early
+    - **Best Practices**:
+        - Use Zen tools liberally - they're designed to handle large codebases (up to 1M tokens)
+        - Include comprehensive context: error logs, stack traces, related files, and diagnostic outputs
+        - Leverage parallel thinking: use Zen to validate your analysis while you work through problems
+        - Choose appropriate thinking modes: 'low' for simple issues, 'high' for complex problems, 'max' for critical decisions
+    - **Design Implication**: Promotes collaborative development with AI assistance, early error detection, and continuous code quality improvement through intelligent tooling.
+
 This overview serves as a guide for navigating and understanding the project.
 
 ## Validation Strategy

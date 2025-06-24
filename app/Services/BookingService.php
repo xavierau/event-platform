@@ -24,9 +24,44 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth; // To get the authenticated user if needed directly
 use App\Helpers\QrCodeHelper; // Import the QrCodeHelper
 use App\Models\Event; // Assuming Event model exists
+use App\Models\Organizer; // Added Organizer model
+use App\Actions\Booking\UpdateBookingAction; // Import the UpdateBookingAction
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class BookingService
 {
+    public function getPaginatedBookings(array $filters = []): LengthAwarePaginator
+    {
+        $paginated = $this->getAllBookingsWithFilters($filters);
+        return $this->transformPaginatedBookings($paginated);
+    }
+
+    public function getPaginatedBookingsForOrganizer(User $organizer, array $filters = []): LengthAwarePaginator
+    {
+        $paginated = $this->getBookingsForOrganizerEventsWithFilters($organizer, $filters);
+        return $this->transformPaginatedBookings($paginated);
+    }
+
+    protected function transformPaginatedBookings(LengthAwarePaginator $paginated): LengthAwarePaginator
+    {
+        return $paginated->through(fn(Booking $booking) => [
+            'id' => $booking->id,
+            'booking_number' => $booking->booking_number,
+            'event_name' => $booking->event?->getTranslation('name', app()->getLocale()),
+            'user_name' => $booking->user?->name,
+            'user_email' => $booking->user?->email,
+            'status' => $booking->status->label(),
+            'status_value' => $booking->status->value,
+            'created_at' => $booking->created_at->toIso8601String(),
+            'total_price_formatted' => $booking->total_price_formatted,
+            'transaction' => $booking->transaction ? [
+                'id' => $booking->transaction->id,
+                'payment_gateway' => $booking->transaction->payment_gateway,
+                'status' => $booking->transaction->status->label(),
+                'status_value' => $booking->transaction->status->value,
+            ] : null,
+        ]);
+    }
 
     /**
      * Processes the booking initiation request.
@@ -314,18 +349,15 @@ class BookingService
      */
     public function getBookingsForOrganizerEvents(User $organizer): Collection
     {
-        // Assuming Event model has an 'organizer_id' or similar relationship to User
-        // And Booking model has an 'event_id' column
-        // This is a simplified example. You might need a more complex query
-        // depending on your database schema and relationships.
-        // Using `whereRelation` for a more concise and efficient single query.
-        // This assumes:
-        // 1. The Booking model has an 'event' relationship.
-        // 2. The related Event model (or 'events' table) has a column named 'organizer_id'
-        //    that stores the ID of the organizer (User).
-        // If the column name is different (e.g., 'user_id'), adjust it accordingly.
-        // This method is available from Laravel 8+.
-        return Booking::whereRelation('event', 'organizer_id', $organizer->id)
+        // Get all organizer entities that this user belongs to
+        $userOrganizerIds = Organizer::whereHas('users', function ($query) use ($organizer) {
+            $query->where('user_id', $organizer->id);
+        })->pluck('id');
+
+        // Get bookings for events belonging to any of the user's organizer entities
+        return Booking::whereHas('event', function ($query) use ($userOrganizerIds) {
+            $query->whereIn('organizer_id', $userOrganizerIds);
+        })
             ->with(['user', 'event']) // Eager load related user and event for each booking
             ->get();
     }
@@ -425,8 +457,13 @@ class BookingService
      */
     public function getBookingsForOrganizerEventsWithFilters(User $organizer, array $filters = []): \Illuminate\Pagination\LengthAwarePaginator
     {
-        // Get organizer's event IDs
-        $organizerEventIds = Event::where('organizer_id', $organizer->id)->pluck('id');
+        // Get all organizer entities that this user belongs to
+        $userOrganizerIds = Organizer::whereHas('users', function ($query) use ($organizer) {
+            $query->where('user_id', $organizer->id);
+        })->pluck('id');
+
+        // Get event IDs for events belonging to any of the user's organizer entities
+        $organizerEventIds = Event::whereIn('organizer_id', $userOrganizerIds)->pluck('id');
 
         $query = Booking::with([
             'user', // Remove column selection to avoid hasOneThrough ambiguity
@@ -521,8 +558,13 @@ class BookingService
      */
     public function getOrganizerEventsForFilter(User $organizer): Collection
     {
+        // Get all organizer entities that this user belongs to
+        $userOrganizerIds = Organizer::whereHas('users', function ($query) use ($organizer) {
+            $query->where('user_id', $organizer->id);
+        })->pluck('id');
+
         return Event::select('id', 'name')
-            ->where('organizer_id', $organizer->id)
+            ->whereIn('organizer_id', $userOrganizerIds)
             ->whereHas('bookings')
             ->orderBy('name')
             ->get();
@@ -539,9 +581,25 @@ class BookingService
         $baseQuery = Booking::query();
 
         if ($organizer) {
-            $organizerEventIds = Event::where('organizer_id', $organizer->id)->pluck('id');
+            // Get all organizer entities that this user belongs to
+            $userOrganizerIds = Organizer::whereHas('users', function ($query) use ($organizer) {
+                $query->where('user_id', $organizer->id);
+            })->pluck('id');
+
+            // Get event IDs for events belonging to any of the user's organizer entities
+            $organizerEventIds = Event::whereIn('organizer_id', $userOrganizerIds)->pluck('id');
             $baseQuery->whereIn('event_id', $organizerEventIds);
         }
+
+        // Calculate revenue directly from the bookings query
+        $revenueQuery = (clone $baseQuery)->where('status', BookingStatusEnum::CONFIRMED);
+
+        $totalRevenueByCurrency = $revenueQuery
+            ->select(DB::raw('currency_at_booking, SUM(price_at_booking) as total'))
+            ->groupBy('currency_at_booking')
+            ->pluck('total', 'currency_at_booking')
+            ->map(fn($total) => (int) $total) // Cast to integer
+            ->all();
 
         return [
             'total_bookings' => (clone $baseQuery)->count(),
@@ -549,14 +607,8 @@ class BookingService
             'pending_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::PENDING_CONFIRMATION)->count(),
             'used_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::USED)->count(),
             'cancelled_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::CANCELLED)->count(),
-            'total_revenue' => Transaction::whereIn('id', function ($query) use ($baseQuery) {
-                $query->select('transaction_id')
-                    ->from('bookings')
-                    ->whereIn('id', (clone $baseQuery)->select('id'))
-                    ->where('status', BookingStatusEnum::CONFIRMED);
-            })
-                ->where('status', TransactionStatusEnum::CONFIRMED)
-                ->sum('total_amount'),
+            'total_revenue' => $totalRevenueByCurrency,
+            'default_currency' => config('app.currency', 'USD'),
             'recent_bookings' => (clone $baseQuery)
                 ->with(['user', 'event:id,name']) // Remove column selection from user relationship
                 ->latest()

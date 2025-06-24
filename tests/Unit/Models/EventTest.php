@@ -542,21 +542,153 @@ class EventTest extends TestCase
             'venue_id' => $venue->id,
         ]);
 
-        // Ticket with no availability window (always available)
-        $alwaysAvailableTicket = TicketDefinition::factory()->create([
-            'price' => 7500, // $75.00
+        // Create ticket with no availability window (should always be available)
+        $ticket = TicketDefinition::factory()->create([
+            'price' => 5000, // $50.00
             'currency' => 'USD',
             'availability_window_start_utc' => null,
             'availability_window_end_utc' => null,
         ]);
 
-        $occurrence->ticketDefinitions()->attach($alwaysAvailableTicket->id, [
+        $occurrence->ticketDefinitions()->attach($ticket->id, [
+            'quantity_for_occurrence' => 100,
             'price_override' => null,
         ]);
 
         $priceRange = $event->getPriceRange();
 
-        // Should include the ticket with no availability window
-        $this->assertEquals('$75.00', $priceRange);
+        $this->assertEquals('$50.00', $priceRange);
+    }
+
+    // ========================================
+    // NEW TESTS FOR UPDATED EVENT FACTORY
+    // ========================================
+
+    #[Test]
+    public function event_factory_creates_event_with_organizer_entity_by_default()
+    {
+        $event = Event::factory()->create();
+
+        $this->assertNotNull($event->organizer_id);
+        $this->assertInstanceOf(\App\Models\Organizer::class, $event->organizer);
+    }
+
+    #[Test]
+    public function event_factory_can_create_event_for_specific_organizer()
+    {
+        $organizer = \App\Models\Organizer::factory()->create();
+        $event = Event::factory()->forOrganizer($organizer)->create();
+
+        $this->assertEquals($organizer->id, $event->organizer_id);
+        $this->assertTrue($event->organizer->is($organizer));
+    }
+
+    #[Test]
+    public function event_factory_can_create_published_event()
+    {
+        $event = Event::factory()->published()->create();
+
+        $this->assertEquals('published', $event->event_status);
+        $this->assertNotNull($event->published_at);
+        $this->assertLessThanOrEqual(now(), $event->published_at);
+    }
+
+    #[Test]
+    public function event_factory_can_create_featured_event()
+    {
+        $event = Event::factory()->featured()->create();
+
+        $this->assertTrue($event->is_featured);
+    }
+
+    #[Test]
+    public function event_factory_can_create_draft_event()
+    {
+        $event = Event::factory()->draft()->create();
+
+        $this->assertEquals('draft', $event->event_status);
+        $this->assertNull($event->published_at);
+    }
+
+    #[Test]
+    public function event_factory_can_create_event_in_specific_category()
+    {
+        $category = Category::factory()->create();
+        $event = Event::factory()->inCategory($category)->create();
+
+        $this->assertEquals($category->id, $event->category_id);
+        $this->assertTrue($event->category->is($category));
+    }
+
+    #[Test]
+    public function event_factory_can_create_event_with_multi_language_content()
+    {
+        $event = Event::factory()->withMultiLanguageContent()->create();
+
+        // Check that all three languages have content in the raw attributes
+        // The translatable trait stores JSON in database but accessors return locale-specific strings
+        $nameData = $event->getAttributes()['name'];
+        $nameArray = is_string($nameData) ? json_decode($nameData, true) : $nameData;
+
+        $this->assertArrayHasKey('en', $nameArray);
+        $this->assertArrayHasKey('zh-TW', $nameArray);
+        $this->assertArrayHasKey('zh-CN', $nameArray);
+
+        $this->assertNotEmpty($nameArray['en']);
+        $this->assertNotEmpty($nameArray['zh-TW']);
+        $this->assertNotEmpty($nameArray['zh-CN']);
+
+        // Check other translatable fields
+        $descriptionData = $event->getAttributes()['description'];
+        $descriptionArray = is_string($descriptionData) ? json_decode($descriptionData, true) : $descriptionData;
+
+        $this->assertArrayHasKey('en', $descriptionArray);
+        $this->assertArrayHasKey('zh-TW', $descriptionArray);
+        $this->assertArrayHasKey('zh-CN', $descriptionArray);
+    }
+
+    #[Test]
+    public function event_factory_methods_can_be_chained()
+    {
+        $category = Category::factory()->create();
+        $organizer = \App\Models\Organizer::factory()->create();
+
+        $event = Event::factory()
+            ->forOrganizer($organizer)
+            ->inCategory($category)
+            ->published()
+            ->featured()
+            ->withMultiLanguageContent()
+            ->create();
+
+        $this->assertEquals($organizer->id, $event->organizer_id);
+        $this->assertEquals($category->id, $event->category_id);
+        $this->assertEquals('published', $event->event_status);
+        $this->assertTrue($event->is_featured);
+        $this->assertNotNull($event->published_at);
+
+        // Check translatable field using raw attributes
+        $nameData = $event->getAttributes()['name'];
+        $nameArray = is_string($nameData) ? json_decode($nameData, true) : $nameData;
+        $this->assertArrayHasKey('zh-TW', $nameArray);
+    }
+
+    #[Test]
+    public function event_factory_with_organizer_entity_method_works()
+    {
+        $event = Event::factory()->withOrganizerEntity()->create();
+
+        $this->assertNotNull($event->organizer_id);
+        $this->assertInstanceOf(\App\Models\Organizer::class, $event->organizer);
+    }
+
+    #[Test]
+    public function event_factory_deprecated_for_testing_method_still_works()
+    {
+        // This test ensures backward compatibility for any existing tests
+        $event = Event::factory()->forTesting()->create();
+
+        $this->assertNotNull($event->organizer_id);
+        $this->assertInstanceOf(\App\Models\Organizer::class, $event->organizer);
     }
 }

@@ -86,31 +86,23 @@ class CheckInData extends Data
 
                         // Platform admins can check in any booking
                         if ($user->hasRole(RoleNameEnum::ADMIN)) {
+                            return [];
+                        }
+
+                        // Check if user has organizer entity membership for this event's organizer
+                        $booking = \App\Models\Booking::byQrCode(request()->input('qr_code_identifier'))->first();
+                        if (!$booking) {
+                            $fail('Cannot validate operator permissions: booking not found.');
                             return;
                         }
 
-                        // For organizers, they must be the organizer of the specific event
-                        if ($user->hasRole(RoleNameEnum::ORGANIZER)) {
-                            // Get the QR code from the current validation data
-                            $qrCode = request()->input('qr_code_identifier');
-                            if ($qrCode) {
-                                $booking = \App\Models\Booking::byQrCode($qrCode)->first();
-                                if ($booking && $booking->event) {
-                                    // Check if the operator is the organizer of this specific event
-                                    if ($booking->event->organizer_id !== $user->id) {
-                                        $fail('The operator must be the organizer of this specific event or a platform admin.');
-                                        return;
-                                    }
-                                } else {
-                                    $fail('Cannot validate operator permissions: booking or event not found.');
-                                    return;
-                                }
-                            } else {
-                                $fail('Cannot validate operator permissions: QR code not provided.');
-                                return;
-                            }
-                        } else {
-                            $fail('The operator must have either organizer or platform admin role.');
+                        $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($query) use ($user) {
+                            $query->where('user_id', $user->id);
+                        })->pluck('id');
+
+                        if (!$userOrganizerIds->contains($booking->event->organizer_id)) {
+                            $fail('You are not authorized to check in for this event.');
+                            return;
                         }
                     }
                 },

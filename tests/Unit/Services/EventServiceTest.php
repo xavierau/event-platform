@@ -33,14 +33,14 @@ class EventServiceTest extends TestCase
 
     private function createTestEvent(array $occurrenceData = []): Event
     {
-        $user = User::factory()->create();
+        $organizer = \App\Models\Organizer::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
 
         // Use existing venue or create one with existing country to avoid constraint violations
         $venue = Venue::first() ?: Venue::factory()->create();
 
         $event = Event::factory()->create([
-            'organizer_id' => $user->id,
+            'organizer_id' => $organizer->id,
             'category_id' => $category->id,
             'name' => ['en' => 'Test Event'],
             'slug' => ['en' => 'test-event'],
@@ -169,12 +169,12 @@ class EventServiceTest extends TestCase
         ]);
 
         // Create draft event (should not be included)
-        $user = User::factory()->create();
+        $organizer = \App\Models\Organizer::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
         $venue = Venue::first() ?: Venue::factory()->create();
 
         $draftEvent = Event::factory()->create([
-            'organizer_id' => $user->id,
+            'organizer_id' => $organizer->id,
             'category_id' => $category->id,
             'name' => ['en' => 'Draft Event'],
             'event_status' => 'draft', // Not published
@@ -197,12 +197,12 @@ class EventServiceTest extends TestCase
     public function test_getEventsToday_only_includes_scheduled_occurrences(): void
     {
         $todayStart = now()->utc()->startOfDay();
-        $user = User::factory()->create();
+        $organizer = \App\Models\Organizer::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
         $venue = Venue::first() ?: Venue::factory()->create();
 
         $event = Event::factory()->create([
-            'organizer_id' => $user->id,
+            'organizer_id' => $organizer->id,
             'category_id' => $category->id,
             'name' => ['en' => 'Test Event'],
             'event_status' => 'published',

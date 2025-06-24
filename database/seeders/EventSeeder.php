@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use App\Models\Event;
-use App\Models\User;
+use App\Models\Organizer;
 use Illuminate\Database\Seeder;
 
 class EventSeeder extends Seeder
@@ -14,36 +14,34 @@ class EventSeeder extends Seeder
      */
     public function run(): void
     {
-        // Ensure some organizers (users) and categories exist
-        if (User::whereHas('roles', fn($query) => $query->whereIn('name', ['organizer', 'platform_admin']))->count() === 0) {
-            $this->command->info('No organizers or admins found, running OrganizerSeeder/PlatformAdminSeeder might be needed first or creating some directly.');
-            // For simplicity, create a fallback organizer if absolutely none found from typical roles.
-            User::factory()->create(); // This user might not have an organizer role unless factory assigns it.
-        }
-        if (Category::count() === 0) {
-            $this->command->info('No categories found, running CategorySeeder might be needed first or creating some directly.');
-            Category::factory(3)->create();
+        // Ensure organizers and categories exist
+        if (Organizer::where('is_active', true)->count() === 0) {
+            $this->command->info('No active organizers found. Running OrganizerSeeder first...');
+            $this->call(OrganizerSeeder::class);
         }
 
-        $organizers = User::whereHas('roles', fn($query) => $query->whereIn('name', ['organizer', 'platform_admin']))->get();
-        if ($organizers->isEmpty()) { // Fallback if the role-based query still yields no one
-            $organizers = User::all();
+        if (Category::count() === 0) {
+            $this->command->info('No categories found. Running CategorySeeder first...');
+            $this->call(CategorySeeder::class);
         }
+
+        $organizers = Organizer::where('is_active', true)->get();
         $categories = Category::all();
 
         if ($organizers->isEmpty() || $categories->isEmpty()) {
-            $this->command->error('Cannot seed Events: Missing organizers or categories. Please run User and Category seeders first.');
+            $this->command->error('Cannot seed Events: Missing organizers or categories. Please run Organizer and Category seeders first.');
             return;
         }
 
-        // Create a few events
-        Event::factory(10)->create([
-            // Override factory defaults for each created event if needed, or let factory handle it
-            // Example of overriding within a loop if more control is needed:
-            // 'organizer_id' => $organizers->random()->id,
-            // 'category_id' => $categories->random()->id,
-        ]);
+        // Create events with proper organizer relationships
+        Event::factory(10)->make()->each(function ($event) use ($organizers, $categories) {
+            $event->organizer_id = $organizers->random()->id;
+            $event->category_id = $categories->random()->id;
+            $event->save();
+        });
 
-        $this->command->info('Event seeding completed. Total events: ' . Event::count());
+        $this->command->info('Event seeding completed successfully.');
+        $this->command->info('Total events: ' . Event::count());
+        $this->command->info('Events distributed across ' . $organizers->count() . ' organizers');
     }
 }

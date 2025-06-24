@@ -28,7 +28,6 @@ class CheckInOccurrenceValidationTest extends TestCase
         $this->eligibilityService = new CheckInEligibilityService();
 
         Role::create(['name' => RoleNameEnum::ADMIN->value]);
-        Role::create(['name' => RoleNameEnum::ORGANIZER->value]);
     }
 
     /** @test */
@@ -126,8 +125,16 @@ class CheckInOccurrenceValidationTest extends TestCase
     /** @test */
     public function it_validates_operator_authorization_for_occurrence_check_in()
     {
-        $organizer = User::factory()->create();
-        $organizer->assignRole(RoleNameEnum::ORGANIZER);
+        // Create organizer entity and user
+        $organizer = \App\Models\Organizer::factory()->create();
+        $organizerUser = User::factory()->create();
+
+        // Create organizer-user relationship
+        $organizer->users()->attach($organizerUser->id, [
+            'role_in_organizer' => \App\Enums\OrganizerRoleEnum::MANAGER->value,
+            'is_active' => true,
+            'joined_at' => now(),
+        ]);
 
         $event = Event::factory()->create([
             'organizer_id' => $organizer->id,
@@ -149,7 +156,7 @@ class CheckInOccurrenceValidationTest extends TestCase
             'max_allowed_check_ins' => 1,
         ]);
 
-        $result = $this->eligibilityService->validateEligibilityForOccurrence($booking, $eventOccurrence, $organizer);
+        $result = $this->eligibilityService->validateEligibilityForOccurrence($booking, $eventOccurrence, $organizerUser);
 
         $this->assertTrue($result['is_eligible']);
         $this->assertEmpty($result['errors']);
@@ -158,12 +165,24 @@ class CheckInOccurrenceValidationTest extends TestCase
     /** @test */
     public function it_rejects_occurrence_check_in_for_wrong_organizer()
     {
-        $organizer1 = User::factory()->create();
-        $organizer1->assignRole(RoleNameEnum::ORGANIZER);
+        // Create two separate organizers with users
+        $organizer1 = \App\Models\Organizer::factory()->create();
+        $organizerUser1 = User::factory()->create();
+        $organizer1->users()->attach($organizerUser1->id, [
+            'role_in_organizer' => \App\Enums\OrganizerRoleEnum::MANAGER->value,
+            'is_active' => true,
+            'joined_at' => now(),
+        ]);
 
-        $organizer2 = User::factory()->create();
-        $organizer2->assignRole(RoleNameEnum::ORGANIZER);
+        $organizer2 = \App\Models\Organizer::factory()->create();
+        $organizerUser2 = User::factory()->create();
+        $organizer2->users()->attach($organizerUser2->id, [
+            'role_in_organizer' => \App\Enums\OrganizerRoleEnum::MANAGER->value,
+            'is_active' => true,
+            'joined_at' => now(),
+        ]);
 
+        // Create event for organizer1
         $event = Event::factory()->create([
             'organizer_id' => $organizer1->id,
         ]);
@@ -184,10 +203,11 @@ class CheckInOccurrenceValidationTest extends TestCase
             'max_allowed_check_ins' => 1,
         ]);
 
-        $result = $this->eligibilityService->validateEligibilityForOccurrence($booking, $eventOccurrence, $organizer2);
+        // Try to check in with organizer2's user (should fail)
+        $result = $this->eligibilityService->validateEligibilityForOccurrence($booking, $eventOccurrence, $organizerUser2);
 
         $this->assertFalse($result['is_eligible']);
-        $this->assertContains('The operator must be the organizer of this specific event or a platform admin', $result['errors']);
+        $this->assertContains('You are not authorized to check in for this event.', $result['errors']);
     }
 
     /** @test */

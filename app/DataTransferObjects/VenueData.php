@@ -68,7 +68,7 @@ class VenueData extends Data
             'website_url' => 'nullable|url|max:255',
             'seating_capacity' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
-            'organizer_id' => 'nullable|integer|exists:users,id',
+            'organizer_id' => 'nullable|integer|exists:organizers,id',
             'uploaded_main_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'removed_main_image_id' => 'nullable|integer|exists:media,id',
             'uploaded_gallery_images' => 'nullable|array',

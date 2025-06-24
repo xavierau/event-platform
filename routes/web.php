@@ -27,6 +27,8 @@ use App\Http\Controllers\Public\MyWalletController;
 use App\Http\Controllers\Public\MyWishlistController;
 use App\Http\Controllers\Public\ContactUsController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\OrganizerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -95,8 +97,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 // --- ADMIN ROUTES ---
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value])->group(function () {
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin|' . RoleNameEnum::ADMIN->value])->group(function () {
+    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
     Route::put('settings', [SiteSettingController::class, 'update'])->name('settings.update');
 
@@ -111,6 +113,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:' . RoleNameEn
     Route::resource('events.occurrences', EventOccurrenceController::class)->shallow();
     Route::resource('ticket-definitions', TicketDefinitionController::class);
     Route::resource('bookings', AdminBookingController::class);
+    Route::resource('organizers', OrganizerController::class);
+    Route::post('organizers/{organizer}/invite', [OrganizerController::class, 'inviteUser'])->name('organizers.invite');
 
     // CMS Routes
     Route::resource('cms-pages', CmsPageController::class);
@@ -123,10 +127,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:' . RoleNameEn
 });
 
 
-// --- ROLE-BASED ROUTES (Admin or Organizer) ---
+// --- ROLE-BASED ROUTES (Admin or Users with Organizer Entity Membership) ---
 Route::prefix('admin/qr-scanner')
     ->name('admin.qr-scanner.')
-    ->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value . '|' . RoleNameEnum::ORGANIZER->value])
+    ->middleware(['auth'])
     ->group(function () {
         Route::get('/', [QrScannerController::class, 'index'])->name('index');
         Route::post('/validate', [QrScannerController::class, 'validateQrCode'])->name('validate');
