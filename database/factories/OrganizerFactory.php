@@ -48,8 +48,8 @@ class OrganizerFactory extends Factory
             'slug' => $slug,
             'description' => [
                 'en' => fake()->paragraph(3),
-                'zh-TW' => fake()->realText(200),
-                'zh-CN' => fake()->realText(200),
+                'zh-TW' => fake()->sentence(10),
+                'zh-CN' => fake()->sentence(10),
             ],
             'logo_path' => null, // Will be handled by media library
             'website_url' => fake()->optional()->url(),

@@ -25,7 +25,10 @@ class EventFactory extends Factory
     {
         $nameEn = $this->faker->sentence(3);
         $attributes = [
-            'organizer_id' => Organizer::factory(), // Uses Organizer entity (new relationship)
+            'organizer_id' => function () {
+                // Use existing organizer or create one if none exist
+                return Organizer::inRandomOrder()->first()?->id ?? Organizer::factory()->create()->id;
+            },
             'category_id' => Category::factory(),
             'name' => ['en' => $nameEn],
             'slug' => ['en' => $this->faker->slug(3)],
@@ -66,7 +69,10 @@ class EventFactory extends Factory
     public function withOrganizerEntity(): static
     {
         return $this->state(fn(array $attributes) => [
-            'organizer_id' => Organizer::factory(),
+            'organizer_id' => function () {
+                // Use existing organizer or create one if none exist
+                return Organizer::inRandomOrder()->first()?->id ?? Organizer::factory()->create()->id;
+            },
         ]);
     }
 
@@ -79,7 +85,10 @@ class EventFactory extends Factory
     public function forTesting(): static
     {
         return $this->state(fn(array $attributes) => [
-            'organizer_id' => Organizer::factory(),
+            'organizer_id' => function () {
+                // Use existing organizer or create one if none exist
+                return Organizer::inRandomOrder()->first()?->id ?? Organizer::factory()->create()->id;
+            },
         ]);
     }
 
