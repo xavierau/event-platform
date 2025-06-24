@@ -1,0 +1,61 @@
+<?php
+
+namespace Database\Factories\Modules\Coupon;
+
+use App\Models\Organizer;
+use App\Modules\Coupon\Enums\CouponTypeEnum;
+use App\Modules\Coupon\Models\Coupon;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Modules\Coupon\Models\Coupon>
+ */
+class CouponFactory extends Factory
+{
+    protected $model = Coupon::class;
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'organizer_id' => Organizer::factory(),
+            'name' => $this->faker->words(3, true),
+            'description' => $this->faker->sentence,
+            'code' => $this->faker->unique()->word,
+            'type' => $this->faker->randomElement(CouponTypeEnum::cases())->value,
+            'discount_value' => $this->faker->numberBetween(10, 50),
+            'discount_type' => 'fixed',
+            'max_issuance' => $this->faker->optional()->numberBetween(100, 1000),
+            'valid_from' => now(),
+            'expires_at' => now()->addMonths(3),
+            'redemption_methods' => ['qr'], // Default to QR only
+            'merchant_pin' => null,
+        ];
+    }
+
+    /**
+     * Create a coupon with PIN redemption enabled
+     */
+    public function withPin(string $pin = '123456'): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'redemption_methods' => ['pin'],
+            'merchant_pin' => $pin,
+        ]);
+    }
+
+    /**
+     * Create a coupon with both QR and PIN redemption
+     */
+    public function withBothMethods(string $pin = '123456'): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'redemption_methods' => ['qr', 'pin'],
+            'merchant_pin' => $pin,
+        ]);
+    }
+}
