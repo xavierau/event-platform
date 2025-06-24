@@ -2,12 +2,14 @@
 import { createI18n } from 'vue-i18n';
 
 // Import your language files
-import en from './locales/en.json';
-import fr from './locales/fr.json';
+import en from '../../lang/en.json';
+import zhCN from '../../lang/zh-CN.json';
+import zhHK from '../../lang/zh-HK.json';
 
 const messages = {
     en,
-    fr,
+    'zh-HK': zhHK,
+    'zh-CN': zhCN,
 };
 
 const i18n = createI18n({

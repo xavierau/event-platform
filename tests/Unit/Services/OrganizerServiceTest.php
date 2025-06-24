@@ -15,6 +15,7 @@ use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class OrganizerServiceTest extends TestCase
 {
@@ -46,13 +47,13 @@ class OrganizerServiceTest extends TestCase
         );
     }
 
-
-
     public function test_can_create_organizer()
     {
         Storage::fake('public');
 
+        /** @var \App\Models\User $user */
         $user = User::factory()->create();
+        $this->actingAs($user);
         $logo = UploadedFile::fake()->image('logo.jpg');
 
         $organizerData = OrganizerData::from([

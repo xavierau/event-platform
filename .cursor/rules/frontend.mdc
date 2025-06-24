@@ -161,3 +161,82 @@ Recent experience with the `Venues/Edit.vue` form highlighted critical considera
 -   Be aware of server-side configurations like `post_max_size` and `max_input_vars` in `php.ini`, as these can truncate complex form data before it even reaches Laravel. Refer to `project_overview.mdc` for details.
 
 By following these conventions, complex form submissions involving translatable data and file uploads can be handled more reliably, reducing debugging time and potential data loss.
+
+## Standard Admin Page Components
+
+To keep admin list pages visually consistent and reduce repetitive markup, always use the shared components below instead of hand-rolled markup:
+
+| Purpose | Component | Location |
+|---------|-----------|----------|
+| Page heading + top-right action buttons | `PageHeader.vue` | [resources/js/components/Shared/PageHeader.vue](mdc:resources/js/components/Shared/PageHeader.vue) |
+| Paginated summary + navigation | `AdminPagination.vue` | [resources/js/components/Shared/AdminPagination.vue](mdc:resources/js/components/Shared/AdminPagination.vue) |
+| Wrapper that combines optional filters grid **and** the data table | `AdminDataTable.vue` | [resources/js/components/Shared/AdminDataTable.vue](mdc:resources/js/components/Shared/AdminDataTable.vue) |
+| Low-level table primitives | `Table`, `TableHeader`, `TableRow`, `TableHead`, `TableBody`, `TableCell` | [resources/js/components/ui/table](mdc:resources/js/components/ui/table) |
+
+### Usage Pattern (Index pages)
+
+```vue
+<script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue'
+import PageHeader from '@/components/Shared/PageHeader.vue'
+import AdminDataTable from '@/components/Shared/AdminDataTable.vue'
+import { TableHead, TableRow, TableCell } from '@/components/ui/table'
+// ...other imports (Link, Inertia form etc.)
+</script>
+
+<template>
+  <Head title="MyEntities" />
+  <AppLayout>
+    <div class="py-12">
+      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-gray-800 shadow-xl sm:rounded-lg p-6 lg:p-8">
+          <!-- 1️⃣ Page title + buttons -->
+          <PageHeader title="My Entities">
+            <template #actions>
+              <Link :href="route('admin.my-entities.create')" class="btn-primary">Create Entity</Link>
+            </template>
+          </PageHeader>
+
+          <!-- 2️⃣ Filters + table -->
+          <AdminDataTable>
+            <!-- Filters grid (optional) -->
+            <template #filters>
+              <!-- each child div becomes a grid item -->
+              <div>…filter field…</div>
+              <div>…filter field…</div>
+            </template>
+
+            <!-- Table header cells -->
+            <template #header>
+              <TableHead>Name</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead class="text-right">Actions</TableHead>
+            </template>
+
+            <!-- Table body rows -->
+            <template #body>
+              <TableRow v-for="item in items.data" :key="item.id">
+                <TableCell>{{ item.name }}</TableCell>
+                <TableCell>{{ item.status }}</TableCell>
+                <TableCell class="text-right">
+                  …action links…
+                </TableCell>
+              </TableRow>
+            </template>
+          </AdminDataTable>
+
+          <!-- 3️⃣ Pagination -->
+          <AdminPagination :links="items.links" :from="items.from" :to="items.to" :total="items.total" />
+        </div>
+      </div>
+    </div>
+  </AppLayout>
+</template>
+```
+
+**Key Points**
+1. **No raw `<table>` markup** – use the primitives from `ui/table` for uniform spacing, typography, and responsive overflow.
+2. Filters should sit inside the `#filters` slot; the grid wrapper is handled by `AdminDataTable.vue`.
+3. Place pagination **outside** the data table but inside the same card container to match system-wide spacing.
+
+Following this pattern keeps all admin index pages visually aligned and simplifies future style updates.

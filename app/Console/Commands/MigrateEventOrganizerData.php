@@ -176,7 +176,7 @@ class MigrateEventOrganizerData extends Command
      */
     private function createDefaultOrganizer(): Organizer
     {
-        $organizerUser = User::role([RoleNameEnum::ADMIN->value, RoleNameEnum::ORGANIZER->value])->first()
+        $organizerUser = User::role([RoleNameEnum::ADMIN->value])->first()
             ?? User::first();
 
         return Organizer::create([
@@ -218,8 +218,9 @@ class MigrateEventOrganizerData extends Command
         // Check for users without organizer memberships
         $usersWithoutMemberships = 0;
         if (class_exists(\Spatie\Permission\Models\Role::class)) {
-            $organizerUsers = User::role([RoleNameEnum::ORGANIZER->value, RoleNameEnum::ADMIN->value])->get();
-            foreach ($organizerUsers as $user) {
+            // Only check admin users since ORGANIZER role has been removed in favor of organizer entity relationships
+            $adminUsers = User::role([RoleNameEnum::ADMIN->value])->get();
+            foreach ($adminUsers as $user) {
                 if (!DB::table('organizer_users')->where('user_id', $user->id)->exists()) {
                     $usersWithoutMemberships++;
                 }
@@ -298,7 +299,8 @@ class MigrateEventOrganizerData extends Command
             return;
         }
 
-        $organizerUsers = User::role([RoleNameEnum::ORGANIZER->value, RoleNameEnum::ADMIN->value])->get();
+        // Only check admin users since ORGANIZER role has been removed in favor of organizer entity relationships
+        $organizerUsers = User::role([RoleNameEnum::ADMIN->value])->get();
         $newMemberships = 0;
 
         foreach ($organizerUsers as $user) {

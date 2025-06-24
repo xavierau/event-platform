@@ -7,6 +7,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Venue;
 use App\Models\Country;
 use App\Models\Organizer;
+use Database\Seeders\OrganizerSeeder;
 
 class VenueSeeder extends Seeder
 {
@@ -15,28 +16,23 @@ class VenueSeeder extends Seeder
      */
     public function run(): void
     {
-        // Attempt to find a default country (should be created by CountrySeeder)
+        // Ensure dependencies exist
         $defaultCountry = Country::where('iso_code_2', 'US')->first();
         if (!$defaultCountry) {
-            $this->command->error('Default country with iso_code_2 = US not found. Please ensure CountrySeeder has run and created it. Skipping venue seeding.');
+            $this->command->error('Default country with iso_code_2 = US not found. Please ensure CountrySeeder has run first.');
             return;
         }
 
-        // Create a default organizer if none exists (for organizer-specific venues)
-        $defaultOrganizer = Organizer::first();
-        if (!$defaultOrganizer) {
-            $defaultOrganizer = Organizer::create([
-                'name' => ['en' => 'Default Event Organization', 'zh-TW' => '預設活動組織'],
-                'slug' => 'default-event-organization',
-                'description' => ['en' => 'Default organizer for initial venues', 'zh-TW' => '預設場地的活動組織'],
-                'contact_email' => 'contact@defaultorganizer.com',
-                'contact_phone' => '+1-555-0123',
-                'website_url' => 'https://defaultorganizer.com',
-                'is_active' => true,
-                'created_by' => 1, // Assuming admin user exists
-            ]);
-            $this->command->info('Created default organizer for venue seeding.');
+        // Ensure organizers exist for organizer-specific venues
+        $organizers = Organizer::where('is_active', true)->get();
+        if ($organizers->isEmpty()) {
+            $this->command->info('No active organizers found. Running OrganizerSeeder first...');
+            $this->call(OrganizerSeeder::class);
+            $organizers = Organizer::where('is_active', true)->get();
         }
+
+        // Get a sample organizer for organizer-specific venues
+        $sampleOrganizer = $organizers->first();
 
         $venues = [
             // Public venues (organizer_id = null)
@@ -75,7 +71,7 @@ class VenueSeeder extends Seeder
                 'name' => ['en' => 'Tech Hub Center', 'zh-TW' => '科技中心'],
                 'slug' => 'tech-hub-center',
                 'description' => ['en' => 'Private venue for tech conferences and events.', 'zh-TW' => '舉辦科技會議和活動的私人場所。'],
-                'organizer_id' => $defaultOrganizer->id,
+                'organizer_id' => $sampleOrganizer->id,
                 'address_line_1' => ['en' => '789 Innovation Dr', 'zh-TW' => '創新大道789號'],
                 'city' => ['en' => 'San Francisco', 'zh-TW' => '舊金山'],
                 'country_id' => $defaultCountry->id,
@@ -90,7 +86,7 @@ class VenueSeeder extends Seeder
                 'name' => ['en' => 'Private Executive Lounge', 'zh-TW' => '私人行政休息室'],
                 'slug' => 'private-executive-lounge',
                 'description' => ['en' => 'Exclusive venue for corporate events and meetings.', 'zh-TW' => '專為企業活動和會議而設的專屬場所。'],
-                'organizer_id' => $defaultOrganizer->id,
+                'organizer_id' => $sampleOrganizer->id,
                 'address_line_1' => ['en' => '101 Executive Blvd', 'zh-TW' => '行政大道101號'],
                 'city' => ['en' => 'Chicago', 'zh-TW' => '芝加哥'],
                 'country_id' => $defaultCountry->id,
@@ -113,5 +109,6 @@ class VenueSeeder extends Seeder
         $this->command->info("Venues seeded successfully:");
         $this->command->info("- {$publicVenuesCount} public venues (available to all organizers)");
         $this->command->info("- {$organizerVenuesCount} organizer-specific venues");
+        $this->command->info('Total venues: ' . Venue::count());
     }
 }

@@ -1,0 +1,127 @@
+{
+    "organizers": {
+        "show_title": "主辦單位詳情",
+        "show_subtitle": "查看主辦單位的詳細資訊。",
+        "organizer_details": "主辦單位詳情",
+        "contact_info": "聯絡資訊",
+        "social_media": "社交媒體",
+        "contract_details": "合約詳情",
+        "terms": "條款",
+        "rate_structure": "費率結構",
+        "payment_terms": "付款條款",
+        "cancellation_policy": "取消政策",
+        "effective_date": "生效日期",
+        "expiry_date": "到期日期",
+        "team_members": "團隊成員",
+        "team_members_subtitle": "管理和邀請成員到此組織。",
+        "invite_user": "邀請用戶",
+        "invite_new_member": "邀請新成員",
+        "invite_new_member_desc": "輸入電子郵件地址並分配角色以邀請新成員。",
+        "index_title": "主辦單位",
+        "index_subtitle": "管理系統中的所有主辦單位。",
+        "create_button": "建立主辦單位",
+        "search_placeholder": "按名稱、電子郵件或描述搜尋...",
+        "no_organizers_found": "找不到主辦單位。",
+        "team_members_count": "{count} 名成員",
+        "events_count": "{count} 個活動",
+        "delete_title": "刪除主辦單位",
+        "delete_confirmation": "您確定要刪除 {name} 嗎？此操作無法復原，並將影響所有相關的活動和資料。",
+        "delete_button": "刪除主辦單位"
+    },
+    "actions": {
+        "edit": "編輯",
+        "send_invitation": "發送邀請",
+        "view": "查看",
+        "delete": "刪除",
+        "cancel": "取消",
+        "save": "儲存"
+    },
+    "status": {
+        "active": "啟用",
+        "inactive": "停用",
+        "pending": "待定"
+    },
+    "messages": {
+        "no_contact_info": "未提供聯絡資訊。",
+        "no_description": "未提供描述。",
+        "no_address": "未提供地址。",
+        "no_contract_details": "未提供合約詳情。",
+        "no_team_members": "未找到該組織的團隊成員。",
+        "organizer_invited_successfully": "主辦單位邀請成功。",
+        "organizer_invitation_failed": "邀請主辦單位失敗。"
+    },
+    "fields": {
+        "name": "姓名",
+        "email": "電子郵件",
+        "role": "角色",
+        "status": "狀態",
+        "actions": "操作",
+        "search": "搜尋",
+        "sort_by": "排序方式",
+        "order": "順序",
+        "created_date": "建立日期",
+        "events_count": "活動數量",
+        "logo": "標誌",
+        "location": "地點",
+        "team": "團隊",
+        "events": "活動",
+        "search_by_name": "按名稱搜尋",
+        "category": "類別",
+        "organizer": "主辦單位",
+        "visibility": "可見性",
+        "featured": "精選",
+        "published_at": "發佈於",
+        "booking_number": "預訂號",
+        "customer": "客戶",
+        "total_price": "總價",
+        "date": "日期",
+        "date_from": "開始日期",
+        "date_to": "結束日期",
+        "transaction": "交易",
+        "event": "活動"
+    },
+    "filters": {
+        "all_statuses": "所有狀態",
+        "ascending": "升序",
+        "descending": "降序",
+        "all_events": "所有活動"
+    },
+    "events": {
+        "index_title": "活動列表",
+        "index_subtitle": "管理系統中的所有活動。",
+        "manage_ticket_definitions_button": "管理票種",
+        "create_button": "建立活動",
+        "search_placeholder": "按活動名稱搜尋...",
+        "no_events_found": "找不到活動。",
+        "occurrences": "場次",
+        "delete_title": "刪除活動",
+        "delete_confirmation": "您確定要刪除活動 {name} 嗎？此操作無法復原。",
+        "delete_button": "刪除活動",
+        "status": {
+            "draft": "草稿",
+            "pending_approval": "待審批",
+            "published": "已發佈",
+            "cancelled": "已取消",
+            "completed": "已完成",
+            "past": "已結束"
+        }
+    },
+    "common": {
+        "description": "描述",
+        "yes": "是",
+        "no": "否"
+    },
+    "bookings": {
+        "index_title": "預訂管理",
+        "index_subtitle": "管理和查看所有活動的預訂。",
+        "scan_qr_button": "掃描QR碼",
+        "search_placeholder": "按預訂號、用戶名、郵箱搜索...",
+        "no_bookings_found": "未找到任何預訂。",
+        "stats": {
+            "total_bookings": "總預訂數",
+            "confirmed_bookings": "已確認",
+            "pending_bookings": "待處理",
+            "total_revenue": "總收入"
+        }
+    }
+}

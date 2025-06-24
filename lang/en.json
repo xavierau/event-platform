@@ -1,0 +1,130 @@
+{
+    "organizers": {
+        "show_title": "Organizer Details",
+        "show_subtitle": "View details about the organizer.",
+        "organizer_details": "Organizer Details",
+        "contact_info": "Contact Information",
+        "social_media": "Social Media",
+        "contract_details": "Contract Details",
+        "terms": "Terms",
+        "rate_structure": "Rate Structure",
+        "payment_terms": "Payment Terms",
+        "cancellation_policy": "Cancellation Policy",
+        "effective_date": "Effective Date",
+        "expiry_date": "Expiry Date",
+        "team_members": "Team Members",
+        "team_members_subtitle": "Manage and invite members to this organization.",
+        "invite_user": "Invite User",
+        "invite_new_member": "Invite New Member",
+        "invite_new_member_desc": "Enter the email address and assign a role to invite a new member.",
+        "index_title": "Organizers",
+        "index_subtitle": "Manage all organizers in the system.",
+        "create_button": "Create Organizer",
+        "search_placeholder": "Search by name, email, or description...",
+        "no_organizers_found": "No organizers found.",
+        "team_members_count": "{count} members",
+        "events_count": "{count} events",
+        "delete_title": "Delete Organizer",
+        "delete_confirmation": "Are you sure you want to delete {name}? This action cannot be undone and will affect all associated events and data.",
+        "delete_button": "Delete Organizer"
+    },
+    "actions": {
+        "edit": "Edit",
+        "send_invitation": "Send Invitation",
+        "view": "View",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "save": "Save"
+    },
+    "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "pending": "Pending"
+    },
+    "common": {
+        "description": "Description",
+        "yes": "Yes",
+        "no": "No"
+    },
+    "addresses": {
+        "address": "Address"
+    },
+    "messages": {
+        "no_contact_info": "No contact information provided.",
+        "no_description": "No description provided.",
+        "no_address": "No address provided.",
+        "no_contract_details": "No contract details provided.",
+        "no_team_members": "No team members found for this organization.",
+        "organizer_invited_successfully": "Organizer invited successfully.",
+        "organizer_invitation_failed": "Failed to invite organizer."
+    },
+    "fields": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions",
+        "search": "Search",
+        "sort_by": "Sort By",
+        "order": "Order",
+        "created_date": "Created Date",
+        "events_count": "Events Count",
+        "logo": "Logo",
+        "location": "Location",
+        "team": "Team",
+        "events": "Events",
+        "search_by_name": "Search by Name",
+        "category": "Category",
+        "organizer": "Organizer",
+        "visibility": "Visibility",
+        "featured": "Featured",
+        "published_at": "Published At",
+        "booking_number": "Booking #",
+        "customer": "Customer",
+        "total_price": "Total Price",
+        "date": "Date",
+        "date_from": "Date From",
+        "date_to": "Date To",
+        "transaction": "Transaction",
+        "event": "Event"
+    },
+    "filters": {
+        "all_statuses": "All Statuses",
+        "ascending": "Ascending",
+        "descending": "Descending",
+        "all_events": "All Events"
+    },
+    "events": {
+        "index_title": "Events List",
+        "index_subtitle": "Manage all events in the system.",
+        "manage_ticket_definitions_button": "Manage Ticket Definitions",
+        "create_button": "Create Event",
+        "search_placeholder": "Search by event name...",
+        "no_events_found": "No events found.",
+        "occurrences": "Occurrences",
+        "delete_title": "Delete Event",
+        "delete_confirmation": "Are you sure you want to delete the event \"{name}\"? This action cannot be undone.",
+        "delete_button": "Delete Event",
+        "status": {
+            "draft": "Draft",
+            "pending_approval": "Pending Approval",
+            "published": "Published",
+            "cancelled": "Cancelled",
+            "completed": "Completed",
+            "past": "Past"
+        }
+    },
+    "bookings": {
+        "index_title": "Bookings",
+        "index_subtitle": "Manage and view all bookings across events.",
+        "scan_qr_button": "Scan QR",
+        "search_placeholder": "Search by booking #, user name, email...",
+        "no_bookings_found": "No bookings found.",
+        "stats": {
+            "total_bookings": "Total Bookings",
+            "confirmed_bookings": "Confirmed",
+            "pending_bookings": "Pending",
+            "total_revenue": "Total Revenue"
+        }
+    }
+}

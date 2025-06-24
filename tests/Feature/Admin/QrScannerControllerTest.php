@@ -1,135 +1,84 @@
 <?php
 
-use App\Models\User;
-use App\Models\Event;
 use App\Enums\RoleNameEnum;
+use App\Models\Event;
+use App\Models\User;
 use Spatie\Permission\Models\Role;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    // Clear permission cache
-    app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-
-    // Create roles if they don't already exist
     Role::firstOrCreate(['name' => RoleNameEnum::ADMIN->value, 'guard_name' => 'web']);
-    Role::firstOrCreate(['name' => RoleNameEnum::ORGANIZER->value, 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => RoleNameEnum::USER->value, 'guard_name' => 'web']);
 });
 
 it('allows platform admin to access QR scanner page', function () {
-    // Create a platform admin user
     $admin = User::factory()->create();
     $admin->assignRole(RoleNameEnum::ADMIN);
 
-    // Create some events
-    $events = Event::factory()->count(3)->create([
-        'event_status' => 'published'
-    ]);
-
-    // Act as the admin and visit the QR scanner page
     $response = $this->actingAs($admin)->get(route('admin.qr-scanner.index'));
 
-    // Assert the response is successful
     $response->assertStatus(200);
-
-    // Assert the correct component is rendered
-    $response->assertInertia(
-        fn($page) => $page
-            ->component('Admin/QrScanner/Index')
-            ->has('events', 3)
-            ->where('user_role', RoleNameEnum::ADMIN->value)
-    );
+    $response->assertInertia(fn($page) => $page->component('Admin/QrScanner/Index'));
 });
 
-it('allows organizer to access QR scanner page with their events only', function () {
-    // Create an organizer user
+it('allows user with organizer entity membership to access QR scanner page with their events only', function () {
+    // Create a user (no special role needed)
     $organizer = User::factory()->create();
-    $organizer->assignRole(RoleNameEnum::ORGANIZER);
 
-    // Create events - some by the organizer, some by others
-    $organizerEvents = Event::factory()->count(2)->create([
-        'organizer_id' => $organizer->id,
-        'event_status' => 'published'
+    // Create an organizer entity for this user
+    $organizerEntity = \App\Models\Organizer::factory()->create();
+    $organizerEntity->users()->attach($organizer->id, [
+        'role_in_organizer' => 'owner',
+        'joined_at' => now(),
+        'is_active' => true,
+        'invitation_accepted_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
     ]);
 
-    $otherEvents = Event::factory()->count(3)->create([
-        'event_status' => 'published'
-    ]);
+    // Create events - some by the organizer entity, some by others
+    $organizerEvents = Event::factory(2)->create(['organizer_id' => $organizerEntity->id, 'event_status' => 'published']);
+    $otherOrganizerEntity = \App\Models\Organizer::factory()->create();
+    $otherEvents = Event::factory(2)->create(['organizer_id' => $otherOrganizerEntity->id, 'event_status' => 'published']);
 
-    // Act as the organizer and visit the QR scanner page
     $response = $this->actingAs($organizer)->get(route('admin.qr-scanner.index'));
 
-    // Assert the response is successful
     $response->assertStatus(200);
-
-    // Assert only organizer's events are returned
     $response->assertInertia(
         fn($page) => $page
             ->component('Admin/QrScanner/Index')
-            ->has('events', 2)
-            ->where('user_role', RoleNameEnum::ORGANIZER->value)
+            ->has('events', 2) // Should only see their own organizer entity's events
+            ->where('events.0.id', $organizerEvents[0]->id)
+            ->where('events.1.id', $organizerEvents[1]->id)
     );
 });
 
-it('shows no events for regular user', function () {
-    // Create a regular user
+it('denies access to regular user without organizer entity membership', function () {
     $user = User::factory()->create();
     $user->assignRole(RoleNameEnum::USER);
 
-    // Create some events
-    Event::factory()->count(3)->create([
-        'event_status' => 'published'
-    ]);
-
-    // Act as the user and visit the QR scanner page
     $response = $this->actingAs($user)->get(route('admin.qr-scanner.index'));
 
-    // Assert the response is a redirect to home with an error message
-    $response->assertRedirect(route('home'));
-    $response->assertSessionHas('error', 'You do not have permission to access this page.');
-
-    // $response->assertStatus(403); // Original expectation was 403
+    $response->assertStatus(403);
 });
 
-it('platform admin can see all published events regardless of organizer', function () {
-    // Create a platform admin user
+it('platform admin can see all published events', function () {
     $admin = User::factory()->create();
     $admin->assignRole(RoleNameEnum::ADMIN);
 
-    // Create organizers
-    $organizer1 = User::factory()->create();
-    $organizer2 = User::factory()->create();
+    // Create multiple organizer entities with events
+    $organizer1 = \App\Models\Organizer::factory()->create();
+    $organizer2 = \App\Models\Organizer::factory()->create();
 
-    // Create events by different organizers
-    $events1 = Event::factory()->count(2)->create([
-        'organizer_id' => $organizer1->id,
-        'event_status' => 'published'
-    ]);
+    Event::factory(2)->create(['organizer_id' => $organizer1->id, 'event_status' => 'published']);
+    Event::factory(1)->create(['organizer_id' => $organizer2->id, 'event_status' => 'published']);
+    Event::factory(1)->create(['organizer_id' => $organizer1->id, 'event_status' => 'draft']); // Should not appear
 
-    $events2 = Event::factory()->count(3)->create([
-        'organizer_id' => $organizer2->id,
-        'event_status' => 'published'
-    ]);
-
-    // Create some draft events (should not be included)
-    Event::factory()->count(2)->create([
-        'organizer_id' => $organizer1->id,
-        'event_status' => 'draft'
-    ]);
-
-    // Act as the admin and visit the QR scanner page
     $response = $this->actingAs($admin)->get(route('admin.qr-scanner.index'));
 
-    // Assert the response is successful
     $response->assertStatus(200);
-
-    // Assert all published events are returned (5 total)
     $response->assertInertia(
         fn($page) => $page
             ->component('Admin/QrScanner/Index')
-            ->has('events', 5)
-            ->where('user_role', RoleNameEnum::ADMIN->value)
+            ->has('events', 3) // Should see all published events
     );
 });

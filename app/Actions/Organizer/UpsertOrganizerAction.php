@@ -24,7 +24,6 @@ class UpsertOrganizerAction
                 'address_line_1' => $organizerData->address_line_1,
                 'address_line_2' => $organizerData->address_line_2,
                 'city' => $organizerData->city,
-                'state' => $organizerData->state,
                 'postal_code' => $organizerData->postal_code,
                 'country_id' => $organizerData->country_id,
                 'state_id' => $organizerData->state_id,
@@ -34,26 +33,18 @@ class UpsertOrganizerAction
 
             if ($organizerData->id) { // Update
                 $organizer = Organizer::findOrFail($organizerData->id);
-                $dataToUpdate['updated_at'] = now();
+                $organizer->update($dataToUpdate);
             } else { // Create
-                $organizer = new Organizer();
                 $dataToUpdate['created_by'] = $organizerData->created_by;
-                $dataToUpdate['created_at'] = now();
-                $dataToUpdate['updated_at'] = now();
+                $organizer = Organizer::create($dataToUpdate);
             }
 
-            $organizer->fill($dataToUpdate);
-            $organizer->save();
-
-            // Handle logo upload
+            // Handle logo upload if present
             if ($organizerData->logo_upload) {
-                // Clear existing logo if updating
                 if ($organizerData->id) {
                     $organizer->clearMediaCollection('logo');
                 }
-
-                $organizer->addMedia($organizerData->logo_upload)
-                    ->toMediaCollection('logo');
+                $organizer->addMedia($organizerData->logo_upload)->toMediaCollection('logo');
             }
 
             return $organizer->refresh();

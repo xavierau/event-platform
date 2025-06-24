@@ -76,6 +76,7 @@ class OrganizerUserFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'role_in_organizer' => OrganizerRoleEnum::OWNER->value,
             'permissions' => $this->getPermissionsForRole(OrganizerRoleEnum::OWNER),
+            'is_active' => true,
         ]);
     }
 
@@ -87,6 +88,7 @@ class OrganizerUserFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'role_in_organizer' => OrganizerRoleEnum::MANAGER->value,
             'permissions' => $this->getPermissionsForRole(OrganizerRoleEnum::MANAGER),
+            'is_active' => true,
         ]);
     }
 
@@ -98,6 +100,7 @@ class OrganizerUserFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'role_in_organizer' => OrganizerRoleEnum::STAFF->value,
             'permissions' => $this->getPermissionsForRole(OrganizerRoleEnum::STAFF),
+            'is_active' => true,
         ]);
     }
 
@@ -109,6 +112,7 @@ class OrganizerUserFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'role_in_organizer' => OrganizerRoleEnum::VIEWER->value,
             'permissions' => $this->getPermissionsForRole(OrganizerRoleEnum::VIEWER),
+            'is_active' => true,
         ]);
     }
 

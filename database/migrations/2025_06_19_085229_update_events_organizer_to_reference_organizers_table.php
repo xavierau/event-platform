@@ -71,18 +71,10 @@ return new class extends Migration
         // Check if Spatie permission roles exist before trying to use them
         if (class_exists(\Spatie\Permission\Models\Role::class)) {
             try {
-                $organizerUser = User::role(RoleNameEnum::ORGANIZER->value)->first();
+                // Try to get an admin user as the creator
+                $organizerUser = User::role(RoleNameEnum::ADMIN->value)->first();
             } catch (\Exception $e) {
                 // Role doesn't exist, continue without it
-            }
-
-            // If no organizer role user exists, try admin
-            if (!$organizerUser) {
-                try {
-                    $organizerUser = User::role(RoleNameEnum::ADMIN->value)->first();
-                } catch (\Exception $e) {
-                    // Role doesn't exist, continue without it
-                }
             }
         }
 

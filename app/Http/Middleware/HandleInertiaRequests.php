@@ -58,7 +58,21 @@ class HandleInertiaRequests extends Middleware
             ],
             'currencySymbols' => CurrencyHelper::getAllSymbols(),
             'available_locales' => config('app.available_locales'),
-            'current_locale' => app()->getLocale(),
+            'locale' => app()->getLocale(),
+            'translations' => function () {
+                $locales = config('app.available_locales', ['en' => 'Eng']);
+                $translations = [];
+                foreach (array_keys($locales) as $locale) {
+                    $jsonTranslations = file_exists(lang_path("{$locale}.json"))
+                        ? json_decode(file_get_contents(lang_path("{$locale}.json")), true)
+                        : [];
+                    $phpTranslations = file_exists(lang_path("{$locale}/messages.php"))
+                        ? require lang_path("{$locale}/messages.php")
+                        : [];
+                    $translations[$locale] = array_merge($phpTranslations, $jsonTranslations);
+                }
+                return $translations;
+            },
         ];
     }
 }

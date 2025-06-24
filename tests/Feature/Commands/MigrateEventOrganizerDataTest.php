@@ -24,7 +24,6 @@ class MigrateEventOrganizerDataTest extends TestCase
 
         // Create roles if they don't exist
         Role::firstOrCreate(['name' => RoleNameEnum::ADMIN->value]);
-        Role::firstOrCreate(['name' => RoleNameEnum::ORGANIZER->value]);
     }
 
     #[Test]
@@ -63,12 +62,12 @@ class MigrateEventOrganizerDataTest extends TestCase
     #[Test]
     public function it_creates_organizer_memberships_for_existing_users()
     {
-        // Create users with roles
-        $adminUser = User::factory()->create();
-        $adminUser->assignRole(RoleNameEnum::ADMIN->value);
+        // Create users with admin roles (since ORGANIZER role has been removed)
+        $adminUser1 = User::factory()->create();
+        $adminUser1->assignRole(RoleNameEnum::ADMIN->value);
 
-        $organizerUser = User::factory()->create();
-        $organizerUser->assignRole(RoleNameEnum::ORGANIZER->value);
+        $adminUser2 = User::factory()->create();
+        $adminUser2->assignRole(RoleNameEnum::ADMIN->value);
 
         $category = Category::factory()->create();
         $event = Event::factory()->create(['category_id' => $category->id]);
@@ -80,19 +79,19 @@ class MigrateEventOrganizerDataTest extends TestCase
         // Verify memberships were created
         $defaultOrganizer = Organizer::where('slug', 'default-organizer')->first();
 
-        $adminMembership = DB::table('organizer_users')
+        $adminMembership1 = DB::table('organizer_users')
             ->where('organizer_id', $defaultOrganizer->id)
-            ->where('user_id', $adminUser->id)
+            ->where('user_id', $adminUser1->id)
             ->first();
-        $this->assertNotNull($adminMembership);
-        $this->assertEquals('owner', $adminMembership->role_in_organizer);
+        $this->assertNotNull($adminMembership1);
+        $this->assertEquals('owner', $adminMembership1->role_in_organizer);
 
-        $organizerMembership = DB::table('organizer_users')
+        $adminMembership2 = DB::table('organizer_users')
             ->where('organizer_id', $defaultOrganizer->id)
-            ->where('user_id', $organizerUser->id)
+            ->where('user_id', $adminUser2->id)
             ->first();
-        $this->assertNotNull($organizerMembership);
-        $this->assertEquals('manager', $organizerMembership->role_in_organizer);
+        $this->assertNotNull($adminMembership2);
+        $this->assertEquals('owner', $adminMembership2->role_in_organizer);
     }
 
     #[Test]

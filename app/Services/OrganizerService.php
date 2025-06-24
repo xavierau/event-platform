@@ -7,6 +7,7 @@ use App\Actions\Organizer\InviteUserToOrganizerAction;
 use App\Actions\Organizer\RemoveUserFromOrganizerAction;
 use App\Actions\Organizer\UpdateOrganizerUserRoleAction;
 use App\Actions\Organizer\UpsertOrganizerAction;
+use App\DataTransferObjects\MediaData;
 use App\DataTransferObjects\Organizer\InviteUserData;
 use App\DataTransferObjects\Organizer\OrganizerData;
 use App\DataTransferObjects\Organizer\OrganizerUserData;
@@ -14,6 +15,7 @@ use App\Models\Organizer;
 use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class OrganizerService
 {
@@ -27,8 +29,9 @@ class OrganizerService
 
     public function createOrganizer(OrganizerData $organizerData): Organizer
     {
+        $dataWithUser = array_merge($organizerData->all(), ['created_by' => Auth::id()]);
         // Use the action to create organizer - exclude ID to force creation
-        return $this->upsertOrganizerAction->execute($organizerData->except('id'));
+        return $this->upsertOrganizerAction->execute(OrganizerData::from($dataWithUser)->except('id'));
     }
 
     public function updateOrganizer(int $organizerId, OrganizerData $organizerData): Organizer
@@ -111,6 +114,57 @@ class OrganizerService
         }
 
         return $query->get();
+    }
+
+    public function getPaginatedOrganizers(array $filters = [], array $with = [], int $perPage = 10)
+    {
+        $defaultWith = ['media', 'users', 'events'];
+        $relationships = array_merge($defaultWith, $with);
+
+        $query = Organizer::with($relationships);
+
+        if (!empty($filters['search'])) {
+            $searchTerm = $filters['search'];
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name->' . app()->getLocale(), 'like', "%{$searchTerm}%")
+                    ->orWhere('name->' . config('app.fallback_locale', 'en'), 'like', "%{$searchTerm}%")
+                    ->orWhere('contact_email', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        if (isset($filters['is_active']) && $filters['is_active'] !== '') {
+            $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
+        }
+
+        $sort = $filters['sort'] ?? 'name';
+        $direction = $filters['direction'] ?? 'asc';
+
+        if ($sort === 'name') {
+            $query->orderBy('name->' . app()->getLocale(), $direction);
+        } else {
+            $query->orderBy($sort, $direction);
+        }
+
+        $paginated = $query->paginate($perPage)->withQueryString();
+
+        $paginated->getCollection()->transform(function ($organizer) {
+            return [
+                'id' => $organizer->id,
+                'name' => $organizer->getTranslations('name'),
+                'contact_email' => $organizer->contact_email,
+                'contact_phone' => $organizer->contact_phone,
+                'is_active' => $organizer->is_active,
+                'logo' => $organizer->getFirstMedia('logo') ? MediaData::fromModel($organizer->getFirstMedia('logo')) : null,
+                'city' => $organizer->city,
+                'state' => $organizer->state ? ['name' => $organizer->state->getTranslations('name')] : null,
+                'team_count' => $organizer->users->count(),
+                'events_count' => $organizer->events->count(),
+                'created_at' => $organizer->created_at->toIso8601String(),
+                'updated_at' => $organizer->updated_at->toIso8601String(),
+            ];
+        });
+
+        return $paginated;
     }
 
     /**

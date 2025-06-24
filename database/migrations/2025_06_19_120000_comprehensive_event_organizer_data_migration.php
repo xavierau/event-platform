@@ -189,20 +189,13 @@ return new class extends Migration
     {
         $user = null;
 
-        // Try to find admin or organizer role users
+        // Try to find admin users
         if (class_exists(\Spatie\Permission\Models\Role::class)) {
             try {
-                // Look for admin users first
+                // Look for admin users
                 $user = User::role(RoleNameEnum::ADMIN->value)->first();
                 if ($user) {
                     $this->logMessage("Found admin user for organizer creator: {$user->email}");
-                    return $user;
-                }
-
-                // Then look for organizer users
-                $user = User::role(RoleNameEnum::ORGANIZER->value)->first();
-                if ($user) {
-                    $this->logMessage("Found organizer user for organizer creator: {$user->email}");
                     return $user;
                 }
             } catch (\Exception $e) {
@@ -299,11 +292,11 @@ return new class extends Migration
     }
 
     /**
-     * Create organizer memberships for existing users with organizer roles.
+     * Create organizer memberships for existing users with admin roles.
      */
     private function createOrganizerMemberships(Organizer $defaultOrganizer): void
     {
-        $this->logMessage('Creating organizer memberships for existing users...');
+        $this->logMessage('Creating organizer memberships for existing admin users...');
 
         if (!class_exists(\Spatie\Permission\Models\Role::class)) {
             $this->logMessage('Spatie permissions not available, skipping automatic membership creation');
@@ -317,28 +310,27 @@ return new class extends Migration
         }
 
         try {
-            // Check if roles exist before querying
-            $organizerRole = \Spatie\Permission\Models\Role::where('name', RoleNameEnum::ORGANIZER->value)->first();
+            // Check if admin role exists before querying
             $adminRole = \Spatie\Permission\Models\Role::where('name', RoleNameEnum::ADMIN->value)->first();
 
-            if (!$organizerRole || !$adminRole) {
-                $this->logMessage('Required roles not found, skipping automatic membership creation');
+            if (!$adminRole) {
+                $this->logMessage('Admin role not found, skipping automatic membership creation');
                 return;
             }
 
-            // Find users with organizer or admin roles
-            $organizerUsers = User::role([RoleNameEnum::ORGANIZER->value, RoleNameEnum::ADMIN->value])->get();
+            // Find users with admin roles
+            $adminUsers = User::role([RoleNameEnum::ADMIN->value])->get();
 
             $createdMemberships = 0;
-            foreach ($organizerUsers as $user) {
+            foreach ($adminUsers as $user) {
                 // Check if user is already a member of any organizer
                 $existingMembership = DB::table('organizer_users')
                     ->where('user_id', $user->id)
                     ->exists();
 
                 if (!$existingMembership) {
-                    // Determine role based on user's system role
-                    $roleInOrganizer = $user->hasRole(RoleNameEnum::ADMIN->value) ? 'owner' : 'manager';
+                    // Admin users get owner role in organizer
+                    $roleInOrganizer = 'owner';
 
                     DB::table('organizer_users')->insert([
                         'organizer_id' => $defaultOrganizer->id,

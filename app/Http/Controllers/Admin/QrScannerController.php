@@ -30,6 +30,17 @@ class QrScannerController extends Controller
     {
         $user = Auth::user();
 
+        // Check authorization: only admins or users with organizer entity membership can access
+        if (!$user->hasRole(RoleNameEnum::ADMIN)) {
+            $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
+                $subQuery->where('user_id', $user->id);
+            })->pluck('id');
+
+            if ($userOrganizerIds->isEmpty()) {
+                abort(403, 'You do not have permission to access the QR scanner.');
+            }
+        }
+
         // Get events based on user role
         $events = $this->getAccessibleEvents($user);
 
@@ -37,7 +48,6 @@ class QrScannerController extends Controller
             'events' => $events,
             'roles' => [
                 'ADMIN' => RoleNameEnum::ADMIN->value,
-                'ORGANIZER' => RoleNameEnum::ORGANIZER->value,
                 'USER' => RoleNameEnum::USER->value,
             ],
             'user_role' => $user->roles->first()?->name,
@@ -183,9 +193,13 @@ class QrScannerController extends Controller
             return $query->get();
         }
 
-        // Organizers can only see their own events
-        if ($user->hasRole(RoleNameEnum::ORGANIZER)) {
-            return $query->where('organizer_id', $user->id)->get();
+        // Users with organizer entity memberships can see events from organizer entities they belong to
+        $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
+            $subQuery->where('user_id', $user->id);
+        })->pluck('id');
+
+        if ($userOrganizerIds->isNotEmpty()) {
+            return $query->whereIn('organizer_id', $userOrganizerIds)->get();
         }
 
         return collect();
@@ -201,12 +215,11 @@ class QrScannerController extends Controller
             return true;
         }
 
-        // Organizers can only access bookings for their events
-        // TODO if future the organizer has many users then need to check if the user is the organizer of the event
-        if ($user->hasRole(RoleNameEnum::ORGANIZER)) {
-            return $booking->event->organizer_id === $user->id;
-        }
+        // Users with organizer entity memberships can access bookings for events from organizer entities they belong to
+        $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
+            $subQuery->where('user_id', $user->id);
+        })->pluck('id');
 
-        return false;
+        return $userOrganizerIds->contains($booking->event->organizer_id);
     }
 }

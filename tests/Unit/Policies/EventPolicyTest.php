@@ -37,7 +37,6 @@ class EventPolicyTest extends TestCase
 
         // Create required roles
         Role::firstOrCreate(['name' => RoleNameEnum::ADMIN->value, 'guard_name' => 'web']);
-        Role::firstOrCreate(['name' => RoleNameEnum::ORGANIZER->value, 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => RoleNameEnum::USER->value, 'guard_name' => 'web']);
 
         // Create admin user

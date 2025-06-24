@@ -6,6 +6,7 @@ use App\Enums\RoleNameEnum;
 use App\Models\Booking;
 use App\Models\Event;
 use App\Models\EventOccurrence;
+use App\Models\Organizer;
 use App\Models\TicketDefinition;
 use App\Models\User;
 use App\Services\CheckInEligibilityService;
@@ -25,9 +26,8 @@ class TicketOccurrenceValidationTest extends TestCase
         parent::setUp();
         $this->eligibilityService = new CheckInEligibilityService();
 
-        // Create roles for testing
+        // Create only the admin role for testing
         Role::create(['name' => RoleNameEnum::ADMIN->value]);
-        Role::create(['name' => RoleNameEnum::ORGANIZER->value]);
     }
 
     /** @test */
@@ -250,8 +250,16 @@ class TicketOccurrenceValidationTest extends TestCase
     /** @test */
     public function it_validates_ticket_occurrence_relationship_with_operator_authorization()
     {
-        $organizer = User::factory()->create();
-        $organizer->assignRole(RoleNameEnum::ORGANIZER);
+        // Create organizer entity and user
+        $organizer = Organizer::factory()->create();
+        $organizerUser = User::factory()->create();
+
+        // Create organizer-user relationship
+        $organizer->users()->attach($organizerUser->id, [
+            'role_in_organizer' => \App\Enums\OrganizerRoleEnum::MANAGER->value,
+            'is_active' => true,
+            'joined_at' => now(),
+        ]);
 
         // Create Event A with occurrence
         $eventA = Event::factory()->create([
@@ -286,12 +294,12 @@ class TicketOccurrenceValidationTest extends TestCase
         ]);
 
         // Test: Valid occurrence with authorized operator
-        $result1 = $this->eligibilityService->validateEligibilityForOccurrence($booking, $occurrence1, $organizer);
+        $result1 = $this->eligibilityService->validateEligibilityForOccurrence($booking, $occurrence1, $organizerUser);
         $this->assertTrue($result1['is_eligible'], 'Should be eligible with valid ticket-occurrence and authorized operator');
         $this->assertEmpty($result1['errors']);
 
         // Test: Invalid occurrence with authorized operator (ticket validation should fail)
-        $result2 = $this->eligibilityService->validateEligibilityForOccurrence($booking, $occurrence2, $organizer);
+        $result2 = $this->eligibilityService->validateEligibilityForOccurrence($booking, $occurrence2, $organizerUser);
         $this->assertFalse($result2['is_eligible'], 'Should NOT be eligible even with authorized operator if ticket is invalid for occurrence');
         $this->assertContains('This ticket is not valid for the selected event occurrence', $result2['errors']);
     }

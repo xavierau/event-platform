@@ -4,18 +4,20 @@ export function useCurrency() {
     const page = usePage();
 
     const currencySymbols = (page.props.currencySymbols as Record<string, string>) || {};
+    const defaultCurrency = (page.props.default_currency as string) || 'USD';
 
-    const getSymbol = (currencyCode: string): string => {
-        return currencySymbols[currencyCode.toUpperCase()] || currencyCode;
+    const getSymbol = (currencyCode: string | null): string => {
+        const code = currencyCode || defaultCurrency;
+        return currencySymbols[code.toUpperCase()] || code;
     };
 
-    const formatPrice = (priceInCents: number, currencyCode: string): string => {
+    const formatPrice = (priceInCents: number, currencyCode: string | null): string => {
         const symbol = getSymbol(currencyCode);
         const price = priceInCents / 100;
         return `${symbol}${price.toFixed(2)}`;
     };
 
-    const formatPriceRange = (minPriceInCents: number, maxPriceInCents: number, currencyCode: string): string => {
+    const formatPriceRange = (minPriceInCents: number, maxPriceInCents: number, currencyCode: string | null): string => {
         const symbol = getSymbol(currencyCode);
         const minPrice = minPriceInCents / 100;
         const maxPrice = maxPriceInCents / 100;
