@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('membership_level_id')->constrained()->onDelete('cascade');
             $table->timestamp('started_at');
-            $table->timestamp('expires_at');
+            $table->timestamp('expires_at')->nullable();
             $table->string('status')->default('active'); // active, expired, cancelled, pending, suspended
             $table->string('payment_method'); // points, kill_points, stripe, admin_grant, promotional
             $table->string('transaction_reference')->nullable();
