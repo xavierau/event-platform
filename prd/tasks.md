@@ -169,7 +169,7 @@
 | WAL-CPN-009 | Integrate Coupons with Booking System | High       | WAL-CPN-008, ORD-004 | Pending | Allow coupon application during booking process. Calculate discounts, update coupon usage, create transaction records. |
 | WAL-CPN-010 | Integrate Coupons with Membership Purchase | Medium     | WAL-CPN-008, MEM-004 | Pending | Allow coupon application during membership purchase. Support membership-specific coupons and discounts. |
 | WAL-CPN-011 | Create Coupon Admin Management | Medium     | WAL-CPN-001  | Pending | Admin interface for creating/editing coupons, viewing usage statistics, managing coupon campaigns, bulk coupon generation. |
-| WAL-CPN-012 | Implement Frontend Coupon Display | Medium     | WAL-CPN-005  | Pending | Add coupon section to wallet dashboard. Display available coupons, expiry dates, usage conditions. Coupon code input in booking/purchase flows. |
+| WAL-CPN-012 | Implement Frontend Coupon Display | Medium     | WAL-CPN-005  | Done | ✅ Frontend admin interface complete: Index page with filtering/pagination, Create/Edit forms with MediaUpload, Show page, Dialog modals. TypeScript, mobile-first design, dark mode. Following Events Index pattern. |
 | **ORGANIZER SYSTEM** | | | | | |
 | **Phase 1: Core Schema & Models** | | | | | |
 | ORG-001 | Create Organizer Entity (Model, Migration) | High       | SU-002       | Done | Create `organizers` table: name (translatable), slug (unique), description (translatable), logo_path, website_url, contact_email, contact_phone, social_media_links (JSON), address components, country_id, state_id, is_active, contract_details (JSON), created_by, created_at, updated_at. |
