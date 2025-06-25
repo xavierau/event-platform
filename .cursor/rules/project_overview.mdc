@@ -32,6 +32,65 @@ This project follows the standard Laravel directory structure:
 - **`vendor/`**: Contains Composer dependencies.
 - **`node_modules/`**: Contains NPM dependencies.
 
+## Git Workflow: Git Flow
+
+This project adheres to the **Git Flow** branching model to ensure a structured and predictable development process. The `git-flow` command-line extension is recommended to streamline this workflow.
+
+### Main Branches:
+- **`main`**: Represents the production-ready state. This branch should always be stable.
+- **`develop`**: The primary development branch where all completed features are merged. This is the source for release branches.
+
+### Supporting Branches:
+- **`feature/<feature-name>`**: For developing new features. Branched from `develop` and merged back into `develop`.
+- **`release/<version>`**: For preparing a new production release. Branched from `develop` and merged into both `main` and `develop`.
+- **`hotfix/<fix-name>`**: For addressing urgent issues in production. Branched from `main` and merged into both `main` and `develop`.
+
+### Common Git Flow Commands:
+
+**Starting a new feature:**
+```bash
+# Start a new feature branch from 'develop'
+git flow feature start <feature-name>
+
+# Example:
+git flow feature start coupon-module
+```
+
+**Finishing a feature:**
+```bash
+# Merge the feature branch back into 'develop' and delete it
+git flow feature finish <feature-name>
+```
+
+**Starting a release:**
+```bash
+# Create a release branch from 'develop'
+git flow release start <version>
+```
+
+**Finishing a release:**
+```bash
+# Merge the release into 'main' and 'develop', tag it, and delete the branch
+git flow release finish <version>
+```
+
+**Starting a hotfix:**
+```bash
+# Create a hotfix branch from 'main'
+git flow hotfix start <fix-name>
+
+# Example:
+git flow hotfix start fix-currency-display-bug
+```
+
+**Finishing a hotfix:**
+```bash
+# Merge the hotfix into 'main' and 'develop', tag it, and delete the branch
+git flow hotfix finish <fix-name>
+```
+
+By following this workflow, we maintain a clean and organized repository, making it easier to manage releases and hotfixes while continuing parallel development on new features.
+
 ## Development Methodology: Test-Driven Development (TDD)
 
 This project follows **Test-Driven Development (TDD)** methodology. The TDD cycle consists of:

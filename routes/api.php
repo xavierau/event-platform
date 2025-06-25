@@ -25,7 +25,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 });
 
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->name('api.v1.')->group(function () {
     // Membership routes
     Route::get('/memberships/levels', [MembershipController::class, 'getMembershipLevels']);
     Route::middleware(['auth:sanctum'])->group(function () {
@@ -34,6 +34,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/memberships/renew', [MembershipController::class, 'renewMembership']);
         Route::delete('/memberships/cancel', [MembershipController::class, 'cancelMembership']);
     });
+
+    // Coupon Scanner
+    Route::get('/coupon-scanner/{uniqueCode}', [\App\Http\Controllers\Api\V1\CouponScannerController::class, 'show'])->name('coupon-scanner.show');
+    Route::post('/coupon-scanner/{uniqueCode}/redeem', [\App\Http\Controllers\Api\V1\CouponScannerController::class, 'store'])->name('coupon-scanner.redeem');
 });
 
 // Note: Wishlist routes moved to web.php for session-based authentication

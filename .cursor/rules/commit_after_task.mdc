@@ -3,8 +3,174 @@ description: git rules for tasks completed
 globs:
 alwaysApply: false
 ---
-# Commit After Task Completion
+# Git Commit Strategy: Frequent Commits for Code Protection
 
-After successfully completing a task (e.g., one outlined in [prd/tasks.md](mdc:prd/tasks.md) or a sub-task discussed during our session), please remember to commit the changes.
+## 🚨 CRITICAL: Commit Early, Commit Often
 
-This ensures that our work is saved incrementally and helps maintain a clean version history, aligning with good Git practices and Git Flow methodology.
+This rule establishes **aggressive git commit practices** to prevent accidental code loss and ensure progress is always persisted.
+
+## 📋 Mandatory Commit Points
+
+### After Every Completed Task
+**🚨 ALWAYS commit immediately after completing any task, no matter how small**
+
+```bash
+# Required after each task completion
+git add .
+git commit -m "feat: complete task [TASK-ID] - [brief description]"
+```
+
+### During Development Phases
+**Commit at each major development milestone:**
+
+1. **After Writing Tests (Red Phase)**
+   ```bash
+   git add tests/
+   git commit -m "test: add tests for [feature/component]"
+   ```
+
+2. **After Implementation (Green Phase)**
+   ```bash
+   git add .
+   git commit -m "feat: implement [feature/component] - tests passing"
+   ```
+
+3. **After Refactoring**
+   ```bash
+   git add .
+   git commit -m "refactor: improve [component] while maintaining test coverage"
+   ```
+
+### Critical Commit Triggers
+**🚨 IMMEDIATE commit required when:**
+- ✅ All tests pass after implementation
+- ✅ Created new Action, Service, or Model class
+- ✅ Added new migration or factory
+- ✅ Updated task status in task lists
+- ✅ Fixed failing tests or bugs
+- ✅ Completed any file creation or major modification
+- ✅ Before starting work on next task
+
+## 🔄 Recommended Commit Workflow
+
+### Standard Development Cycle
+```bash
+# 1. Start new feature branch (if needed)
+git flow feature start feature-name
+
+# 2. Write tests first (TDD Red phase)
+git add tests/
+git commit -m "test: add failing tests for [feature]"
+
+# 3. Implement minimum code to pass tests (TDD Green phase)
+git add .
+git commit -m "feat: implement [feature] - basic functionality"
+
+# 4. Run tests and verify all pass
+./vendor/bin/pest --parallel
+
+# 5. Commit test verification
+git add .
+git commit -m "test: verify all tests pass for [feature]"
+
+# 6. Refactor if needed (TDD Refactor phase)
+git add .
+git commit -m "refactor: improve [feature] implementation"
+
+# 7. Update task status
+git add .
+git commit -m "docs: mark task [TASK-ID] as completed"
+```
+
+### Module Development Pattern
+```bash
+# After each significant component:
+git add .
+git commit -m "feat: add [ComponentName] with comprehensive tests"
+
+# After each action implementation:
+git add .
+git commit -m "feat: implement [ActionName] - [X] tests passing"
+
+# After updating DTOs or models:
+git add .
+git commit -m "feat: update [DTO/Model] for [purpose]"
+```
+
+## 📊 Commit Message Conventions
+
+### Prefixes
+- `feat:` - New feature implementation
+- `test:` - Adding or modifying tests
+- `fix:` - Bug fixes
+- `refactor:` - Code refactoring without functionality change
+- `docs:` - Documentation updates (including task status)
+- `chore:` - Maintenance tasks
+
+### Format
+```
+type: brief description of change
+
+Optional longer description if needed
+- Key points
+- Important notes
+```
+
+### Examples
+```bash
+git commit -m "feat: implement UpsertCouponAction with 6 comprehensive tests"
+git commit -m "test: add 10 validation tests for coupon eligibility service"
+git commit -m "fix: resolve dependency injection in coupon issuance tests"
+git commit -m "docs: update coupon task list - mark CPN-007c as completed"
+```
+
+## 🛡️ Code Protection Strategy
+
+### Branch Protection
+- Never work directly on `main` or `develop`
+- Always use feature branches for development
+- Commit frequently to feature branches
+
+### Recovery Strategy
+- Each commit creates a recovery point
+- Use `git log --oneline` to see recent commits
+- Use `git show [commit-hash]` to inspect specific commits
+- Use `git cherry-pick` to recover specific commits if needed
+
+### Pre-Commit Checklist
+Before committing, always verify:
+- [ ] Tests are running and passing (`./vendor/bin/pest --parallel`)
+- [ ] No syntax errors in PHP files
+- [ ] All new files are properly added to git
+- [ ] Commit message is descriptive and follows conventions
+- [ ] Task status is updated if applicable
+
+## 🎯 Benefits of Frequent Commits
+
+1. **Code Safety**: Never lose more than a few minutes of work
+2. **Progress Tracking**: Clear history of development steps
+3. **Easy Rollback**: Can revert to any working state
+4. **Collaboration**: Team members can see incremental progress
+5. **Debugging**: Easier to identify when issues were introduced
+6. **Documentation**: Commits serve as development log
+
+## ⚠️ Anti-Patterns to Avoid
+
+- **Don't wait** until "everything is perfect" to commit
+- **Don't accumulate** multiple changes in one commit
+- **Don't skip** committing after test passes
+- **Don't forget** to commit task status updates
+- **Don't work** for hours without committing
+
+## 🚨 Emergency Recovery
+
+If you ever lose work due to not committing:
+1. Check git stash: `git stash list`
+2. Check recent commits: `git reflog`
+3. Check if files exist in working directory
+4. Immediately commit any recovered work
+5. Implement more frequent commit discipline going forward
+
+---
+
+**Remember: It's better to have 20 small, meaningful commits than 1 large commit that represents hours of work. Each commit is a safety net.**

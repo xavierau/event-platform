@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TicketDefinitionController;
 use App\Http\Controllers\Admin\VenueController;
 use App\Http\Controllers\Admin\ContactSubmissionController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Modules\Membership\MembershipPaymentController;
@@ -29,6 +30,8 @@ use App\Http\Controllers\Public\ContactUsController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\OrganizerController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -124,6 +127,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin|' 
     // Contact Submissions
     Route::resource('contact-submissions', ContactSubmissionController::class)->only(['index', 'show', 'destroy']);
     Route::patch('contact-submissions/{submission}/toggle-read', [ContactSubmissionController::class, 'toggleRead'])->name('contact-submissions.toggle-read');
+
+    // TODO: Implement UserController for admin
+    // Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    // TODO: The SettingsController is not yet implemented.
+    // Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+});
+
+// Coupon routes are managed by CouponPolicy
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    Route::resource('coupons', CouponController::class);
+    Route::get('coupon-scanner', [CouponController::class, 'scanner'])->name('coupons.scanner');
 });
 
 
@@ -152,3 +166,38 @@ Route::get('/membership/payment/cancel', [MembershipPaymentController::class, 'h
 
 // Stripe Webhook (must be outside CSRF protection)
 Route::post('/webhook/stripe', [PaymentController::class, 'handleWebhook'])->name('webhook.stripe');
+
+// New coupon scanner API routes
+// THIS SECTION APPEARS TO BE A DUPLICATE/INCORRECT - REMOVING
+/*
+Route::middleware(['auth:sanctum', 'verified', 'role:admin|organizer-admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // Resourceful routes for admin management
+    Route::resource('events', EventController::class);
+    Route::resource('venues', VenueController::class);
+    Route::resource('categories', CategoryController::class);
+    Route::resource('tags', TagController::class);
+    Route::resource('promotions', PromotionController::class);
+    // TODO: Implement UserController for admin
+    // Route::resource('users', UserController::class);
+    Route::resource('organizers', OrganizerController::class);
+    Route::resource('cms-pages', CmsPageController::class);
+    Route::resource('contact-submissions', ContactSubmissionController::class)->only(['index', 'show', 'destroy']);
+    Route::resource('coupons', CouponController::class);
+
+    // API-like routes for admin panel functionalities
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::apiResource('coupon-scanner', App\Http\Controllers\Api\V1\CouponScannerController::class)
+            ->only(['show', 'store'])
+            ->parameters(['coupon-scanner' => 'uniqueCode']);
+    });
+
+    // Settings routes
+    Route::prefix('settings')->name('settings.')->group(function () {
+        // TODO: Implement a general admin settings controller/page
+        // Route::get('/', [SettingsController::class, 'index'])->name('index');
+        // Route::put('/', [SettingsController::class, 'update'])->name('update');
+    });
+});
+*/

@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import type { NavItem } from '@/types/index.d';
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid,Calendar, MapPin, Tag, Settings, Ticket, Megaphone, FileText, MessageSquare, Users } from 'lucide-vue-next';
+import { LayoutGrid,Calendar, MapPin, Tag, Settings, Ticket, Megaphone, FileText, MessageSquare, Users, Percent } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -23,6 +23,16 @@ const mainNavItems: NavItem[] = [
         title: 'Bookings',
         href: '/admin/bookings',
         icon: Ticket,
+    },
+    {
+        title: 'Coupons',
+        href: '/admin/coupons',
+        icon: Percent,
+    },
+    {
+        title: 'Coupon Scanner',
+        href: '/admin/coupon-scanner',
+        icon: Percent,
     },
     {
         title: 'Organizers',

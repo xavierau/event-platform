@@ -252,6 +252,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is a member of a specific organizer.
+     */
+    public function isMemberOfOrganizer(Organizer $organizer): bool
+    {
+        return !is_null($this->getOrganizerRole($organizer));
+    }
+
+    /**
      * Check if user can manage a specific organizer.
      */
     public function canManageOrganizer(Organizer $organizer): bool
@@ -268,8 +276,6 @@ class User extends Authenticatable
         $role = $this->getOrganizerRole($organizer);
         return $role && $role->canManageUsers();
     }
-
-
 
     /**
      * Get all organizers that user can manage events for.
