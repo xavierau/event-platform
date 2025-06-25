@@ -41,7 +41,7 @@ return new class extends Migration
             $table->integer('times_can_be_used')->default(1);
             $table->integer('times_used')->default(0);
             $table->timestamp('expires_at')->nullable();
-            $table->timestamp('issued_at');
+            $table->timestamp('issued_at')->useCurrent();
             $table->timestamps();
 
             $table->index(['user_id', 'status']);
