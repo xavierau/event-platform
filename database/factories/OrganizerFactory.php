@@ -34,10 +34,11 @@ class OrganizerFactory extends Factory
             'Metropolitan Events',
             'Global Conference Group',
             'Prestige Event Solutions',
+            'EventSolutions',
         ];
 
         $name = fake()->randomElement($companyNames);
-        $slug = Str::slug($name) . '-' . fake()->randomNumber(4);
+        $slug = Str::slug($name) . '-' . uniqid();
 
         return [
             'name' => [

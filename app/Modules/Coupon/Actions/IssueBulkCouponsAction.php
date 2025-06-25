@@ -27,26 +27,13 @@ class IssueBulkCouponsAction
         $coupon = Coupon::findOrFail($issuanceData->coupon_id);
         $user = User::findOrFail($issuanceData->user_id);
 
-<<<<<<< HEAD
-        // Validate eligibility first (includes checking if user already has single-use coupon)
-        $eligibilityResult = $this->eligibilityValidator->execute($coupon, $user);
-
-        if (!$eligibilityResult['eligible']) {
-            throw new InvalidArgumentException($eligibilityResult['reason']);
-        }
-
-        // For single-use coupons, special validation
-=======
         // For single-use coupons, validate quantity first
->>>>>>> feature/coupon-module
         if ($coupon->type === CouponTypeEnum::SINGLE_USE) {
             if ($quantity > 1) {
                 throw new InvalidArgumentException('Cannot issue multiple single-use coupons to same user');
             }
         }
 
-<<<<<<< HEAD
-=======
         // Validate eligibility (includes checking if user already has single-use coupon)
         $eligibilityResult = $this->eligibilityValidator->execute($coupon, $user);
 
@@ -54,7 +41,6 @@ class IssueBulkCouponsAction
             throw new InvalidArgumentException($eligibilityResult['reason']);
         }
 
->>>>>>> feature/coupon-module
         // Check if bulk issuance would exceed max_issuance limit
         if ($coupon->max_issuance !== null) {
             $currentCount = UserCoupon::where('coupon_id', $coupon->id)->count();
