@@ -13,7 +13,6 @@ class CouponData extends Data
         public readonly int $organizer_id,
         public readonly string $name,
         public readonly ?string $description,
-        #[Rule(['required', 'string', 'unique:coupons,code'])]
         public readonly string $code,
         #[Enum(CouponTypeEnum::class)]
         public readonly CouponTypeEnum $type,

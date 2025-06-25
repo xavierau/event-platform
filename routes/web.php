@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TicketDefinitionController;
 use App\Http\Controllers\Admin\VenueController;
 use App\Http\Controllers\Admin\ContactSubmissionController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Modules\Membership\MembershipPaymentController;
@@ -115,6 +116,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin|' 
     Route::resource('bookings', AdminBookingController::class);
     Route::resource('organizers', OrganizerController::class);
     Route::post('organizers/{organizer}/invite', [OrganizerController::class, 'inviteUser'])->name('organizers.invite');
+    Route::resource('coupons', CouponController::class);
 
     // CMS Routes
     Route::resource('cms-pages', CmsPageController::class);
