@@ -8,6 +8,8 @@ use App\Models\Event;
 use App\Models\Venue;
 use App\Policies\EventPolicy;
 use App\Policies\VenuePolicy;
+use App\Modules\Coupon\Models\Coupon;
+use App\Policies\CouponPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Event::class => EventPolicy::class,
         Venue::class => VenuePolicy::class,
+        Coupon::class => CouponPolicy::class,
     ];
 
     /**

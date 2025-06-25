@@ -134,25 +134,21 @@ class CouponServiceTest extends TestCase
         $uniqueCode = 'ABC123';
         $location = 'Test Location';
         $details = ['event_id' => 1];
+        $userCoupon = UserCoupon::factory()->make();
 
-        $expectedResult = [
-            'success' => true,
-            'message' => 'Coupon redeemed successfully',
-            'user_coupon' => UserCoupon::factory()->make(),
-            'usage_log' => null,
-        ];
+        $this->mockFindAction->method('execute')->with($uniqueCode)->willReturn($userCoupon);
+        $this->mockValidateAction->method('execute')->with($userCoupon)->willReturn(['valid' => true]);
 
-        $this->mockRedeemAction
-            ->expects($this->once())
+        $this->mockRedeemAction->expects($this->once())
             ->method('execute')
-            ->with($uniqueCode, $location, $details)
-            ->willReturn($expectedResult);
+            ->with($userCoupon, $location, $details)
+            ->willReturn($userCoupon);
 
         // Act
         $result = $this->couponService->redeemCoupon($uniqueCode, $location, $details);
 
         // Assert
-        $this->assertEquals($expectedResult, $result);
+        $this->assertEquals($userCoupon, $result);
     }
 
     public function test_validate_coupon_when_coupon_not_found()
@@ -160,20 +156,17 @@ class CouponServiceTest extends TestCase
         // Arrange
         $uniqueCode = 'INVALID';
 
-        $this->mockFindAction
-            ->expects($this->once())
+        $this->mockFindAction->expects($this->once())
             ->method('execute')
             ->with($uniqueCode)
             ->willReturn(null);
 
-        // Act
-        $result = $this->couponService->validateCoupon($uniqueCode);
-
         // Assert
-        $this->assertFalse($result['valid']);
-        $this->assertEquals(['Coupon not found'], $result['reasons']);
-        $this->assertNull($result['user_coupon']);
-        $this->assertNull($result['details']);
+        $this->expectException(\App\Modules\Coupon\Exceptions\InvalidCouponException::class);
+        $this->expectExceptionMessage('Coupon not found');
+
+        // Act
+        $this->couponService->validateCoupon($uniqueCode);
     }
 
     public function test_validate_coupon_when_coupon_found_and_valid()
@@ -188,14 +181,12 @@ class CouponServiceTest extends TestCase
             'details' => ['remaining_uses' => 1],
         ];
 
-        $this->mockFindAction
-            ->expects($this->once())
+        $this->mockFindAction->expects($this->once())
             ->method('execute')
             ->with($uniqueCode)
             ->willReturn($userCoupon);
 
-        $this->mockValidateAction
-            ->expects($this->once())
+        $this->mockValidateAction->expects($this->once())
             ->method('execute')
             ->with($userCoupon)
             ->willReturn($validationResult);
@@ -204,10 +195,7 @@ class CouponServiceTest extends TestCase
         $result = $this->couponService->validateCoupon($uniqueCode);
 
         // Assert
-        $this->assertTrue($result['valid']);
-        $this->assertEquals([], $result['reasons']);
-        $this->assertEquals($userCoupon, $result['user_coupon']);
-        $this->assertEquals(['remaining_uses' => 1], $result['details']);
+        $this->assertEquals($userCoupon, $result);
     }
 
     public function test_validate_coupon_when_coupon_found_but_invalid()
@@ -222,26 +210,22 @@ class CouponServiceTest extends TestCase
             'details' => ['remaining_uses' => 0],
         ];
 
-        $this->mockFindAction
-            ->expects($this->once())
+        $this->mockFindAction->expects($this->once())
             ->method('execute')
             ->with($uniqueCode)
             ->willReturn($userCoupon);
 
-        $this->mockValidateAction
-            ->expects($this->once())
+        $this->mockValidateAction->expects($this->once())
             ->method('execute')
             ->with($userCoupon)
             ->willReturn($validationResult);
 
-        // Act
-        $result = $this->couponService->validateCoupon($uniqueCode);
-
         // Assert
-        $this->assertFalse($result['valid']);
-        $this->assertEquals(['Coupon has expired'], $result['reasons']);
-        $this->assertEquals($userCoupon, $result['user_coupon']);
-        $this->assertEquals(['remaining_uses' => 0], $result['details']);
+        $this->expectException(\App\Modules\Coupon\Exceptions\CouponExpiredException::class);
+        $this->expectExceptionMessage('Coupon has expired');
+
+        // Act
+        $this->couponService->validateCoupon($uniqueCode);
     }
 
     public function test_find_coupon_by_code_calls_action()

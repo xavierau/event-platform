@@ -7,6 +7,7 @@ use App\Modules\Coupon\Enums\UserCouponStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class UserCoupon extends Model
 {
@@ -39,6 +40,11 @@ class UserCoupon extends Model
     public function coupon(): BelongsTo
     {
         return $this->belongsTo(Coupon::class);
+    }
+
+    public function usageLogs(): HasMany
+    {
+        return $this->hasMany(CouponUsageLog::class);
     }
 
     protected static function newFactory()

@@ -18,12 +18,7 @@ class CouponController extends Controller
 {
     public function __construct(protected CouponService $couponService)
     {
-        // TODO: Add authorization middleware when CouponPolicy is implemented
-        // $this->middleware('can:viewAny,App\Modules\Coupon\Models\Coupon')->only(['index']);
-        // $this->middleware('can:view,coupon')->only(['show']);
-        // $this->middleware('can:create,App\Modules\Coupon\Models\Coupon')->only(['create', 'store']);
-        // $this->middleware('can:update,coupon')->only(['edit', 'update']);
-        // $this->middleware('can:delete,coupon')->only(['destroy']);
+        $this->authorizeResource(Coupon::class, 'coupon');
     }
 
     /**
@@ -196,5 +191,19 @@ class CouponController extends Controller
 
         return redirect()->route('admin.coupons.index')
             ->with('success', 'Coupon deleted successfully.');
+    }
+
+    /**
+     * Show the QR code scanner page
+     */
+    public function scanner(): InertiaResponse
+    {
+        return Inertia::render('Admin/CouponScanner/Index', [
+            'pageTitle' => 'Coupon Scanner',
+            'breadcrumbs' => [
+                ['text' => 'Admin', 'href' => route('admin.dashboard')],
+                ['text' => 'Coupon Scanner']
+            ],
+        ]);
     }
 }

@@ -9,6 +9,9 @@ use App\Modules\Coupon\Actions\ValidateUserCouponForRedemptionAction;
 use App\Modules\Coupon\Actions\FindUserCouponByCodeAction;
 use App\Modules\Coupon\DataTransferObjects\CouponData;
 use App\Modules\Coupon\DataTransferObjects\IssueCouponData;
+use App\Modules\Coupon\Exceptions\CouponAlreadyUsedException;
+use App\Modules\Coupon\Exceptions\CouponExpiredException;
+use App\Modules\Coupon\Exceptions\InvalidCouponException;
 use App\Modules\Coupon\Models\Coupon;
 use App\Modules\Coupon\Models\UserCoupon;
 use Illuminate\Support\Collection;
@@ -52,43 +55,52 @@ class CouponService
      * @param string $uniqueCode The unique code of the user coupon
      * @param string|null $location Optional location where redemption occurs
      * @param array|null $details Optional additional details for the redemption
-     * @return array Redemption result with success status, message, and data
+     * @return UserCoupon
      */
     public function redeemCoupon(
         string $uniqueCode,
         ?string $location = null,
         ?array $details = null
-    ): array {
-        return $this->redeemCouponAction->execute($uniqueCode, $location, $details);
+    ): UserCoupon {
+        $userCoupon = $this->validateCoupon($uniqueCode);
+
+        return $this->redeemCouponAction->execute($userCoupon, $location, $details);
     }
 
     /**
      * Validate a coupon for redemption without actually redeeming it
      *
      * @param string $uniqueCode The unique code of the user coupon
-     * @return array Validation result with validity status and details
+     * @return UserCoupon
+     * @throws InvalidCouponException
+     * @throws CouponExpiredException
+     * @throws CouponAlreadyUsedException
      */
-    public function validateCoupon(string $uniqueCode): array
+    public function validateCoupon(string $uniqueCode): UserCoupon
     {
         $userCoupon = $this->findCouponByCodeAction->execute($uniqueCode);
 
         if (!$userCoupon) {
-            return [
-                'valid' => false,
-                'reasons' => ['Coupon not found'],
-                'user_coupon' => null,
-                'details' => null,
-            ];
+            throw new InvalidCouponException('Coupon not found');
         }
 
         $validation = $this->validateCouponAction->execute($userCoupon);
 
-        return [
-            'valid' => $validation['valid'],
-            'reasons' => $validation['reasons'],
-            'user_coupon' => $userCoupon,
-            'details' => $validation['details'],
-        ];
+        if (!$validation['valid']) {
+            $reasons = $validation['reasons'];
+
+            if (in_array('Coupon has expired', $reasons)) {
+                throw new CouponExpiredException('Coupon has expired');
+            }
+
+            if (in_array('Coupon has been fully used', $reasons) || in_array('Coupon usage limit reached', $reasons)) {
+                throw new CouponAlreadyUsedException('Coupon has been fully used or its usage limit has been reached');
+            }
+
+            throw new InvalidCouponException(implode(', ', $reasons));
+        }
+
+        return $userCoupon;
     }
 
     /**

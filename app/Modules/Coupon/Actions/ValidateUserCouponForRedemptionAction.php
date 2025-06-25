@@ -13,8 +13,9 @@ class ValidateUserCouponForRedemptionAction
         $reasons = [];
         $valid = true;
 
-        // Check if coupon has expired (date-based or status-based)
+        // Check if coupon has expired (date-based on UserCoupon or parent Coupon, or status-based)
         $hasExpired = ($userCoupon->expires_at && $userCoupon->expires_at->isPast())
+            || ($userCoupon->coupon && $userCoupon->coupon->expires_at && $userCoupon->coupon->expires_at->isPast())
             || $userCoupon->status === UserCouponStatusEnum::EXPIRED;
 
         if ($hasExpired) {

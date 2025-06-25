@@ -2,10 +2,10 @@
     <Head title="Create Coupon" />
     <AppLayout>
         <div class="py-12">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
-                    <div class="p-6 lg:p-8 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                        <PageHeader title="Create New Coupon" subtitle="Set up a new coupon template">
+                    <div class="p-6 lg:p-8 bg-white dark:bg-gray-800 dark:bg-gradient-to-bl dark:from-gray-700/50 dark:via-transparent border-b border-gray-200 dark:border-gray-700">
+                        <PageHeader title="Create New Coupon" subtitle="Create a new coupon template for your organization">
                             <template #actions>
                                 <Link :href="route('admin.coupons.index')" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-500 active:bg-gray-700 focus:outline-none focus:border-gray-700 focus:ring focus:ring-gray-200 disabled:opacity-25 transition">
                                     Back to Coupons
@@ -13,242 +13,246 @@
                             </template>
                         </PageHeader>
 
-                        <form @submit.prevent="submitForm">
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                <!-- Left Column -->
-                                <div class="space-y-6">
+                        <div class="mt-8 max-w-4xl">
+                            <form @submit.prevent="createCoupon" class="space-y-6">
+                                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <!-- Basic Information -->
-                                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Basic Information</h3>
+                                    <div class="space-y-6">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Basic Information</h3>
 
-                                        <div class="space-y-4">
-                                            <!-- Coupon Name -->
-                                            <div>
-                                                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Coupon Name *</label>
+                                        <!-- Organizer Selection -->
+                                        <div>
+                                            <label for="organizer_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Organizer *</label>
+                                            <select
+                                                v-model="form.organizer_id"
+                                                id="organizer_id"
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                :class="{ 'border-red-500': form.errors.organizer_id }"
+                                            >
+                                                <option value="">Select an organizer</option>
+                                                <option v-for="organizer in organizers" :key="organizer.id" :value="organizer.id">
+                                                    {{ getTranslation(organizer.name, currentLocale) }}
+                                                </option>
+                                            </select>
+                                            <p v-if="form.errors.organizer_id" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.organizer_id }}</p>
+                                        </div>
+
+                                        <!-- Coupon Name -->
+                                        <div>
+                                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Coupon Name *</label>
+                                            <input
+                                                type="text"
+                                                v-model="form.name"
+                                                id="name"
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                :class="{ 'border-red-500': form.errors.name }"
+                                                placeholder="Enter coupon name"
+                                            >
+                                            <p v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.name }}</p>
+                                        </div>
+
+                                        <!-- Coupon Code -->
+                                        <div>
+                                            <label for="code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Coupon Code *</label>
+                                            <div class="mt-1 flex rounded-md shadow-sm">
                                                 <input
                                                     type="text"
-                                                    v-model="form.name"
-                                                    id="name"
-                                                    required
-                                                    class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                                    placeholder="Enter coupon name"
-                                                />
-                                                <div v-if="form.errors.name" class="input-error mt-1">{{ form.errors.name }}</div>
-                                            </div>
-
-                                            <!-- Coupon Code -->
-                                            <div>
-                                                <label for="code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Coupon Code *</label>
-                                                <div class="mt-1 flex rounded-md shadow-sm">
-                                                    <input
-                                                        type="text"
-                                                        v-model="form.code"
-                                                        id="code"
-                                                        required
-                                                        class="flex-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-l-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                                        placeholder="SAVE20"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        @click="generateCode"
-                                                        class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-r-md hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                                                    >
-                                                        Generate
-                                                    </button>
-                                                </div>
-                                                <div v-if="form.errors.code" class="input-error mt-1">{{ form.errors.code }}</div>
-                                            </div>
-
-                                            <!-- Description -->
-                                            <div>
-                                                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-                                                <textarea
-                                                    v-model="form.description"
-                                                    id="description"
-                                                    rows="3"
-                                                    class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                                    placeholder="Describe the coupon purpose and terms"
-                                                />
-                                                <div v-if="form.errors.description" class="input-error mt-1">{{ form.errors.description }}</div>
-                                            </div>
-
-                                            <!-- Organizer -->
-                                            <div>
-                                                <label for="organizer_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Organizer *</label>
-                                                <select
-                                                    v-model="form.organizer_id"
-                                                    id="organizer_id"
-                                                    required
-                                                    class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                    v-model="form.code"
+                                                    id="code"
+                                                    class="flex-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-l-md focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                    :class="{ 'border-red-500': form.errors.code }"
+                                                    placeholder="Enter unique code"
                                                 >
-                                                    <option value="">Select an organizer</option>
-                                                    <option v-for="organizer in organizers" :key="organizer.id" :value="organizer.id">
-                                                        {{ getTranslation(organizer.name, currentLocale) }}
-                                                    </option>
-                                                </select>
-                                                <div v-if="form.errors.organizer_id" class="input-error mt-1">{{ form.errors.organizer_id }}</div>
+                                                <button
+                                                    type="button"
+                                                    @click="generateRandomCode"
+                                                    class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-300 text-sm rounded-r-md hover:bg-gray-100 dark:hover:bg-gray-500"
+                                                >
+                                                    Generate
+                                                </button>
                                             </div>
+                                            <p v-if="form.errors.code" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.code }}</p>
+                                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Must be unique across all coupons</p>
+                                        </div>
+
+                                        <!-- Description -->
+                                        <div>
+                                            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                                            <textarea
+                                                v-model="form.description"
+                                                id="description"
+                                                rows="3"
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                :class="{ 'border-red-500': form.errors.description }"
+                                                placeholder="Optional description for the coupon"
+                                            ></textarea>
+                                            <p v-if="form.errors.description" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.description }}</p>
                                         </div>
                                     </div>
 
                                     <!-- Discount Configuration -->
-                                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Discount Configuration</h3>
+                                    <div class="space-y-6">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Discount Configuration</h3>
 
-                                        <div class="space-y-4">
-                                            <!-- Discount Type -->
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Discount Type *</label>
-                                                <div class="mt-2 space-y-2">
-                                                    <label class="inline-flex items-center">
-                                                        <input type="radio" v-model="form.discount_type" value="fixed" class="form-radio text-indigo-600">
-                                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Fixed Amount ($)</span>
-                                                    </label>
-                                                    <label class="inline-flex items-center">
-                                                        <input type="radio" v-model="form.discount_type" value="percentage" class="form-radio text-indigo-600">
-                                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Percentage (%)</span>
-                                                    </label>
-                                                </div>
-                                                <div v-if="form.errors.discount_type" class="input-error mt-1">{{ form.errors.discount_type }}</div>
-                                            </div>
-
-                                            <!-- Discount Value -->
-                                            <div>
-                                                <label for="discount_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                    Discount Value *
-                                                    <span v-if="form.discount_type === 'fixed'" class="text-gray-500">(in dollars)</span>
-                                                    <span v-if="form.discount_type === 'percentage'" class="text-gray-500">(0-100)</span>
-                                                </label>
-                                                <div class="mt-1 relative rounded-md shadow-sm">
-                                                    <div v-if="form.discount_type === 'fixed'" class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <span class="text-gray-500 sm:text-sm">$</span>
-                                                    </div>
+                                        <!-- Coupon Type -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Coupon Type *</label>
+                                            <div class="mt-2 space-y-2">
+                                                <label class="inline-flex items-center">
                                                     <input
-                                                        type="number"
-                                                        v-model.number="form.discount_value"
-                                                        id="discount_value"
-                                                        required
-                                                        :min="form.discount_type === 'percentage' ? 0 : 0.01"
-                                                        :max="form.discount_type === 'percentage' ? 100 : undefined"
-                                                        :step="form.discount_type === 'percentage' ? 1 : 0.01"
-                                                        :class="form.discount_type === 'fixed' ? 'pl-7' : ''"
-                                                        class="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                                        :placeholder="form.discount_type === 'percentage' ? '10' : '5.00'"
-                                                    />
-                                                    <div v-if="form.discount_type === 'percentage'" class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                                        <span class="text-gray-500 sm:text-sm">%</span>
-                                                    </div>
-                                                </div>
-                                                <div v-if="form.errors.discount_value" class="input-error mt-1">{{ form.errors.discount_value }}</div>
+                                                        type="radio"
+                                                        v-model="form.type"
+                                                        value="single_use"
+                                                        class="form-radio text-indigo-600"
+                                                    >
+                                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Single Use - Each coupon can only be used once</span>
+                                                </label>
+                                                <label class="inline-flex items-center">
+                                                    <input
+                                                        type="radio"
+                                                        v-model="form.type"
+                                                        value="multi_use"
+                                                        class="form-radio text-indigo-600"
+                                                    >
+                                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Multi Use - Each coupon can be used multiple times</span>
+                                                </label>
                                             </div>
+                                            <p v-if="form.errors.type" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.type }}</p>
                                         </div>
-                                    </div>
-                                </div>
 
-                                <!-- Right Column -->
-                                <div class="space-y-6">
-                                    <!-- Usage Configuration -->
-                                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Usage Configuration</h3>
-
-                                        <div class="space-y-4">
-                                            <!-- Coupon Type -->
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Coupon Type *</label>
-                                                <div class="mt-2 space-y-2">
-                                                    <label class="inline-flex items-center">
-                                                        <input type="radio" v-model="form.type" value="single_use" class="form-radio text-indigo-600">
-                                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Single Use (one-time per user)</span>
-                                                    </label>
-                                                    <label class="inline-flex items-center">
-                                                        <input type="radio" v-model="form.type" value="multi_use" class="form-radio text-indigo-600">
-                                                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Multi Use (reusable)</span>
-                                                    </label>
-                                                </div>
-                                                <div v-if="form.errors.type" class="input-error mt-1">{{ form.errors.type }}</div>
+                                        <!-- Discount Type -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Discount Type *</label>
+                                            <div class="mt-2 space-y-2">
+                                                <label class="inline-flex items-center">
+                                                    <input
+                                                        type="radio"
+                                                        v-model="form.discount_type"
+                                                        value="percentage"
+                                                        class="form-radio text-indigo-600"
+                                                    >
+                                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Percentage - Discount as a percentage</span>
+                                                </label>
+                                                <label class="inline-flex items-center">
+                                                    <input
+                                                        type="radio"
+                                                        v-model="form.discount_type"
+                                                        value="fixed"
+                                                        class="form-radio text-indigo-600"
+                                                    >
+                                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Fixed Amount - Discount as a fixed amount</span>
+                                                </label>
                                             </div>
+                                            <p v-if="form.errors.discount_type" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.discount_type }}</p>
+                                        </div>
 
-                                            <!-- Max Issuance -->
-                                            <div>
-                                                <label for="max_issuance" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Maximum Issuance</label>
+                                        <!-- Discount Value -->
+                                        <div>
+                                            <label for="discount_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Discount Value *
+                                                <span v-if="form.discount_type === 'percentage'" class="text-gray-500">(Percentage 1-100)</span>
+                                                <span v-else-if="form.discount_type === 'fixed'" class="text-gray-500">(Amount in cents)</span>
+                                            </label>
+                                            <div class="mt-1 relative rounded-md shadow-sm">
                                                 <input
                                                     type="number"
-                                                    v-model.number="form.max_issuance"
-                                                    id="max_issuance"
-                                                    min="1"
-                                                    class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                                    placeholder="Leave empty for unlimited"
-                                                />
-                                                <p class="mt-1 text-sm text-gray-500">Maximum number of times this coupon can be issued to users</p>
-                                                <div v-if="form.errors.max_issuance" class="input-error mt-1">{{ form.errors.max_issuance }}</div>
+                                                    v-model.number="form.discount_value"
+                                                    id="discount_value"
+                                                    class="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                    :class="{ 'border-red-500': form.errors.discount_value }"
+                                                    :placeholder="form.discount_type === 'percentage' ? 'e.g., 10 for 10%' : 'e.g., 500 for $5.00'"
+                                                    :min="1"
+                                                    :max="form.discount_type === 'percentage' ? 100 : undefined"
+                                                >
+                                                <div v-if="form.discount_type === 'percentage'" class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                    <span class="text-gray-500 sm:text-sm">%</span>
+                                                </div>
+                                                <div v-else-if="form.discount_type === 'fixed'" class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <span class="text-gray-500 sm:text-sm">$</span>
+                                                </div>
                                             </div>
+                                            <p v-if="form.errors.discount_value" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.discount_value }}</p>
+                                            <p v-if="form.discount_type === 'fixed'" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                                Enter amount in cents (e.g., 500 = $5.00)
+                                            </p>
                                         </div>
-                                    </div>
 
-                                    <!-- Validity Period -->
-                                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Validity Period</h3>
-
-                                        <div class="space-y-4">
-                                            <!-- Valid From -->
-                                            <div>
-                                                <label for="valid_from" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Valid From</label>
-                                                <input
-                                                    type="datetime-local"
-                                                    v-model="form.valid_from"
-                                                    id="valid_from"
-                                                    class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                                />
-                                                <p class="mt-1 text-sm text-gray-500">Leave empty to make coupon valid immediately</p>
-                                                <div v-if="form.errors.valid_from" class="input-error mt-1">{{ form.errors.valid_from }}</div>
-                                            </div>
-
-                                            <!-- Expires At -->
-                                            <div>
-                                                <label for="expires_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Expires At</label>
-                                                <input
-                                                    type="datetime-local"
-                                                    v-model="form.expires_at"
-                                                    id="expires_at"
-                                                    class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                                />
-                                                <p class="mt-1 text-sm text-gray-500">Leave empty for no expiration</p>
-                                                <div v-if="form.errors.expires_at" class="input-error mt-1">{{ form.errors.expires_at }}</div>
-                                            </div>
+                                        <!-- Max Issuance -->
+                                        <div>
+                                            <label for="max_issuance" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Maximum Issuance</label>
+                                            <input
+                                                type="number"
+                                                v-model.number="form.max_issuance"
+                                                id="max_issuance"
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                :class="{ 'border-red-500': form.errors.max_issuance }"
+                                                placeholder="Leave empty for unlimited"
+                                                min="1"
+                                            >
+                                            <p v-if="form.errors.max_issuance" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.max_issuance }}</p>
+                                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Maximum number of times this coupon can be issued to users</p>
                                         </div>
-                                    </div>
-
-                                    <!-- Coupon Image -->
-                                    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-                                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Coupon Image</h3>
-
-                                        <MediaUpload
-                                            v-model="form.uploaded_image"
-                                            :existingMedia="null"
-                                            collectionName="coupon_image"
-                                            label="Coupon Image"
-                                            :multiple="false"
-                                            accept="image/*"
-                                            :maxFileSizeMb="5"
-                                        />
-                                        <p class="mt-2 text-sm text-gray-500">Upload an optional image for this coupon (max 5MB)</p>
-                                        <div v-if="form.errors.uploaded_image" class="input-error mt-1">{{ form.errors.uploaded_image }}</div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Submit Button -->
-                            <div class="mt-8 flex justify-end">
-                                <Button
-                                    type="submit"
-                                    :disabled="form.processing"
-                                    class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-sm text-white uppercase tracking-widest hover:bg-indigo-500 active:bg-indigo-700 focus:outline-none focus:border-indigo-700 focus:ring focus:ring-indigo-200 disabled:opacity-25 transition"
-                                >
-                                    <span v-if="form.processing">Creating...</span>
-                                    <span v-else>Create Coupon</span>
-                                </Button>
-                            </div>
-                        </form>
+                                <!-- Validity Period -->
+                                <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Validity Period</h3>
+                                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        <!-- Valid From -->
+                                        <div>
+                                            <label for="valid_from" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Valid From</label>
+                                            <input
+                                                type="datetime-local"
+                                                v-model="form.valid_from"
+                                                id="valid_from"
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                :class="{ 'border-red-500': form.errors.valid_from }"
+                                            >
+                                            <p v-if="form.errors.valid_from" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.valid_from }}</p>
+                                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Leave empty if valid immediately</p>
+                                        </div>
+
+                                        <!-- Expires At -->
+                                        <div>
+                                            <label for="expires_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Expires At</label>
+                                            <input
+                                                type="datetime-local"
+                                                v-model="form.expires_at"
+                                                id="expires_at"
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                :class="{ 'border-red-500': form.errors.expires_at }"
+                                            >
+                                            <p v-if="form.errors.expires_at" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.errors.expires_at }}</p>
+                                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Leave empty if never expires</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Form Actions -->
+                                <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                                    <div class="flex justify-end space-x-3">
+                                        <Link
+                                            :href="route('admin.coupons.index')"
+                                            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        >
+                                            Cancel
+                                        </Link>
+                                        <button
+                                            type="submit"
+                                            :disabled="form.processing"
+                                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                                        >
+                                            <svg v-if="form.processing" class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            {{ form.processing ? 'Creating...' : 'Create Coupon' }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -260,10 +264,8 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import Button from '@/components/ui/button/Button.vue';
 import { getTranslation } from '@/Utils/i18n';
 import PageHeader from '@/components/Shared/PageHeader.vue';
-import MediaUpload from '@/components/Form/MediaUpload.vue';
 
 const page = usePage();
 const currentLocale = computed(() => page.props.locale as 'en' | 'zh-HK' | 'zh-CN');
@@ -273,25 +275,25 @@ interface Organizer {
     name: Record<string, string> | string;
 }
 
-const props = defineProps<{
+defineProps<{
     organizers: Organizer[];
 }>();
 
 const form = useForm({
-    name: '',
-    code: '',
-    description: '',
     organizer_id: '',
+    name: '',
+    description: '',
+    code: '',
     type: 'single_use',
-    discount_type: 'percentage',
     discount_value: null as number | null,
+    discount_type: 'percentage',
     max_issuance: null as number | null,
     valid_from: '',
     expires_at: '',
-    uploaded_image: null as File | null,
 });
 
-const generateCode = () => {
+const generateRandomCode = () => {
+    // Generate a random alphanumeric code
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
     for (let i = 0; i < 8; i++) {
@@ -300,19 +302,18 @@ const generateCode = () => {
     form.code = result;
 };
 
-const submitForm = () => {
-    // Convert discount value to cents if it's a fixed amount
-    const processedForm = { ...form.data() };
-    if (processedForm.discount_type === 'fixed' && processedForm.discount_value) {
-        processedForm.discount_value = Math.round(processedForm.discount_value * 100);
-    }
-
-    form.post(route('admin.coupons.store'));
+const createCoupon = () => {
+    form.post(route('admin.coupons.store'), {
+        onSuccess: () => {
+            // Redirect will be handled by the controller
+        },
+    });
 };
 </script>
 
 <style scoped>
-.input-error {
-    @apply text-red-600 text-sm;
+/* Custom radio button styles for better dark mode support */
+input[type="radio"] {
+    @apply focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
 }
 </style>
