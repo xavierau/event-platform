@@ -254,6 +254,7 @@ class BookingService
                     'success_url' => route('payment.success') . '?transaction_id=' . $orderId . '&session_id={CHECKOUT_SESSION_ID}',
                     'cancel_url' => route('payment.cancel') . '?transaction_id=' . $orderId . '&session_id={CHECKOUT_SESSION_ID}',
                     'metadata' => $metadata,
+                    'phone_number_collection' => ['enabled' => true],
                     // 'payment_method_types' => ['card'], // From your PaymentController - usually not needed as Stripe handles this
                 ];
 
