@@ -100,26 +100,11 @@ const activeLocaleTab = ref(currentLocale.value || localeTabs.value[0]?.key || '
 
 const formatDateTimeForInput = (isoString: string | null | undefined): string => {
     if (!isoString) return '';
-    try {
-        const date = new Date(isoString);
-        // Checks if the date is valid
-        if (isNaN(date.getTime())) {
-            // Fallback for strings that might be partially correct but not parsable as a Date
-            return isoString.slice(0, 16);
-        }
-        // These methods return parts in the browser's local timezone
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    } catch (e) {
-        console.error(`Could not parse date: ${isoString}`, e);
-        // Fallback to simple slice if Date object construction fails
-        return isoString.slice(0, 16);
-    }
+    // Simply slice the ISO string to get the 'YYYY-MM-DDTHH:mm' part.
+    // This treats the UTC time from the server as the "wall clock" time to display,
+    // avoiding any timezone conversion by the browser's `new Date()` constructor,
+    // which would otherwise convert the time to the user's local timezone.
+    return isoString.slice(0, 16);
 };
 
 const initializeTranslatableField = (fieldData: Record<string, string> | undefined): Record<string, string> => {
