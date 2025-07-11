@@ -98,6 +98,30 @@ interface OccurrenceFormData {
 const localeTabs = computed(() => Object.entries(props.availableLocales).map(([key, label]) => ({ key, label })));
 const activeLocaleTab = ref(currentLocale.value || localeTabs.value[0]?.key || 'en');
 
+const formatDateTimeForInput = (isoString: string | null | undefined): string => {
+    if (!isoString) return '';
+    try {
+        const date = new Date(isoString);
+        // Checks if the date is valid
+        if (isNaN(date.getTime())) {
+            // Fallback for strings that might be partially correct but not parsable as a Date
+            return isoString.slice(0, 16);
+        }
+        // These methods return parts in the browser's local timezone
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (e) {
+        console.error(`Could not parse date: ${isoString}`, e);
+        // Fallback to simple slice if Date object construction fails
+        return isoString.slice(0, 16);
+    }
+};
+
 const initializeTranslatableField = (fieldData: Record<string, string> | undefined): Record<string, string> => {
     const translations: Record<string, string> = {};
     localeTabs.value.forEach(tab => {
@@ -111,8 +135,8 @@ const form = useForm<OccurrenceFormData>({
     event_id: props.event.id,
     name: initializeTranslatableField(props.occurrence.name),
     description: initializeTranslatableField(props.occurrence.description),
-    start_at: props.occurrence.start_at || '',
-    end_at: props.occurrence.end_at || '',
+    start_at: formatDateTimeForInput(props.occurrence.start_at),
+    end_at: formatDateTimeForInput(props.occurrence.end_at),
     venue_id: props.occurrence.venue_id || null,
     is_online: props.occurrence.is_online || false,
     online_meeting_link: props.occurrence.online_meeting_link || '',
@@ -166,8 +190,8 @@ watch(() => props.occurrence, (newOccurrence) => {
     if (newOccurrence) {
         form.name = initializeTranslatableField(newOccurrence.name);
         form.description = initializeTranslatableField(newOccurrence.description);
-        form.start_at = newOccurrence.start_at || '';
-        form.end_at = newOccurrence.end_at || '';
+        form.start_at = formatDateTimeForInput(newOccurrence.start_at);
+        form.end_at = formatDateTimeForInput(newOccurrence.end_at);
         form.venue_id = newOccurrence.venue_id || null;
         form.is_online = newOccurrence.is_online || false;
         form.online_meeting_link = newOccurrence.online_meeting_link || '';
