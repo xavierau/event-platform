@@ -197,7 +197,7 @@ onMounted(() => {
     <!-- Occurrences Section -->
     <section v-if="event.occurrences && event.occurrences.length > 1" class="bg-white dark:bg-gray-800 pt-4 pb-2 mt-3 shadow-sm">
       <div class="container mx-auto">
-        <div class="flex overflow-x-auto whitespace-nowrap pb-2 -mb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-700 scrollbar-thumb-rounded">
+        <div class="flex flex-row overflow-x-auto whitespace-nowrap pb-2 -mb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-700 scrollbar-thumb-rounded">
           <button
             v-for="occurrence in event.occurrences"
             :key="occurrence.id"
