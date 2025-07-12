@@ -1,0 +1,1 @@
+import{d as s,a,o,f as t,t as n,K as r}from"./app-BlriFIqe.js";const i={class:"flex justify-between items-center mb-6"},c={class:"text-2xl font-medium text-gray-900 dark:text-white"},l={class:"flex space-x-2"},m=s({__name:"PageHeader",props:{title:{}},setup(_){return(e,d)=>(o(),a("div",i,[t("h1",c,n(e.title),1),t("div",l,[r(e.$slots,"actions")])]))}});export{m as _};
