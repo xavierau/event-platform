@@ -30,7 +30,6 @@ const handleCommentPosted = (newComment: Comment) => {
 
 <template>
     <Head :title="event.name" />
-    <AppLayout>
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900 pb-20">
 
             <!-- Hero/Header Section -->
@@ -68,5 +67,4 @@ const handleCommentPosted = (newComment: Comment) => {
                 </div>
             </section>
         </div>
-    </AppLayout>
 </template>
