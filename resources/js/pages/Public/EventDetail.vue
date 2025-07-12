@@ -45,6 +45,7 @@ interface EventDetails {
   occurrences?: EventOccurrence[];
   landscape_poster_url?: string;
 comments: Comment[];
+comment_config:string;
 
 }
 
@@ -270,7 +271,7 @@ const handleCommentPosted = (newComment: Comment) => {
     </section>
 
 <!-- Comments Section -->
-            <section class="bg-white dark:bg-gray-800 p-4 mt-3 shadow-sm">
+            <section class="bg-white dark:bg-gray-800 p-4 mt-3 shadow-sm" v-if="event.comment_config !== 'disabled'">
                 <div class="container mx-auto">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white">Comments</h2>

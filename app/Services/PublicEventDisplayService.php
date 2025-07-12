@@ -121,7 +121,7 @@ class PublicEventDisplayService
         // Load approved comments with user relationship, ordered by latest
         $comments = $event->comments()
             ->where('status', 'APPROVED')
-            ->with('user')
+            ->with(['user' => fn($query) => $query->select('id', 'name')])
             ->latest()
             ->get();
 
@@ -144,6 +144,7 @@ class PublicEventDisplayService
             'venue_address' => $primaryVenue?->address,
             'occurrences' => $this->mapEventOccurrences($event->eventOccurrences),
             'comments' => $comments->toArray(),
+            'comment_config' => $event->comment_config,
         ];
     }
 
