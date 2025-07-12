@@ -32,6 +32,10 @@ class RolePermissionSeeder extends Seeder
         // Assign Permissions to Roles
         $platformAdminRole = Role::findByName(RoleNameEnum::ADMIN->value, 'web');
         if ($platformAdminRole) {
+            // Ensure the new 'manage-users' permission exists
+            Permission::firstOrCreate(['name' => 'manage-users', 'guard_name' => 'web']);
+            $this->command->info("Permission 'manage-users' created or ensured.");
+
             // Platform Admin gets all permissions
             $allPermissions = Permission::all();
             $platformAdminRole->givePermissionTo($allPermissions);

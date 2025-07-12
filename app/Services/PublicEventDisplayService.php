@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\EventOccurrence;
 use Carbon\Carbon;
 use App\Models\TicketDefinition;
+use App\Enums\CommentStatusEnum;
 
 class PublicEventDisplayService
 {
@@ -113,6 +114,17 @@ class PublicEventDisplayService
             },
         ]);
 
+        if (!$event) {
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Event not found with identifier: {$eventIdentifier}");
+        }
+
+        // Load approved comments with user relationship, ordered by latest
+        $comments = $event->comments()
+            ->where('status', 'APPROVED')
+            ->with('user')
+            ->latest()
+            ->get();
+
         // Calculate price range using model method
         $priceRange = $event->getPriceRange();
 
@@ -131,6 +143,7 @@ class PublicEventDisplayService
             'venue_name' => $primaryVenue?->name,
             'venue_address' => $primaryVenue?->address,
             'occurrences' => $this->mapEventOccurrences($event->eventOccurrences),
+            'comments' => $comments->toArray(),
         ];
     }
 

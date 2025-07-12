@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\CommentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -118,6 +119,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin|' 
     Route::resource('bookings', AdminBookingController::class);
     Route::resource('organizers', OrganizerController::class);
     Route::post('organizers/{organizer}/invite', [OrganizerController::class, 'inviteUser'])->name('organizers.invite');
+    Route::middleware('permission:manage-users')->group(function () {
+        Route::resource('users', UserController::class);
+    });
 
     // CMS Routes
     Route::resource('cms-pages', CmsPageController::class);
@@ -128,8 +132,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin|' 
     Route::resource('contact-submissions', ContactSubmissionController::class)->only(['index', 'show', 'destroy']);
     Route::patch('contact-submissions/{submission}/toggle-read', [ContactSubmissionController::class, 'toggleRead'])->name('contact-submissions.toggle-read');
 
-    // TODO: Implement UserController for admin
-    // Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    // User Management
+    // Route::resource('users', UserController::class)->middleware('permission:manage-users'); // This line is removed as per the edit hint
+
     // TODO: The SettingsController is not yet implemented.
     // Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
 });
@@ -201,3 +206,7 @@ Route::middleware(['auth:sanctum', 'verified', 'role:admin|organizer-admin'])->p
     });
 });
 */
+
+Route::middleware(['auth', 'web'])->group(function () {
+    Route::post('/events/{event}/comments', [CommentController::class, 'store'])->name('events.comments.store');
+});

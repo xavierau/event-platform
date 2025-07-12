@@ -6,6 +6,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\CommentApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,7 +24,24 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    // Event Comments
+    Route::get('/events/{event}/comments', [CommentApiController::class, 'index']);
+    Route::post('/events/{event}/comments', [CommentApiController::class, 'store']);
+    Route::put('/comments/{comment}', [CommentApiController::class, 'update']);
+    Route::delete('/comments/{comment}', [CommentApiController::class, 'destroy']);
+
+    // Comment Moderation
+    Route::post('/comments/{comment}/approve', [CommentApiController::class, 'approve'])->name('api.comments.approve');
+    Route::post('/comments/{comment}/reject', [CommentApiController::class, 'reject'])->name('api.comments.reject');
 });
+
+
+Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('admin.api.')->group(function () {
+    // Comment Moderation
+    Route::get('/events/{event}/comments', [CommentApiController::class, 'indexForModeration'])->name('events.comments.indexForModeration');
+});
+
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
     // Membership routes

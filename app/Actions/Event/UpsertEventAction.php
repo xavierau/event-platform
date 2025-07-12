@@ -28,6 +28,8 @@ class UpsertEventAction
                 'meta_title' => $eventData->meta_title,
                 'meta_description' => $eventData->meta_description,
                 'meta_keywords' => $eventData->meta_keywords,
+                'comment_config' => $eventData->comment_config,
+                'seating_chart' => $eventData->seating_chart,
                 // Conditional fields
                 'event_status' => $eventData->event_status ?? 'draft', // Default if not provided
                 'visibility' => $eventData->visibility ?? 'private', // Default if not provided
@@ -74,8 +76,8 @@ class UpsertEventAction
                     ->toMediaCollection('landscape_poster');
             }
 
-            if (!empty($eventData->uploaded_gallery)) {
-                foreach ($eventData->uploaded_gallery as $galleryFile) {
+            if (!empty($eventData->gallery_images)) {
+                foreach ($eventData->gallery_images as $galleryFile) {
                     if ($galleryFile) { // Ensure file is not null
                         $event->addMedia($galleryFile)
                             ->toMediaCollection('gallery');

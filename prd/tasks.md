@@ -230,3 +230,18 @@
 | ORG-008.1 | Create AssignVenueToOrganizerAction | Low | ORG-004, ORG-007.1 | Done | Action for platform admins to assign public venues to specific organizers. Include venue availability validation. |
 | ORG-008.2 | Create UnassignVenueFromOrganizerAction | Low | ORG-008.1 | Done | Action to convert organizer-specific venues back to public venues. Handle existing event dependencies. |
 | ORG-008.3 | Create BulkAssignVenuesToOrganizerAction | Medium | ORG-008.1 | Done | Action for bulk venue assignments. Handle batch processing, error handling, progress tracking for large operations. **Comprehensive implementation with batch processing (configurable size), detailed progress tracking, performance metrics, validation methods, and error handling. 13 tests, 78 assertions - full TDD implementation.** |
+| **USER COMMENT** | | | | | |
+| CMT-001 | Backend: Add `comment_config` to events table | Medium | EVT-001 | Done | Add enum (enabled, moderated, disabled) to control comments. Includes migration, model, DTO updates. |
+| CMT-002 | Backend: Create `Comment` entity | Medium | CMT-001, USR-002 | Done | Model (with user, event, content, status, parent_id), migration, factory. |
+| CMT-003 | Backend: Implement `CommentService` & `CommentPolicy` | High | CMT-002 | Done | Handles comment logic (posting, moderation) and authorization. Checks if a user is blocked. |
+| CMT-004 | Backend: Create Comment API endpoints | High | CMT-003 | Done | Endpoints for posting, viewing (public, filtered), and moderating (approve, reject, delete) comments. |
+| CMT-005 | Admin FE: Comment moderation section | Medium | CMT-004 | Done | In event detail page, add UI to list, approve, reject, and delete comments based on event config. |
+| CMT-006 | Public FE: Comment submission form | Medium | CMT-004 | Done | On public event detail page, add a button and form to allow users to post comments. `CommentForm.vue` created. |
+| CMT-007 | Public FE: Comment display section | Medium | CMT-004 | Done | On public event detail page, fetch and display approved comments, optimizing with a separate API call. |
+| **USER MANAGEMENT** | | | | | |
+| USR-001 | Backend: Add `is_commenting_blocked` to users table | Low | SU-002 | Done | Add boolean field to users table via a new migration. |
+| USR-002 | Backend: Implement `UserService` for block/unblock | Medium | USR-001 | Done | Service to handle user operations, focusing on an admin's ability to block/unblock a user from commenting. |
+| USR-003 | Backend: Implement comment blocking logic in Policy | Medium | USR-002, CMT-003 | Done | Implement logic in `CommentPolicy` to prevent blocked users from posting. |
+| USR-004 | Backend: Create `manage-users` permission | Low | USR-002 | Done | Create permission and protect user management admin routes. |
+| USR-005 | Admin FE: Add "User Management" to sidebar | Low | USR-004 | Done | Menu item visible only to users with `manage-users` permission. |
+| USR-006 | Admin FE: Create User Management pages | Medium | USR-005 | Done | List, Show, and Edit pages for User Management, allowing platform admins to toggle comment-blocking status. |

@@ -58,9 +58,17 @@
         "organizer_invited_successfully": "Organizer invited successfully.",
         "organizer_invitation_failed": "Failed to invite organizer."
     },
+    "users": {
+        "edit_title": "Edit User: {name}",
+        "edit_subtitle": "Update user details and status.",
+        "no_users_found": "No users found."
+    },
     "fields": {
         "name": "Name",
         "email": "Email",
+        "commenting_blocked": "Commenting Blocked",
+        "membership_level": "Membership Level",
+        "organization": "Organization",
         "role": "Role",
         "status": "Status",
         "actions": "Actions",

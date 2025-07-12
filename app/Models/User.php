@@ -13,6 +13,7 @@ use Laravel\Cashier\Billable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use App\Traits\HasOrganizerPermissions;
 
 class User extends Authenticatable
@@ -30,6 +31,11 @@ class User extends Authenticatable
         'email',
         'mobile_number',
         'password',
+        'provider',
+        'provider_id',
+        'provider_token',
+        'provider_refresh_token',
+        'is_commenting_blocked',
     ];
 
     /**
@@ -52,6 +58,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_commenting_blocked' => 'boolean',
         ];
     }
 
@@ -292,5 +299,15 @@ class User extends Authenticatable
     public function membership(): HasOne
     {
         return $this->hasOne(UserMembership::class)->ofMany('started_at', 'max');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
     }
 }

@@ -2,10 +2,16 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    mobile_number?: string;
     avatar?: string;
+    avatar_url?: string;
     email_verified_at: string | null;
+    is_commenting_blocked?: boolean;
+    membership_level?: string;
+    organizer_info?: string;
     created_at: string;
     updated_at: string;
+    permissions?: string[];
 }
 
 export interface Promotion {

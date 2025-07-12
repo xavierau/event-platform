@@ -58,9 +58,17 @@
         "organizer_invited_successfully": "主办单位邀请成功。",
         "organizer_invitation_failed": "邀请主办单位失败。"
     },
+    "users": {
+        "edit_title": "编辑用户：{name}",
+        "edit_subtitle": "更新用户详情和状态。",
+        "no_users_found": "未找到用户。"
+    },
     "fields": {
         "name": "姓名",
         "email": "电子邮件",
+        "commenting_blocked": "禁止评论",
+        "membership_level": "会员等级",
+        "organization": "组织",
         "role": "角色",
         "status": "状态",
         "actions": "操作",

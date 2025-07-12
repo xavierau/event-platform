@@ -24,6 +24,7 @@ enum OrganizerPermissionEnum: string
     case VIEW_EVENTS = 'view_events';
     case PUBLISH_EVENTS = 'publish_events';
     case MANAGE_EVENT_OCCURRENCES = 'manage_event_occurrences';
+    case MODERATE_COMMENTS = 'moderate_comments';
 
         // Venue Management Permissions
     case MANAGE_VENUES = 'manage_venues';
@@ -116,6 +117,7 @@ enum OrganizerPermissionEnum: string
             self::VIEW_EVENTS->value,
             self::PUBLISH_EVENTS->value,
             self::MANAGE_EVENT_OCCURRENCES->value,
+            self::MODERATE_COMMENTS->value,
         ];
     }
 
@@ -192,6 +194,7 @@ enum OrganizerPermissionEnum: string
                 self::VIEW_EVENTS->value,
                 self::PUBLISH_EVENTS->value,
                 self::MANAGE_EVENT_OCCURRENCES->value,
+                self::MODERATE_COMMENTS->value,
                 // Venue management
                 self::VIEW_VENUES->value,
                 self::EDIT_VENUES->value,
