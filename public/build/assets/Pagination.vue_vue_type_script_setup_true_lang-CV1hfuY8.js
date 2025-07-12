@@ -1,6 +1,0 @@
-import{c as o}from"./createLucideIcon-C1ebVwtv.js";import{d as c,a as s,i as l,o as r,f as i,F as t,r as d,h as m,j as u,e as p,P as f}from"./app-BlriFIqe.js";/**
- * @license lucide-vue-next v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */const v=o("EyeIcon",[["path",{d:"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",key:"1nclc0"}],["circle",{cx:"12",cy:"12",r:"3",key:"1v7zrd"}]]),_={key:0,class:"flex items-center justify-center mt-6"},h={class:"flex flex-wrap -mb-1"},y=["innerHTML"],L=c({__name:"Pagination",props:{links:{}},setup(b){return(n,g)=>n.links.length>3?(r(),s("div",_,[i("div",h,[(r(!0),s(t,null,d(n.links,(e,a)=>(r(),s(t,{key:a},[e.url===null?(r(),s("div",{key:0,class:"mr-1 mb-1 px-4 py-3 text-sm leading-4 text-gray-400 border rounded",innerHTML:e.label},null,8,y)):(r(),m(p(f),{key:1,class:u(["mr-1 mb-1 px-4 py-3 text-sm leading-4 border rounded hover:bg-white focus:border-indigo-500 focus:text-indigo-500",{"bg-white":e.active}]),href:e.url,innerHTML:e.label},null,8,["class","href","innerHTML"]))],64))),128))])])):l("",!0)}});export{v as E,L as _};
