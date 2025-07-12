@@ -66,5 +66,7 @@ const handleCommentPosted = (newComment: Comment) => {
                     <CommentList :comments="localComments" />
                 </div>
             </section>
+
+            
         </div>
 </template>
