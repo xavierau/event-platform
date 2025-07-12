@@ -18,7 +18,7 @@ class MembershipPurchaseData extends Data
         #[Required]
         public readonly PaymentMethod $payment_method,
 
-        public readonly ?string $transaction_reference = null,
+        public ?string $transaction_reference = null,
         public readonly bool $auto_renew = false,
         public readonly ?array $metadata = null,
     ) {}

@@ -7,6 +7,12 @@ import WishlistButton from '@/components/Shared/WishlistButton.vue';
 
 import type { PublicTicketType } from '@/types/ticket';
 
+import CommentList from '@/components/Comments/CommentList.vue';
+import CommentForm from '@/components/Comments/CommentForm.vue';
+import type { Comment } from '@/types/comment';
+
+
+
 interface EventOccurrence {
   id: string | number;
   name: string; // e.g., "上海站", "深圳站"
@@ -38,6 +44,9 @@ interface EventDetails {
   description_html?: string;
   occurrences?: EventOccurrence[];
   landscape_poster_url?: string;
+comments: Comment[];
+comment_config:string;
+
 }
 
 // Props will be passed from the controller, containing the event details
@@ -157,6 +166,15 @@ onMounted(() => {
     console.log(props.event);
 });
 
+const localComments = ref<Comment[]>(props.event.comments || []);
+const showCommentForm = ref(false);
+
+const handleCommentPosted = (newComment: Comment) => {
+    localComments.value.unshift(newComment);
+    showCommentForm.value = false;
+};
+
+
 </script>
 
 <template>
@@ -251,6 +269,21 @@ onMounted(() => {
         <!-- Placeholder for more images/media -->
       </div>
     </section>
+
+<!-- Comments Section -->
+            <section class="bg-white dark:bg-gray-800 p-4 mt-3 shadow-sm" v-if="event.comment_config !== 'disabled'">
+                <div class="container mx-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Comments</h2>
+                        <button @click="showCommentForm = !showCommentForm" class="text-indigo-600 hover:text-indigo-800">
+                            {{ showCommentForm ? 'Cancel' : 'Leave a Comment' }}
+                        </button>
+                    </div>
+                    <CommentForm v-if="showCommentForm" :event-id="event.id" @comment-posted="handleCommentPosted" />
+                    <CommentList :comments="localComments" />
+                </div>
+            </section>
+
 
     <!-- Fixed Footer/Bottom Bar -->
     <footer class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 shadow-top-lg z-50 max-w-[100vw] overflow-hidden">
@@ -385,3 +418,4 @@ onMounted(() => {
   background-color: #6b7280; /* dark:gray-500 */
 }
 </style>
+

@@ -23,46 +23,24 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        $filters = $request->only(['search', 'status', 'event_id', 'user_id', 'date_from', 'date_to', 'sort_by', 'sort_order', 'per_page']);
 
-        // Build filters array from request
-        $filters = [
-            'search' => $request->get('search'),
-            'status' => $request->get('status'),
-            'event_id' => $request->get('event_id'),
-            'user_id' => $request->get('user_id'),
-            'date_from' => $request->get('date_from'),
-            'date_to' => $request->get('date_to'),
-            'sort_by' => $request->get('sort_by', 'created_at'),
-            'sort_order' => $request->get('sort_order', 'desc'),
-            'per_page' => $request->get('per_page', 15),
-        ];
-
-        // Remove empty filters
-        $filters = array_filter($filters, function ($value) {
-            return $value !== null && $value !== '';
-        });
-
-        // Get bookings based on user role
         if ($user->hasRole(RoleNameEnum::ADMIN->value)) {
-            $bookings = $this->bookingService->getAllBookingsWithFilters($filters);
+            $bookings = $this->bookingService->getPaginatedBookings($filters);
             $events = $this->bookingService->getEventsForFilter();
             $statistics = $this->bookingService->getBookingStatistics();
         } elseif ($user->hasRole('organizer')) {
-            $bookings = $this->bookingService->getBookingsForOrganizerEventsWithFilters($user, $filters);
+            $bookings = $this->bookingService->getPaginatedBookingsForOrganizer($user, $filters);
             $events = $this->bookingService->getOrganizerEventsForFilter($user);
             $statistics = $this->bookingService->getBookingStatistics($user);
         } else {
-            // For regular users, redirect to their personal bookings page
             return redirect()->route('my-bookings');
         }
 
-        // Get available booking statuses for filter dropdown
-        $statuses = collect(BookingStatusEnum::cases())->map(function ($status) {
-            return [
-                'value' => $status->value,
-                'label' => ucfirst(str_replace('_', ' ', $status->value))
-            ];
-        });
+        $statuses = collect(BookingStatusEnum::cases())->map(fn($status) => [
+            'value' => $status->value,
+            'label' => $status->label(),
+        ]);
 
         return inertia('Admin/Bookings/Index', [
             'bookings' => $bookings,
@@ -70,10 +48,10 @@ class BookingController extends Controller
             'statuses' => $statuses,
             'statistics' => $statistics,
             'filters' => $filters,
-            'pageTitle' => 'Manage Bookings',
+            'pageTitle' => __('bookings.index_title'),
             'breadcrumbs' => [
-                ['title' => 'Admin', 'href' => route('admin.dashboard')],
-                ['title' => 'Bookings']
+                ['title' => __('common.admin'), 'href' => route('admin.dashboard')],
+                ['title' => __('bookings.index_title')]
             ]
         ]);
     }

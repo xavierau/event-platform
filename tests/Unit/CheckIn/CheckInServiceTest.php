@@ -32,7 +32,6 @@ class CheckInServiceTest extends TestCase
 
         // Create roles for testing
         Role::create(['name' => RoleNameEnum::ADMIN->value]);
-        Role::create(['name' => RoleNameEnum::ORGANIZER->value]);
         Role::create(['name' => RoleNameEnum::USER->value]);
 
         $this->eligibilityService = new CheckInEligibilityService();

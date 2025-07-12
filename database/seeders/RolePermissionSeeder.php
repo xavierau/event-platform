@@ -18,11 +18,10 @@ class RolePermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()['cache']->forget('spatie.permission.cache');
 
-        // Define Roles using Enum
+        // Define roles with their descriptions
         $roles = [
-            RoleNameEnum::ADMIN->value => 'Platform Admin',
-            RoleNameEnum::ORGANIZER->value => 'Organizer',
-            RoleNameEnum::USER->value => 'General User',
+            RoleNameEnum::ADMIN->value => 'Administrator',
+            RoleNameEnum::USER->value => 'Regular User',
         ];
 
         foreach ($roles as $roleValue => $displayName) {
@@ -33,48 +32,17 @@ class RolePermissionSeeder extends Seeder
         // Assign Permissions to Roles
         $platformAdminRole = Role::findByName(RoleNameEnum::ADMIN->value, 'web');
         if ($platformAdminRole) {
+            // Ensure the new 'manage-users' permission exists
+            Permission::firstOrCreate(['name' => 'manage-users', 'guard_name' => 'web']);
+            $this->command->info("Permission 'manage-users' created or ensured.");
+
             // Platform Admin gets all permissions
             $allPermissions = Permission::all();
             $platformAdminRole->givePermissionTo($allPermissions);
             $this->command->info('All permissions assigned to Platform Admin.');
         }
 
-        $organizerRole = Role::findByName(RoleNameEnum::ORGANIZER->value, 'web');
-        if ($organizerRole) {
-            $organizerPermissions = [
-                'viewAny Event',
-                'view Event',
-                'create Event',
-                'update Event',
-                'delete Event',
-                'viewAny EventOccurrence',
-                'view EventOccurrence',
-                'create EventOccurrence',
-                'update EventOccurrence',
-                'delete EventOccurrence',
-                'viewAny Venue',
-                'view Venue',
-                'create Venue',
-                'update Venue',
-                'delete Venue',
-                'viewAny Booking',
-                'view Booking',
-                'viewAny TicketDefinition',
-                'view TicketDefinition',
-                'create TicketDefinition',
-                'update TicketDefinition',
-                'delete TicketDefinition',
-                'viewAny Tag',
-                'view Tag',
-                'viewAny Category',
-                'view Category',
-            ];
-            foreach ($organizerPermissions as $permissionName) {
-                Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']); // Ensure permission exists
-            }
-            $organizerRole->givePermissionTo($organizerPermissions);
-            $this->command->info('Permissions assigned to Organizer.');
-        }
+
 
         $generalUserRole = Role::findByName(RoleNameEnum::USER->value, 'web');
         if ($generalUserRole) {

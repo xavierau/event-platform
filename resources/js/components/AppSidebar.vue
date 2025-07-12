@@ -3,10 +3,16 @@ import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
-import { LayoutGrid,Calendar, MapPin, Tag, Settings, Ticket, Megaphone } from 'lucide-vue-next';
+import type { NavItem, SharedData } from '@/types/index.d';
+import { Link, usePage } from '@inertiajs/vue3';
+import { LayoutGrid,Calendar, MapPin, Tag, Settings, Ticket, Megaphone, FileText, MessageSquare, Users, Percent, UserCog } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import { computed } from 'vue';
+
+const page = usePage<SharedData>();
+const userPermissions = computed(() => page.props.auth.user.permissions || []);
+
+const canManageUsers = computed(() => userPermissions.value.includes('manage-users'));
 
 const mainNavItems: NavItem[] = [
     {
@@ -23,6 +29,31 @@ const mainNavItems: NavItem[] = [
         title: 'Bookings',
         href: '/admin/bookings',
         icon: Ticket,
+    },
+    {
+        title: 'Coupons',
+        href: '/admin/coupons',
+        icon: Percent,
+    },
+    {
+        title: 'Coupon Scanner',
+        href: '/admin/coupon-scanner',
+        icon: Percent,
+    },
+    {
+        title: 'Organizers',
+        href: '/admin/organizers',
+        icon: Users,
+    },
+    {
+        title: 'CMS Pages',
+        href: '/admin/cms-pages',
+        icon: FileText,
+    },
+    {
+        title: 'Contact Submissions',
+        href: '/admin/contact-submissions',
+        icon: MessageSquare,
     },
     {
         title: 'Venues',
@@ -52,6 +83,27 @@ const mainNavItems: NavItem[] = [
 
 ];
 
+const userManagementNavItem: NavItem = {
+    title: 'User Management',
+    href: '/admin/users',
+    icon: UserCog,
+};
+
+const filteredMainNavItems = computed(() => {
+    const items = [...mainNavItems];
+    if (canManageUsers.value) {
+        // find settings index
+        const settingsIndex = items.findIndex(item => item.title === 'Settings');
+        if (settingsIndex !== -1) {
+            items.splice(settingsIndex, 0, userManagementNavItem);
+        } else {
+            items.push(userManagementNavItem);
+        }
+    }
+    return items;
+});
+
+
 const footerNavItems: NavItem[] = [
     // {
     //     title: 'Github Repo',
@@ -76,7 +128,7 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain :items="filteredMainNavItems" />
         </SidebarContent>
 
         <SidebarFooter>

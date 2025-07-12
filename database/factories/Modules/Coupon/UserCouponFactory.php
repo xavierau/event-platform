@@ -33,4 +33,38 @@ class UserCouponFactory extends Factory
             'issued_at' => now(),
         ];
     }
+
+    public function active(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'status' => UserCouponStatusEnum::ACTIVE,
+            'times_used' => 0,
+        ]);
+    }
+
+    public function fullyUsed(): static
+    {
+        return $this->state(function (array $attributes) {
+            $timesCanBeUsed = $attributes['times_can_be_used'] ?? 1;
+            return [
+                'status' => UserCouponStatusEnum::FULLY_USED,
+                'times_used' => $timesCanBeUsed,
+            ];
+        });
+    }
+
+    public function expired(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'status' => UserCouponStatusEnum::EXPIRED,
+            'expires_at' => now()->subDay(),
+        ]);
+    }
+
+    public function withCode(string $code): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'unique_code' => $code,
+        ]);
+    }
 }

@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Models\Organizer;
 
 class CheckInEligibilityService
 {
@@ -73,28 +74,22 @@ class CheckInEligibilityService
      */
     private function validateOperatorAuthorization(User $operator, Booking $booking): ?string
     {
-        // Platform admins can check in any booking
+        // Check if operator is authorized to check in for this event
         if ($operator->hasRole(RoleNameEnum::ADMIN)) {
+            // Admin can check in for any event
             return null;
         }
 
-        // For organizers, they must be the organizer of the specific event
-        if ($operator->hasRole(RoleNameEnum::ORGANIZER)) {
-            // Ensure event relationship is loaded
-            if (!$booking->event) {
-                return 'Cannot validate operator permissions: event not found for this booking';
-            }
+        // Check if user has organizer entity membership for this event's organizer
+        $userOrganizerIds = Organizer::whereHas('users', function ($query) use ($operator) {
+            $query->where('user_id', $operator->id);
+        })->pluck('id');
 
-            // Check if the operator is the organizer of this specific event
-            if ($booking->event->organizer_id !== $operator->id) {
-                return 'The operator must be the organizer of this specific event or a platform admin';
-            }
-
-            return null; // Authorized
+        if (!$userOrganizerIds->contains($booking->event->organizer_id)) {
+            return 'You are not authorized to check in for this event.';
         }
 
-        // User doesn't have the required role
-        return 'The operator must have either organizer or platform admin role';
+        return null; // Authorized
     }
 
 

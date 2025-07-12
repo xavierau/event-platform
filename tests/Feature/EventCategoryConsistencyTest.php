@@ -29,9 +29,11 @@ class EventCategoryConsistencyTest extends TestCase
 
     private function createTestEvent(array $eventData = [], array $occurrenceData = []): Event
     {
-        $organizer = User::factory()->create();
         $category = Category::factory()->create();
         $venue = Venue::factory()->create();
+
+        // Use existing organizer or create one if none exist
+        $organizer = \App\Models\Organizer::inRandomOrder()->first() ?? \App\Models\Organizer::factory()->create();
 
         $defaultEventData = [
             'organizer_id' => $organizer->id,
@@ -106,9 +108,9 @@ class EventCategoryConsistencyTest extends TestCase
         $categoryResponse = $this->get('/events?category=magic');
         $categoryResponse->assertStatus(200);
 
-        $categoryResponse->assertInertia(function ($page) use ($moreEventsEvent, $upcomingEvent) {
+        $categoryResponse->assertInertia(function ($page) use ($moreEventsEvent, $upcomingEvent, $magicCategory) {
             $page->component('Public/EventsByCategory')
-                ->where('title', '魔術')
+                ->where('title', $magicCategory->name)
                 ->has('events', 2); // Should show both events
 
             $events = collect($page->toArray()['props']['events']);
@@ -131,7 +133,7 @@ class EventCategoryConsistencyTest extends TestCase
 
         $allEventsResponse->assertInertia(function ($page) use ($moreEventsEvent, $upcomingEvent) {
             $page->component('Public/EventsByCategory')
-                ->where('title', '全部活動')
+                ->where('title', trans('messages.All Events'))
                 ->has('events', 2); // Should show both events
 
             $events = collect($page->toArray()['props']['events']);
@@ -188,9 +190,9 @@ class EventCategoryConsistencyTest extends TestCase
         $categoryResponse = $this->get('/events?category=test-category');
         $categoryResponse->assertStatus(200);
 
-        $categoryResponse->assertInertia(function ($page) use ($todayEvent, $tomorrowEvent, $nextWeekEvent, $nextMonthEvent) {
+        $categoryResponse->assertInertia(function ($page) use ($todayEvent, $tomorrowEvent, $nextWeekEvent, $nextMonthEvent, $category) {
             $page->component('Public/EventsByCategory')
-                ->where('title', '測試分類')
+                ->where('title', $category->name)
                 ->has('events', 4); // Should show all 4 events
 
             $events = collect($page->toArray()['props']['events']);

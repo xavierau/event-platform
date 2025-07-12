@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Venue;
-use App\Models\User; // For organizer_id
+use App\Models\Organizer; // For organizer_id
 use App\Models\Country; // Assuming Country model & factory exist
 use App\Models\State;   // Assuming State model & factory exist
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -24,9 +24,15 @@ class VenueFactory extends Factory
     {
         $nameEn = $this->faker->company;
         return [
-            'organizer_id' => User::factory(), // Or null if nullable and you want to test that
-            'country_id' => Country::factory(), // Assuming CountryFactory exists
-            'state_id' => State::factory(), // Assuming StateFactory exists and state is linked to country
+            'organizer_id' => null, // Public venue by default, can be overridden with Organizer::factory()
+            'country_id' => function () {
+                // Use existing country or create one if none exist
+                return Country::inRandomOrder()->first()?->id ?? Country::factory()->create()->id;
+            },
+            'state_id' => function () {
+                // Use existing state or create one if none exist
+                return State::inRandomOrder()->first()?->id ?? State::factory()->create()->id;
+            },
             'name' => ['en' => $nameEn],
             'slug' => strtolower(str_replace(' ', '-', $nameEn)) . '-' . $this->faker->unique()->randomNumber(5), // Ensure uniqueness for tests
             'description' => ['en' => $this->faker->optional()->paragraph],
@@ -44,5 +50,25 @@ class VenueFactory extends Factory
             // 'created_by' => User::factory(), // If you have these fields
             // 'updated_by' => User::factory(),
         ];
+    }
+
+    /**
+     * Create an organizer-specific venue.
+     */
+    public function forOrganizer($organizer = null): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'organizer_id' => $organizer ?? Organizer::factory(),
+        ]);
+    }
+
+    /**
+     * Create a public venue (explicitly set organizer_id to null).
+     */
+    public function public(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'organizer_id' => null,
+        ]);
     }
 }

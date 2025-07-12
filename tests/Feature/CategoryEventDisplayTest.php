@@ -28,9 +28,11 @@ class CategoryEventDisplayTest extends TestCase
 
     private function createTestEvent(array $eventData = [], array $occurrenceData = []): Event
     {
-        $organizer = User::factory()->create();
         $category = Category::factory()->create();
         $venue = Venue::factory()->create();
+
+        // Use existing organizer or create one if none exist
+        $organizer = \App\Models\Organizer::inRandomOrder()->first() ?? \App\Models\Organizer::factory()->create();
 
         $defaultEventData = [
             'organizer_id' => $organizer->id,
@@ -124,7 +126,7 @@ class CategoryEventDisplayTest extends TestCase
 
         $allEventsResponse->assertInertia(function ($page) use ($magicEvent) {
             $page->component('Public/EventsByCategory')
-                ->where('title', '全部活動')
+                ->where('title', trans('messages.All Events'))
                 ->has('events', 1)
                 ->where('events.0.id', $magicEvent->id)
                 ->where('events.0.name', '魔術夢幻學院')

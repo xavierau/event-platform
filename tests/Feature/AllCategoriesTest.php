@@ -32,8 +32,11 @@ class AllCategoriesTest extends TestCase
         // Use existing venue or create one with existing country to avoid constraint violations
         $venue = Venue::first() ?: Venue::factory()->create();
 
+        // Use existing organizer or create one if none exist
+        $organizer = \App\Models\Organizer::inRandomOrder()->first() ?? \App\Models\Organizer::factory()->create();
+
         $defaultEventData = [
-            'organizer_id' => $user->id,
+            'organizer_id' => $organizer->id,
             'category_id' => $category->id,
             'name' => ['en' => 'Test Event'],
             'slug' => ['en' => 'test-event'],

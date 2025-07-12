@@ -25,7 +25,6 @@ class TicketOccurrenceValidationTest extends TestCase
         $this->eligibilityService = new CheckInEligibilityService();
 
         Role::create(['name' => RoleNameEnum::ADMIN->value]);
-        Role::create(['name' => RoleNameEnum::ORGANIZER->value]);
     }
 
     /** @test */

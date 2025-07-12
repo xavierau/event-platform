@@ -27,14 +27,14 @@ class HomeControllerTest extends TestCase
 
     private function createTestEvent(array $eventData = [], array $occurrenceData = []): Event
     {
-        $user = User::factory()->create();
+        $organizer = \App\Models\Organizer::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
 
         // Use existing venue or create one with existing country to avoid constraint violations
         $venue = Venue::first() ?: Venue::factory()->create();
 
         $defaultEventData = [
-            'organizer_id' => $user->id,
+            'organizer_id' => $organizer->id,
             'category_id' => $category->id,
             'name' => ['en' => 'Test Event'],
             'slug' => ['en' => 'test-event'],
@@ -162,13 +162,13 @@ class HomeControllerTest extends TestCase
     public function test_home_page_only_includes_published_events(): void
     {
         $todayStart = now()->utc()->startOfDay();
-        $user = User::factory()->create();
+        $organizer = \App\Models\Organizer::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
         $venue = Venue::factory()->create();
 
         // Create published event
         $publishedEvent = Event::factory()->create([
-            'organizer_id' => $user->id,
+            'organizer_id' => $organizer->id,
             'category_id' => $category->id,
             'name' => ['en' => 'Published Event'],
             'event_status' => 'published',
@@ -185,7 +185,7 @@ class HomeControllerTest extends TestCase
 
         // Create draft event (should not appear)
         $draftEvent = Event::factory()->create([
-            'organizer_id' => $user->id,
+            'organizer_id' => $organizer->id,
             'category_id' => $category->id,
             'name' => ['en' => 'Draft Event'],
             'event_status' => 'draft',
@@ -214,12 +214,12 @@ class HomeControllerTest extends TestCase
     public function test_home_page_only_includes_scheduled_occurrences(): void
     {
         $todayStart = now()->utc()->startOfDay();
-        $user = User::factory()->create();
+        $organizer = \App\Models\Organizer::factory()->create();
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
         $venue = Venue::factory()->create();
 
         $event = Event::factory()->create([
-            'organizer_id' => $user->id,
+            'organizer_id' => $organizer->id,
             'category_id' => $category->id,
             'name' => ['en' => 'Test Event'],
             'event_status' => 'published',

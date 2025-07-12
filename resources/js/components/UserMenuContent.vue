@@ -3,7 +3,7 @@ import UserInfo from '@/components/UserInfo.vue';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { LogOut, Heart, Ticket, Wallet } from 'lucide-vue-next';
+import { LogOut, Heart, Ticket, Wallet, Settings } from 'lucide-vue-next';
 
 interface Props {
     user: User;
@@ -42,12 +42,18 @@ defineProps<Props>();
                 My Wallet
             </Link>
         </DropdownMenuItem>
-        <!-- <DropdownMenuItem :as-child="true">
+        <DropdownMenuItem :as-child="true">
+            <Link class="block w-full" :href="route('my-membership')" prefetch as="button">
+                <Ticket class="mr-2 h-4 w-4" />
+                My Membership
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="route('profile.edit')" prefetch as="button">
                 <Settings class="mr-2 h-4 w-4" />
-                Settings
+                My Profile
             </Link>
-        </DropdownMenuItem> -->
+        </DropdownMenuItem>
     </DropdownMenuGroup>
     <DropdownMenuSeparator />
     <DropdownMenuItem :as-child="true">

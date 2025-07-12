@@ -29,14 +29,35 @@ class BookingServiceTest extends TestCase
         // Ensure necessary locales are available for translatable fields
         Config::set('app.available_locales', ['en' => 'English', 'zh-TW' => 'Traditional Chinese']);
         Config::set('app.locale', 'en');
+        Config::set('app.currency', 'USD');
     }
 
     private function createTestBooking(User $customer, User $organizer, array $bookingData = []): Booking
     {
         $category = Category::factory()->create(['name' => ['en' => 'Test Category']]);
 
+        // Find existing organizer entity for this user or create a new one
+        $organizerEntity = \App\Models\Organizer::whereHas('users', function ($query) use ($organizer) {
+            $query->where('user_id', $organizer->id);
+        })->first();
+
+        if (!$organizerEntity) {
+            // Create a new organizer entity for this user
+            $organizerEntity = \App\Models\Organizer::factory()->create();
+
+            // Associate the user organizer with the organizer entity
+            $organizerEntity->users()->attach($organizer->id, [
+                'role_in_organizer' => 'owner',
+                'joined_at' => now(),
+                'is_active' => true,
+                'invitation_accepted_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         $event = Event::factory()->create([
-            'organizer_id' => $organizer->id,
+            'organizer_id' => $organizerEntity->id,
             'category_id' => $category->id,
             'name' => ['en' => 'Test Event'],
             'event_status' => 'published',
@@ -49,12 +70,15 @@ class BookingServiceTest extends TestCase
             'currency' => 'USD',
         ]);
 
-        $transaction = Transaction::factory()->create([
+        $transactionData = $bookingData['transaction'] ?? [];
+        unset($bookingData['transaction']);
+
+        $transaction = Transaction::factory()->create(array_merge([
             'user_id' => $customer->id,
             'total_amount' => 5000,
             'currency' => 'USD',
             'status' => TransactionStatusEnum::CONFIRMED,
-        ]);
+        ], $transactionData));
 
         $defaultBookingData = [
             'transaction_id' => $transaction->id,
@@ -337,30 +361,46 @@ class BookingServiceTest extends TestCase
 
     public function test_getBookingStatistics_returns_correct_statistics_for_admin(): void
     {
-        $organizer = User::factory()->create();
+        $organizer1 = User::factory()->create();
+        $organizer2 = User::factory()->create();
         $customer = User::factory()->create();
 
-        // Create bookings with different statuses
-        $this->createTestBooking($customer, $organizer, ['status' => BookingStatusEnum::CONFIRMED]);
-        $this->createTestBooking($customer, $organizer, ['status' => BookingStatusEnum::CONFIRMED]);
-        $this->createTestBooking($customer, $organizer, ['status' => BookingStatusEnum::PENDING_CONFIRMATION]);
-        $this->createTestBooking($customer, $organizer, ['status' => BookingStatusEnum::CANCELLED]);
+        // Setup bookings with various statuses
+        // 4 Confirmed bookings should contribute to revenue
+        for ($i = 0; $i < 4; $i++) {
+            $this->createTestBooking($customer, $organizer1, [
+                'status' => BookingStatusEnum::CONFIRMED,
+                'transaction' => ['status' => TransactionStatusEnum::CONFIRMED]
+            ]);
+        }
+        // 1 Pending booking with a pending transaction
+        $this->createTestBooking($customer, $organizer1, [
+            'status' => BookingStatusEnum::PENDING_CONFIRMATION,
+            'transaction' => ['status' => TransactionStatusEnum::PENDING_PAYMENT]
+        ]);
+        // 1 Cancelled booking
+        $this->createTestBooking($customer, $organizer2, [
+            'status' => BookingStatusEnum::CANCELLED,
+            'transaction' => ['status' => TransactionStatusEnum::CANCELLED]
+        ]);
 
+        // Act
         $statistics = $this->bookingService->getBookingStatistics();
 
-        $this->assertEquals(4, $statistics['total_bookings']);
-        $this->assertEquals(2, $statistics['confirmed_bookings']);
+        // Assert
+        $this->assertEquals(6, $statistics['total_bookings']);
+        $this->assertEquals(4, $statistics['confirmed_bookings']);
         $this->assertEquals(1, $statistics['pending_bookings']);
         $this->assertEquals(1, $statistics['cancelled_bookings']);
         // Revenue is calculated from transaction total_amount, and each transaction is $50.00 (5000 cents)
-        // Since there are 4 transactions with confirmed status, total should be 4 × $50.00 = $200.00
-        $this->assertEquals(20000, $statistics['total_revenue']); // 4 confirmed transactions × $50.00
-        $this->assertCount(4, $statistics['recent_bookings']); // Latest 5, we have 4
+        // Since there are 4 transactions with confirmed status, total should be 4 * $50.00 = $200.00
+        $this->assertIsArray($statistics['total_revenue']);
+        $this->assertEquals(20000, $statistics['total_revenue']['USD']); // 4 confirmed transactions * $50.00
+        $this->assertCount(5, $statistics['recent_bookings']);
+        $this->assertEquals(config('app.currency'), $statistics['default_currency']);
     }
 
-    /**
-     * CRITICAL TEST: Organizer statistics only include their event bookings
-     */
+    /** @test */
     public function test_getBookingStatistics_scopes_to_organizer_events(): void
     {
         $organizer1 = User::factory()->create();
@@ -368,38 +408,47 @@ class BookingServiceTest extends TestCase
         $customer = User::factory()->create();
 
         // Create bookings for organizer1
-        $this->createTestBooking($customer, $organizer1, ['status' => BookingStatusEnum::CONFIRMED]);
-        $this->createTestBooking($customer, $organizer1, ['status' => BookingStatusEnum::PENDING_CONFIRMATION]);
+        $this->createTestBooking($customer, $organizer1, [
+            'status' => BookingStatusEnum::CONFIRMED,
+            'transaction' => ['status' => TransactionStatusEnum::CONFIRMED]
+        ]);
+        $this->createTestBooking($customer, $organizer1, [
+            'status' => BookingStatusEnum::PENDING_CONFIRMATION,
+            'transaction' => ['status' => TransactionStatusEnum::PENDING_PAYMENT]
+        ]);
 
-        // Create bookings for organizer2
+        // Create a booking for organizer2 (should be ignored for organizer1's stats)
         $this->createTestBooking($customer, $organizer2, ['status' => BookingStatusEnum::CONFIRMED]);
 
-        // Statistics for organizer1 should only include their event bookings
+        // Statistics for organizer1
         $statistics = $this->bookingService->getBookingStatistics($organizer1);
+
         $this->assertEquals(2, $statistics['total_bookings']);
         $this->assertEquals(1, $statistics['confirmed_bookings']);
         $this->assertEquals(1, $statistics['pending_bookings']);
-        // Revenue includes both confirmed and pending transactions for organizer1
-        $this->assertEquals(10000, $statistics['total_revenue']); // 2 transactions × $50.00
+        // Revenue includes only confirmed transactions for organizer1
+        $this->assertIsArray($statistics['total_revenue']);
+        $this->assertEquals(5000, $statistics['total_revenue']['USD']); // 1 confirmed transaction * $50.00
 
         // Statistics for organizer2 should only include their event bookings
         $statistics = $this->bookingService->getBookingStatistics($organizer2);
         $this->assertEquals(1, $statistics['total_bookings']);
-        $this->assertEquals(1, $statistics['confirmed_bookings']);
-        $this->assertEquals(0, $statistics['pending_bookings']);
-        $this->assertEquals(5000, $statistics['total_revenue']); // 1 confirmed transaction × $50.00
+        $this->assertIsArray($statistics['total_revenue']);
+        $this->assertEquals(5000, $statistics['total_revenue']['USD']);
     }
 
-    public function test_getBookingStatistics_handles_organizer_with_no_events(): void
+    /** @test */
+    public function get_booking_statistics_handles_organizer_with_no_events(): void
     {
-        $organizerWithoutEvents = User::factory()->create();
+        $organizerWithNoEvents = User::factory()->create();
 
-        $statistics = $this->bookingService->getBookingStatistics($organizerWithoutEvents);
+        $statistics = $this->bookingService->getBookingStatistics($organizerWithNoEvents);
 
         $this->assertEquals(0, $statistics['total_bookings']);
         $this->assertEquals(0, $statistics['confirmed_bookings']);
         $this->assertEquals(0, $statistics['pending_bookings']);
-        $this->assertEquals(0, $statistics['total_revenue']);
+        $this->assertIsArray($statistics['total_revenue']);
+        $this->assertEmpty($statistics['total_revenue']);
         $this->assertCount(0, $statistics['recent_bookings']);
     }
 

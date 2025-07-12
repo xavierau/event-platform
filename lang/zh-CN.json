@@ -1,0 +1,138 @@
+{
+    "organizers": {
+        "show_title": "主办单位详情",
+        "show_subtitle": "查看主办单位的详细信息。",
+        "organizer_details": "主办单位详情",
+        "contact_info": "联系信息",
+        "social_media": "社交媒体",
+        "contract_details": "合约详情",
+        "terms": "条款",
+        "rate_structure": "费率结构",
+        "payment_terms": "付款条款",
+        "cancellation_policy": "取消政策",
+        "effective_date": "生效日期",
+        "expiry_date": "到期日期",
+        "team_members": "团队成员",
+        "team_members_subtitle": "管理和邀请成员到此组织。",
+        "invite_user": "邀请用户",
+        "invite_new_member": "邀请新成员",
+        "invite_new_member_desc": "输入电子邮件地址并分配角色以邀请新成员。",
+        "index_title": "主办单位",
+        "index_subtitle": "管理系统中的所有主办单位。",
+        "create_button": "创建主办单位",
+        "search_placeholder": "按名称、电子邮件或描述搜索...",
+        "no_organizers_found": "未找到主办单位。",
+        "team_members_count": "{count} 名成员",
+        "events_count": "{count} 个活动",
+        "delete_title": "删除主办单位",
+        "delete_confirmation": "您确定要删除 {name} 吗？此操作无法撤销，并将影响所有相关的活动和数据。",
+        "delete_button": "删除主办单位"
+    },
+    "actions": {
+        "edit": "编辑",
+        "send_invitation": "发送邀请",
+        "view": "查看",
+        "delete": "删除",
+        "cancel": "取消",
+        "save": "保存"
+    },
+    "status": {
+        "active": "启用",
+        "inactive": "停用",
+        "pending": "待定"
+    },
+    "common": {
+        "description": "描述",
+        "yes": "是",
+        "no": "否"
+    },
+    "addresses": {
+        "address": "地址"
+    },
+    "messages": {
+        "no_contact_info": "未提供联系信息。",
+        "no_description": "未提供描述。",
+        "no_address": "未提供地址。",
+        "no_contract_details": "未提供合约详情。",
+        "no_team_members": "未找到该组织的团队成员。",
+        "organizer_invited_successfully": "主办单位邀请成功。",
+        "organizer_invitation_failed": "邀请主办单位失败。"
+    },
+    "users": {
+        "edit_title": "编辑用户：{name}",
+        "edit_subtitle": "更新用户详情和状态。",
+        "no_users_found": "未找到用户。"
+    },
+    "fields": {
+        "name": "姓名",
+        "email": "电子邮件",
+        "commenting_blocked": "禁止评论",
+        "membership_level": "会员等级",
+        "organization": "组织",
+        "role": "角色",
+        "status": "状态",
+        "actions": "操作",
+        "search": "搜索",
+        "sort_by": "排序方式",
+        "order": "顺序",
+        "created_date": "创建日期",
+        "events_count": "活动数量",
+        "logo": "标志",
+        "location": "地点",
+        "team": "团队",
+        "events": "活动",
+        "search_by_name": "按名称搜索",
+        "category": "类别",
+        "organizer": "主办方",
+        "visibility": "可见性",
+        "featured": "精选",
+        "published_at": "发布于",
+        "booking_number": "预订号",
+        "customer": "客户",
+        "total_price": "总价",
+        "date": "日期",
+        "date_from": "开始日期",
+        "date_to": "结束日期",
+        "transaction": "交易",
+        "event": "活动"
+    },
+    "filters": {
+        "all_statuses": "所有状态",
+        "ascending": "升序",
+        "descending": "降序",
+        "all_events": "所有活动"
+    },
+    "events": {
+        "index_title": "活动列表",
+        "index_subtitle": "管理系统中的所有活动。",
+        "manage_ticket_definitions_button": "管理票种",
+        "create_button": "创建活动",
+        "search_placeholder": "按活动名称搜索...",
+        "no_events_found": "未找到活动。",
+        "occurrences": "场次",
+        "delete_title": "删除活动",
+        "delete_confirmation": "您确定要删除活动 {name} 吗？此操作无法撤销。",
+        "delete_button": "删除活动",
+        "status": {
+            "draft": "草稿",
+            "pending_approval": "待审批",
+            "published": "已发布",
+            "cancelled": "已取消",
+            "completed": "已完成",
+            "past": "已过期"
+        }
+    },
+    "bookings": {
+        "index_title": "预订管理",
+        "index_subtitle": "管理和查看所有活动的预订。",
+        "scan_qr_button": "扫描QR码",
+        "search_placeholder": "按预订号、用户名、邮箱搜索...",
+        "no_bookings_found": "未找到任何预订。",
+        "stats": {
+            "total_bookings": "总预订数",
+            "confirmed_bookings": "已确认",
+            "pending_bookings": "待处理",
+            "total_revenue": "总收入"
+        }
+    }
+}

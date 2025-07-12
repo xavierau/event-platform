@@ -13,11 +13,13 @@ use Laravel\Cashier\Billable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use App\Traits\HasOrganizerPermissions;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles, Billable;
+    use HasFactory, Notifiable, HasRoles, Billable, HasOrganizerPermissions;
 
     /**
      * The attributes that are mass assignable.
@@ -29,6 +31,11 @@ class User extends Authenticatable
         'email',
         'mobile_number',
         'password',
+        'provider',
+        'provider_id',
+        'provider_token',
+        'provider_refresh_token',
+        'is_commenting_blocked',
     ];
 
     /**
@@ -51,6 +58,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_commenting_blocked' => 'boolean',
         ];
     }
 
@@ -155,8 +163,151 @@ class User extends Authenticatable
         return $this->getKillPointsBalance() >= $amount;
     }
 
+    /**
+     * Get organizers that this user belongs to.
+     */
+    public function organizers(): BelongsToMany
+    {
+        return $this->belongsToMany(Organizer::class, 'organizer_users')
+            ->withPivot([
+                'role_in_organizer',
+                'permissions',
+                'joined_at',
+                'is_active',
+                'invited_by',
+                'invitation_accepted_at'
+            ])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get active organizer memberships.
+     */
+    public function activeOrganizers(): BelongsToMany
+    {
+        return $this->organizers()->wherePivot('is_active', true);
+    }
+
+    /**
+     * Get organizers where user has a specific role.
+     */
+    public function organizersByRole(\App\Enums\OrganizerRoleEnum $role): BelongsToMany
+    {
+        return $this->activeOrganizers()->wherePivot('role_in_organizer', $role->value);
+    }
+
+    /**
+     * Get organizers where user is an owner.
+     */
+    public function ownedOrganizers(): BelongsToMany
+    {
+        return $this->organizersByRole(\App\Enums\OrganizerRoleEnum::OWNER);
+    }
+
+    /**
+     * Get organizers where user is a manager.
+     */
+    public function managedOrganizers(): BelongsToMany
+    {
+        return $this->organizersByRole(\App\Enums\OrganizerRoleEnum::MANAGER);
+    }
+
+    /**
+     * Check if user belongs to any organizer.
+     */
+    public function hasOrganizerMembership(): bool
+    {
+        return $this->activeOrganizers()->exists();
+    }
+
+    /**
+     * Check if user has a specific role in any organizer.
+     */
+    public function hasOrganizerRole(\App\Enums\OrganizerRoleEnum $role): bool
+    {
+        return $this->organizersByRole($role)->exists();
+    }
+
+    /**
+     * Check if user is an organizer owner.
+     */
+    public function isOrganizerOwner(): bool
+    {
+        return $this->hasOrganizerRole(\App\Enums\OrganizerRoleEnum::OWNER);
+    }
+
+    /**
+     * Check if user is an organizer member (any role).
+     */
+    public function isOrganizerMember(): bool
+    {
+        return $this->hasOrganizerMembership();
+    }
+
+    /**
+     * Get user's role in a specific organizer.
+     */
+    public function getOrganizerRole(Organizer $organizer): ?\App\Enums\OrganizerRoleEnum
+    {
+        $pivot = $this->organizers()->where('organizer_id', $organizer->id)->first()?->pivot;
+
+        if (!$pivot || !$pivot->is_active) {
+            return null;
+        }
+
+        return \App\Enums\OrganizerRoleEnum::tryFrom($pivot->role_in_organizer);
+    }
+
+    /**
+     * Check if user is a member of a specific organizer.
+     */
+    public function isMemberOfOrganizer(Organizer $organizer): bool
+    {
+        return !is_null($this->getOrganizerRole($organizer));
+    }
+
+    /**
+     * Check if user can manage a specific organizer.
+     */
+    public function canManageOrganizer(Organizer $organizer): bool
+    {
+        $role = $this->getOrganizerRole($organizer);
+        return $role && $role->canManageOrganizer();
+    }
+
+    /**
+     * Check if user can manage users in a specific organizer.
+     */
+    public function canManageOrganizerUsers(Organizer $organizer): bool
+    {
+        $role = $this->getOrganizerRole($organizer);
+        return $role && $role->canManageUsers();
+    }
+
+    /**
+     * Get all organizers that user can manage events for.
+     * Uses the HasOrganizerPermissions trait method for fine-grained permission checking.
+     */
+    public function getEventManageableOrganizers(): BelongsToMany
+    {
+        // Get organizers where user has event management permissions
+        $organizerIds = $this->getOrganizersWhereCanManageEvents()->pluck('id');
+
+        return $this->activeOrganizers()->whereIn('organizer_id', $organizerIds);
+    }
+
     public function membership(): HasOne
     {
         return $this->hasOne(UserMembership::class)->ofMany('started_at', 'max');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
     }
 }

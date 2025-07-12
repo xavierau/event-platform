@@ -22,11 +22,15 @@ class CouponUsageLog extends Model
         'redeemed_by_user_id',
         'redeemed_at',
         'context',
+        'user_id',
+        'used_at',
+        'location',
+        'details',
     ];
 
     protected $casts = [
-        'redeemed_at' => 'datetime',
-        'context' => 'array',
+        'used_at' => 'datetime',
+        'details' => 'array',
     ];
 
     public function userCoupon(): BelongsTo
@@ -37,5 +41,10 @@ class CouponUsageLog extends Model
     public function redeemedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'redeemed_by_user_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

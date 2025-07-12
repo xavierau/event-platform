@@ -10,6 +10,16 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Helpers\CurrencyHelper;
+use App\Models\User;
+use App\Models\Organizer;
+use App\Models\Category;
+use App\Models\EventOccurrence;
+use App\Models\Tag;
+use App\Models\Venue;
+use App\Enums\CommentConfigEnum;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Event extends Model implements HasMedia
 {
@@ -52,6 +62,8 @@ class Event extends Model implements HasMedia
         'published_at',
         'created_by',
         'updated_by',
+        'comment_config',
+        'seating_chart',
     ];
 
     public array $translatable = [
@@ -77,11 +89,12 @@ class Event extends Model implements HasMedia
         'social_media_links' => 'json',
         'published_at' => 'datetime',
         'is_featured' => 'boolean',
+        'comment_config' => CommentConfigEnum::class,
     ];
 
     public function organizer()
     {
-        return $this->belongsTo(User::class, 'organizer_id');
+        return $this->belongsTo(Organizer::class, 'organizer_id');
     }
 
     public function category()
@@ -89,7 +102,7 @@ class Event extends Model implements HasMedia
         return $this->belongsTo(Category::class);
     }
 
-    public function tags()
+    public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'event_tag');
     }
@@ -102,6 +115,11 @@ class Event extends Model implements HasMedia
     public function eventOccurrences()
     {
         return $this->hasMany(EventOccurrence::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
     }
 
     // public function ticketDefinitions() // This relationship is no longer directly valid as TicketDefinition does not have event_id.
@@ -118,6 +136,43 @@ class Event extends Model implements HasMedia
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get the organizer entity for this event.
+     * Alias for organizer() for clarity.
+     */
+    public function organizerEntity()
+    {
+        return $this->organizer();
+    }
+
+    /**
+     * Check if the event has an organizer.
+     */
+    public function hasOrganizer(): bool
+    {
+        return !is_null($this->organizer_id);
+    }
+
+    /**
+     * Get the organizer name in the current locale.
+     */
+    public function getOrganizerName(): ?string
+    {
+        return $this->organizer?->getTranslation('name', app()->getLocale());
+    }
+
+    /**
+     * Check if a user can manage this event through their organizer membership.
+     */
+    public function canBeEditedByUser(User $user): bool
+    {
+        if (!$this->organizer) {
+            return false;
+        }
+
+        return $this->organizer->userCanManageEvents($user);
     }
 
     public function registerMediaCollections(): void
@@ -265,49 +320,19 @@ class Event extends Model implements HasMedia
      *
      * @param string|int $identifier Event ID or slug
      * @param array $with Relationships to eager load
-     * @return static
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @return static|null
      */
     public static function findPublishedByIdentifier($identifier, array $with = [])
     {
         return static::with($with)
             ->where('event_status', 'published')
             ->where(function ($query) use ($identifier) {
-                // Try to find by ID first (if numeric), then by slug
                 if (is_numeric($identifier)) {
                     $query->where('id', $identifier);
                 } else {
-                    // Search in translatable slug field (JSON) - find exact match in any locale
-                    // Use database-specific JSON functions for optimal performance
-                    $databaseDriver = config('database.default');
-                    $connectionConfig = config("database.connections.{$databaseDriver}");
-                    $driver = $connectionConfig['driver'] ?? $databaseDriver;
-
-                    $query->where(function ($subQuery) use ($identifier, $driver) {
-                        switch ($driver) {
-                            case 'mysql':
-                                // MySQL: Use JSON_SEARCH for exact value matching
-                                $subQuery->whereRaw("JSON_SEARCH(slug, 'one', ?) IS NOT NULL", [$identifier]);
-                                break;
-
-                            case 'pgsql':
-                                // PostgreSQL: Use JSON operators for exact value matching
-                                $subQuery->whereRaw("slug::jsonb ? ?", [$identifier])
-                                    ->orWhereRaw("EXISTS (SELECT 1 FROM jsonb_each_text(slug::jsonb) WHERE value = ?)", [$identifier]);
-                                break;
-
-                            case 'sqlite':
-                            default:
-                                // SQLite and fallback: Use LIKE with precise patterns
-                                // Use addslashes for proper escaping in LIKE queries
-                                $escapedIdentifier = addslashes($identifier);
-                                $subQuery->where('slug', 'LIKE', '%:"' . $escapedIdentifier . '"%')  // After colon
-                                    ->orWhere('slug', 'LIKE', '%{"' . $escapedIdentifier . '"%'); // At start of object
-                                break;
-                        }
-                    });
+                    $query->whereJsonContains('slug', $identifier);
                 }
             })
-            ->firstOrFail();
+            ->first();
     }
 }

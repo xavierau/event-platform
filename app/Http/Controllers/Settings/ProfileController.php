@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Modules\Membership\Services\MembershipService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,11 +15,39 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     /**
+     * Show the user's membership page.
+     */
+    public function myMembership(Request $request, MembershipService $membershipService): Response
+    {
+        $membership = $membershipService->checkMembershipStatus($request->user());
+
+        return Inertia::render('Profile/MyMembership', [
+            'membership' => $membership,
+        ]);
+    }
+
+    /**
      * Show the user's profile settings page.
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request, MembershipService $membershipService): Response
     {
-        return Inertia::render('settings/Profile', [
+        $user = $request->user();
+
+        // Check if user is platform admin
+        if ($user->hasRole('platform-admin')) {
+            return Inertia::render('settings/Profile', [
+                'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+                'status' => $request->session()->get('status'),
+            ]);
+        }
+
+        // Get user's membership information
+        $membership = $membershipService->checkMembershipStatus($user);
+
+        // For non-admin users, show the simplified profile page
+        return Inertia::render('Profile/MyProfile', [
+            'user' => $user,
+            'membership' => $membership,
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
         ]);

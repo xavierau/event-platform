@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Modules\Coupon\Models\UserCoupon;
 
 class Coupon extends Model
 {
@@ -41,6 +42,10 @@ class Coupon extends Model
         'discount_value' => 'integer',
         'max_issuance' => 'integer',
         'redemption_methods' => 'array',
+        'discount_value' => 'integer',
+        'valid_from' => 'datetime',
+        'expires_at' => 'datetime',
+        'max_issuance' => 'integer',
     ];
 
     public function organizer(): BelongsTo

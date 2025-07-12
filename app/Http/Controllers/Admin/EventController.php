@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Illuminate\Http\RedirectResponse;
+use App\Enums\CommentConfigEnum; // Added for comment config options
 
 class EventController extends Controller
 {
@@ -22,11 +23,8 @@ class EventController extends Controller
     public function __construct(EventService $eventService)
     {
         $this->eventService = $eventService;
-        // Optional: Add middleware for authorization (e.g., using Spatie/laravel-permission)
-        // $this->middleware('can:view events')->only(['index', 'show']);
-        // $this->middleware('can:create events')->only(['create', 'store']);
-        // $this->middleware('can:edit events')->only(['edit', 'update']);
-        // $this->middleware('can:delete events')->only(['destroy']);
+        // Use the EventPolicy for authorization
+        $this->authorizeResource(Event::class, 'event');
     }
 
     /**
@@ -166,6 +164,7 @@ class EventController extends Controller
                     'tag_ids' => $tagIds, // Ensure tag_ids are in the top level for form binding
                 ]
             ),
+            'commentConfigOptions' => collect(CommentConfigEnum::cases())->map(fn($case) => ['value' => $case->value, 'label' => ucfirst($case->value)])->values()->toArray(),
             'availableLocales' => $availableLocalesForView, // Pass the locales to the view
             'categories' => Category::orderBy('name->' . app()->getLocale())->get()->map(fn($cat) => ['value' => $cat->id, 'label' => $cat->name]),
             'tags' => Tag::orderBy('name->' . app()->getLocale())->get()->map(fn($tag) => ['value' => $tag->id, 'label' => $tag->name]),

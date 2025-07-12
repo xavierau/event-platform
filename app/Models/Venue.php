@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Translatable\HasTranslations;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use App\Models\Organizer;
 
 class Venue extends Model implements HasMedia
 {
@@ -90,7 +91,7 @@ class Venue extends Model implements HasMedia
 
     public function organizer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'organizer_id');
+        return $this->belongsTo(Organizer::class, 'organizer_id');
     }
 
     public function state(): BelongsTo
@@ -106,5 +107,36 @@ class Venue extends Model implements HasMedia
     public function getAddressAttribute(): string
     {
         return $this->address_line_1 . ' ' . $this->address_line_2 . ' ' . $this->city . ' ' . $this->postal_code . ' ';
+    }
+
+    // Helper methods for dual ownership as per ORG-004 requirements
+
+    /**
+     * Check if this venue is public (not owned by any organizer).
+     */
+    public function isPublic(): bool
+    {
+        return is_null($this->organizer_id);
+    }
+
+    /**
+     * Check if this venue is owned by a specific organizer.
+     */
+    public function isOwnedBy($organizer): bool
+    {
+        if (is_null($this->organizer_id)) {
+            return false;
+        }
+
+        $organizerId = is_object($organizer) ? $organizer->id : $organizer;
+        return $this->organizer_id === $organizerId;
+    }
+
+    /**
+     * Check if this venue is organizer-specific (not public).
+     */
+    public function isOrganizerSpecific(): bool
+    {
+        return !$this->isPublic();
     }
 }
