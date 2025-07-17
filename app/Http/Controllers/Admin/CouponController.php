@@ -26,10 +26,21 @@ class CouponController extends Controller
      */
     public function index(Request $request): InertiaResponse
     {
+        $organizers = Organizer::orderBy('name')->get(['id', 'name']);
         // TODO: Implement filtering/searching by organizer, status, type, etc.
         $coupons = Coupon::with('organizer')
+            ->when($request->input('organizer_id'), function ($query) use ($request) {
+                return $query->where('organizer_id', $request->input('organizer_id'));
+            })
+            ->when($request->input('type'), function ($query) use ($request) {
+                return $query->where('type', $request->input('type'));
+            })
+            ->when($request->input('search'), function ($query) use ($request) {
+                return $query->where('name', 'like', '%' . $request->input('search') . '%')
+                    ->orWhere('code', 'like', '%' . $request->input('search') . '%');
+            })
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate();
 
         return Inertia::render('Admin/Coupons/Index', [
             'pageTitle' => 'Coupons',
@@ -38,6 +49,7 @@ class CouponController extends Controller
                 ['text' => 'Coupons']
             ],
             'coupons' => $coupons,
+            'organizers' => $organizers,
         ]);
     }
 

@@ -97,6 +97,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Booking Initiation
     Route::post('/bookings/initiate', [BookingController::class, 'initiateBooking'])->name('bookings.initiate');
+
+    // Comments
+    Route::post('/events/{event}/comments', [CommentController::class, 'store'])->name('events.comments.store');
 });
 
 
@@ -119,9 +122,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin|' 
     Route::resource('bookings', AdminBookingController::class);
     Route::resource('organizers', OrganizerController::class);
     Route::post('organizers/{organizer}/invite', [OrganizerController::class, 'inviteUser'])->name('organizers.invite');
-    Route::middleware('permission:manage-users')->group(function () {
-        Route::resource('users', UserController::class);
-    });
 
     // CMS Routes
     Route::resource('cms-pages', CmsPageController::class);
@@ -132,8 +132,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin|' 
     Route::resource('contact-submissions', ContactSubmissionController::class)->only(['index', 'show', 'destroy']);
     Route::patch('contact-submissions/{submission}/toggle-read', [ContactSubmissionController::class, 'toggleRead'])->name('contact-submissions.toggle-read');
 
+    // Comments
+    Route::get('/events/{event}/comments/moderation', [CommentController::class, 'indexForModeration']);
+    Route::post('/comments/{comment}/approve', [CommentController::class, 'approve']);
+    Route::put('/comments/{comment}/reject', [CommentController::class, 'reject']);
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+
     // User Management
-    // Route::resource('users', UserController::class)->middleware('permission:manage-users'); // This line is removed as per the edit hint
+    Route::resource('users', UserController::class)->middleware('permission:manage-users');
 
     // TODO: The SettingsController is not yet implemented.
     // Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
@@ -206,7 +212,3 @@ Route::middleware(['auth:sanctum', 'verified', 'role:admin|organizer-admin'])->p
     });
 });
 */
-
-Route::middleware(['auth', 'web'])->group(function () {
-    Route::post('/events/{event}/comments', [CommentController::class, 'store'])->name('events.comments.store');
-});

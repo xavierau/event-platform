@@ -15,7 +15,7 @@ class UpsertCmsPageAction
 
         // If no slug is provided OR if the title was changed and the slug wasn't, regenerate the slug.
         $newSlug = Str::slug($data->title['en']);
-        if (empty($payload['slug']) || ($page && $page->title['en'] !== $data->title['en'] && $page->slug === $payload['slug'])) {
+        if (empty($payload['slug']) || ($page && $page->getTranslation('title', 'en') !== $data->title['en'] && $page->slug === $payload['slug'])) {
             $payload['slug'] = $newSlug;
         }
 
@@ -30,13 +30,13 @@ class UpsertCmsPageAction
         if (!isset($payload['sort_order'])) {
             $payload['sort_order'] = 0;
         }
-
         if ($page) {
             // Update
+            $payload['author_id'] = $payload['author_id'] ?? request()->user()->id;
             $page->update($payload);
         } else {
             // Create
-            $payload['author_id'] = Auth::id();
+            $payload['author_id'] = request()->user()->id;
             $page = CmsPage::create($payload);
         }
 
