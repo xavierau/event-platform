@@ -29,7 +29,7 @@ class OrganizerData extends Data
         public readonly ?int $state_id,
         public readonly bool $is_active,
         public readonly ?array $contract_details,
-        public readonly int $created_by,
+        public readonly ?int $created_by,
         public readonly ?UploadedFile $logo_upload,
         public readonly ?int $id,
     ) {}

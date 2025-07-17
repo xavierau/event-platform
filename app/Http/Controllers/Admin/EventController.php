@@ -15,6 +15,7 @@ use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Illuminate\Http\RedirectResponse;
 use App\Enums\CommentConfigEnum; // Added for comment config options
+use App\Models\Organizer;
 
 class EventController extends Controller
 {
@@ -154,7 +155,7 @@ class EventController extends Controller
             ];
         })->values()->toArray(); // Ensure it's a numerically indexed array of objects for Vue
 
-        return Inertia::render('Admin/Events/Edit', [
+        $viewData = [
             'event' => array_merge(
                 $eventDataArray,
                 [
@@ -168,9 +169,7 @@ class EventController extends Controller
             'availableLocales' => $availableLocalesForView, // Pass the locales to the view
             'categories' => Category::orderBy('name->' . app()->getLocale())->get()->map(fn($cat) => ['value' => $cat->id, 'label' => $cat->name]),
             'tags' => Tag::orderBy('name->' . app()->getLocale())->get()->map(fn($tag) => ['value' => $tag->id, 'label' => $tag->name]),
-            'organizers' => User::whereHas('roles', fn($q) => $q->whereIn('name', ['Organizer', 'Platform Admin']))
-                ->orderBy('name')->get(['id', 'name'])
-                ->map(fn($user) => ['value' => $user->id, 'label' => $user->name]),
+            'organizers' => Organizer::orderBy('name')->get()->map(fn($organizer) => ['value' => $organizer->id, 'label' => $organizer->name]),
             'eventStatuses' => collect(Event::EVENT_STATUSES ?? [])->map(fn($status) => ['value' => $status, 'label' => ucfirst(str_replace('_', ' ', $status))])->values(),
             'visibilities' => collect(Event::VISIBILITIES ?? [])->map(fn($status) => ['value' => $status, 'label' => ucfirst(str_replace('_', ' ', $status))])->values(),
             'venues' => Venue::where('is_active', true)
@@ -192,7 +191,8 @@ class EventController extends Controller
                         'longitude' => $venue->longitude,
                     ];
                 }),
-        ]);
+        ];
+        return Inertia::render('Admin/Events/Edit', $viewData);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Enums\CommentConfigEnum;
 use App\Enums\OrganizerPermissionEnum;
 use Illuminate\Auth\Access\Response;
+use App\Enums\RoleNameEnum;
 
 class CommentPolicy
 {
@@ -80,6 +81,10 @@ class CommentPolicy
      */
     public function moderate(User $user, Event $event): bool
     {
+        if ($user->hasRole(RoleNameEnum::ADMIN->value)) {
+            return true;
+        }
+
         if (!$event->organizer) {
             return false;
         }

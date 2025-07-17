@@ -1,30 +1,24 @@
 <template>
-    <AuthenticatedLayout title="Admin Dashboard">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Admin Dashboard
-            </h2>
-        </template>
-
+    <Head :title="t('events.index_title')" />
+    <AppLayout>
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900 dark:text-gray-100">
-                        Welcome to the Admin Dashboard!
-                        <!-- Admin-specific content will go here -->
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
+                    <div class="p-6 lg:p-8 bg-white dark:bg-gray-800 dark:bg-gradient-to-bl dark:from-gray-700/50 dark:via-transparent border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                            Admin Dashboard
+                        </h2>
                     </div>
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>
 
 <script setup lang="ts">
-    import AuthenticatedLayout from '@/layouts/AuthLayout.vue';
-
-// Define props, if any, passed from the controller
-// const props = defineProps({
-//     // exampleProp: String,
-// });
+    import AppLayout from '@/layouts/AppLayout.vue';
+    import { Head } from '@inertiajs/vue3';
+    import { useI18n } from 'vue-i18n';
+    const { t } = useI18n();
 
 </script>

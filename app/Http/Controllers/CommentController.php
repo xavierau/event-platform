@@ -46,32 +46,33 @@ class CommentController extends Controller
 
         $comment = $this->commentService->updateComment($comment, $request->all(), Auth::user());
 
-        return response()->json($comment);
+        return redirect()->back()->with('success', 'Comment updated.');
     }
 
     public function destroy(Comment $comment)
     {
         $this->commentService->deleteComment($comment, Auth::user());
 
-        return response()->json(null, 204);
+        return redirect()->back()->with('success', 'Comment deleted.');
     }
 
     public function approve(Comment $comment)
     {
         $comment = $this->commentService->approveComment($comment, Auth::user());
-        return response()->json($comment);
+        return redirect()->back()->with('success', 'Comment approved.');
     }
 
     public function reject(Comment $comment)
     {
         $comment = $this->commentService->rejectComment($comment, Auth::user());
-        return response()->json($comment);
+        return redirect()->back()->with('success', 'Comment rejected.');
     }
 
     public function indexForModeration(Event $event)
     {
         // This is for admin use, so we don't filter by status
         $comments = $event->comments()->with('user', 'replies')->latest()->paginate(10);
+
         return response()->json($comments);
     }
 }

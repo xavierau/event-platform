@@ -35,15 +35,15 @@
                                         <option value="multi_use">Multi Use</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label for="status_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-                                    <select v-model="filterForm.status" @change="searchCoupons" id="status_filter" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                        <option value="">All Status</option>
-                                        <option value="active">Active</option>
-                                        <option value="expired">Expired</option>
-                                        <option value="upcoming">Upcoming</option>
-                                    </select>
-                                </div>
+<!--                                <div>-->
+<!--                                    <label for="status_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>-->
+<!--                                    <select v-model="filterForm.status" @change="searchCoupons" id="status_filter" class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">-->
+<!--                                        <option value="">All Status</option>-->
+<!--                                        <option value="active">Active</option>-->
+<!--                                        <option value="expired">Expired</option>-->
+<!--                                        <option value="upcoming">Upcoming</option>-->
+<!--                                    </select>-->
+<!--                                </div>-->
                             </template>
 
                             <!-- Header Slot -->
@@ -188,7 +188,7 @@ interface Filters {
     search?: string;
     organizer_id?: string;
     type?: string;
-    status?: string;
+    // status?: string;
 }
 
 const props = defineProps<{
@@ -201,7 +201,7 @@ const filterForm = useForm({
     search: props.filters?.search || '',
     organizer_id: props.filters?.organizer_id || '',
     type: props.filters?.type || '',
-    status: props.filters?.status || '',
+    // status: props.filters?.status || '',
     per_page: props.coupons.per_page || 15,
 });
 
