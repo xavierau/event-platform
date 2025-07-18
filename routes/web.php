@@ -165,7 +165,7 @@ Route::prefix('admin/qr-scanner')
 
 // --- AUTH & PAYMENT ROUTES ---
 require __DIR__ . '/auth.php';
-require __DIR__ . '/s.php'; // Note: This file seems to be required but its purpose is not clear from the context.
+require __DIR__ . '/settings.php'; // Note: This file seems to be required but its purpose is not clear from the context.
 
 // Payment Gateway Callbacks
 Route::get('/payment/success', [PaymentController::class, 'handlePaymentSuccess'])->name('payment.success');
