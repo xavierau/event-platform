@@ -93,8 +93,8 @@ const formatStatus = (status: string | null) => {
                                             <div v-if="occurrence.name && getTranslation(occurrence.name, currentLocale)">{{ getTranslation(occurrence.name, currentLocale) }}</div>
                                             <div v-else class="text-xs text-gray-500 italic">{{ getTranslation(occurrence.description, currentLocale, 'en').substring(0,50) || 'No name/desc' }}...</div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ formatDate(occurrence.start_at) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ formatDate(occurrence.end_at) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ formatDate(occurrence.start_at_utc) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ formatDate(occurrence.end_at_utc) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             <span v-if="occurrence.is_online">Online: {{ occurrence.online_meeting_link }}</span>
                                             <span v-else-if="occurrence.venue && occurrence.venue.name">{{ getTranslation(occurrence.venue.name, currentLocale) }}</span>

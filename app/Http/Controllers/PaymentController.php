@@ -60,15 +60,6 @@ class PaymentController extends Controller
         }
 
         $metadata = [];
-        // if (isset($data->order_id) && $data->order_id) {
-        //     $metadata['order_id'] = $data->order_id;
-        // }
-
-        // $successUrl = route('payment.success') . '?transaction_id=' . $data->transaction_id;
-        // $cancelUrl = route('payment.cancel') . '?transaction_id=' . $data->transaction_id;
-        // if (isset($metadata['order_id'])) {
-        //    $cancelUrl .= '&transaction_id=' . $metadata['order_id'];
-        // }
 
         try {
             $checkoutSession = $user->checkout($lineItems, [

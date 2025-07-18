@@ -179,8 +179,6 @@ class EventOccurrenceController extends Controller
 
         // Prepare the occurrence data, converting to DTO and adding assigned tickets
         $occurrenceData = EventOccurrenceData::from($occurrence->toArray());
-        // It's often better to pass related data separately than to try to shoehorn it into the main DTO
-        // if the DTO doesn't naturally accommodate it. Here, we'll pass `assigned_tickets` separately.
 
         return Inertia::render('Admin/EventOccurrences/Edit', [
             'event' => [
