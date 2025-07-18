@@ -23,7 +23,7 @@ return new class extends Migration
             $table->integer('max_issuance')->nullable(); // null = unlimited
             $table->timestamp('valid_from')->nullable();
             $table->timestamp('expires_at')->nullable();
-            $table->json('redemption_methods')->default(json_encode(['qr'])); // Default to QR
+            $table->json('redemption_methods'); // Default to QR
             $table->char('merchant_pin', 6)->nullable()->comment('6-digit PIN for PIN-based redemption');
             $table->timestamps();
 
