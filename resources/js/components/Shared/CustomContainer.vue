@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import Footer from '@/components/Public/Footer.vue';
 
 const props = defineProps<{
   title: string;
