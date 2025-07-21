@@ -86,6 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Wallet API-like routes (session-based)
     Route::prefix('wallet')->group(function () {
+        Route::post('/decode-qr', [\App\Http\Controllers\Api\WalletController::class, 'decodeQrCode']);
         Route::get('/balance', [\App\Http\Controllers\Api\WalletController::class, 'balance']);
         Route::get('/transactions', [\App\Http\Controllers\Api\WalletController::class, 'transactions']);
         Route::post('/add-points', [\App\Http\Controllers\Api\WalletController::class, 'addPoints']);
