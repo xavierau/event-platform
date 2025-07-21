@@ -2,20 +2,30 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\Event;
-use App\Services\EventService;
 use App\DataTransferObjects\EventData;
-use App\Models\Category; // For fetching categories
-use App\Models\Tag;       // For fetching tags
-use App\Models\User;      // For fetching organizers (if selectable)
-use App\Models\Venue;     // For fetching venues
+use App\Enums\CommentConfigEnum;
+use App\Enums\RoleNameEnum;
+use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Event;
+use App\Models\Organizer;
+use App\Models\Tag;
+use App\Models\Venue;
+use App\Services\EventService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use Illuminate\Http\RedirectResponse;
-use App\Enums\CommentConfigEnum; // Added for comment config options
-use App\Models\Organizer;
+
+// For fetching categories
+
+// For fetching tags
+
+// For fetching organizers (if selectable)
+
+// For fetching venues
+
+// Added for comment config options
 
 class EventController extends Controller
 {
@@ -62,9 +72,15 @@ class EventController extends Controller
      */
     public function create(): InertiaResponse
     {
+
+        $isAdmin = auth()->user()->hasRole(RoleNameEnum::ADMIN->value);
+
+
         $venues_data_for_view = Venue::where('is_active', true)
             ->with(['state', 'country']) // Eager load relations
             ->orderBy('name->' . app()->getLocale())
+            ->when(!$isAdmin, fn($query) => $query->whereIn('organizer_id', auth()->user()->organizers->pluck('id'))
+                ->orWhere('organizer_id', null))
             ->get()
             ->map(function ($venue) {
                 $locale = app()->getLocale();
@@ -82,12 +98,17 @@ class EventController extends Controller
                 ];
             });
 
+        // if user has role of Platform Admin then load all organizers, otherwise load only organizers that the user has access to
+        $organizers = Organizer::when(auth()->user()->hasRole(RoleNameEnum::ADMIN->value),
+            fn($query) => $query->orderBy('name'),
+            fn($query) => $query->whereIn('id', auth()->user()->organizers->pluck('id'))->orderBy('name'))
+            ->get()->map(fn($organizer) => ['value' => $organizer->id, 'label' => $organizer->name]);
+
         return Inertia::render('Admin/Events/Create', [
             // Pass necessary data for form selects, e.g.:
             'categories' => Category::orderBy('name->' . app()->getLocale())->get()->map(fn($cat) => ['value' => $cat->id, 'label' => $cat->name]),
             'tags' => Tag::orderBy('name->' . app()->getLocale())->get()->map(fn($tag) => ['value' => $tag->id, 'label' => $tag->name]),
-            'organizers' => User::whereHas('roles', fn($q) => $q->whereIn('name', ['Organizer', 'Platform Admin']))->orderBy('name')->get(['id', 'name'])
-                ->map(fn($user) => ['value' => $user->id, 'label' => $user->name]),
+            'organizers' => $organizers,
             'eventStatuses' => collect(Event::EVENT_STATUSES ?? [])->map(fn($status) => ['value' => $status, 'label' => ucfirst(str_replace('_', ' ', $status))])->values(),
             'visibilities' => collect(Event::VISIBILITIES ?? [])->map(fn($status) => ['value' => $status, 'label' => ucfirst(str_replace('_', ' ', $status))])->values(),
             'venues' => $venues_data_for_view, // Use the prepared data
