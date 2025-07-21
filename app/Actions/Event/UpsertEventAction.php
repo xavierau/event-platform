@@ -3,6 +3,7 @@
 namespace App\Actions\Event;
 
 use App\DataTransferObjects\EventData;
+use App\Enums\CommentConfigEnum;
 use App\Models\Event;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,7 @@ class UpsertEventAction
                 'meta_title' => $eventData->meta_title,
                 'meta_description' => $eventData->meta_description,
                 'meta_keywords' => $eventData->meta_keywords,
-                'comment_config' => $eventData->comment_config,
+                'comment_config' => $eventData->comment_config ?? CommentConfigEnum::DISABLED->value,
                 'seating_chart' => $eventData->seating_chart,
                 // Conditional fields
                 'event_status' => $eventData->event_status ?? 'draft', // Default if not provided
