@@ -14,16 +14,17 @@ use App\Modules\Wallet\Exceptions\InsufficientPointsException;
 use App\Modules\Wallet\Models\Wallet;
 use App\Modules\Wallet\Models\WalletTransaction;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 class WalletService
 {
     public function __construct(
-        private readonly AddPointsAction $addPointsAction,
-        private readonly SpendPointsAction $spendPointsAction,
-        private readonly AddKillPointsAction $addKillPointsAction,
+        private readonly AddPointsAction       $addPointsAction,
+        private readonly SpendPointsAction     $spendPointsAction,
+        private readonly AddKillPointsAction   $addKillPointsAction,
         private readonly SpendKillPointsAction $spendKillPointsAction,
-    ) {}
+    )
+    {
+    }
 
     /**
      * Get or create a wallet for a user.
@@ -47,13 +48,14 @@ class WalletService
      * Add points to a user's wallet.
      */
     public function addPoints(
-        User $user,
-        int $amount,
-        string $description,
+        User    $user,
+        int     $amount,
+        string  $description,
         ?string $referenceType = null,
-        ?int $referenceId = null,
-        ?array $metadata = null
-    ): WalletTransaction {
+        ?int    $referenceId = null,
+        ?array  $metadata = null
+    ): WalletTransaction
+    {
         $wallet = $this->getOrCreateWallet($user);
 
         return $this->addPointsAction->execute(
@@ -72,13 +74,14 @@ class WalletService
      * @throws InsufficientPointsException
      */
     public function spendPoints(
-        User $user,
-        int $amount,
-        string $description,
+        User    $user,
+        int     $amount,
+        string  $description,
         ?string $referenceType = null,
-        ?int $referenceId = null,
-        ?array $metadata = null
-    ): WalletTransaction {
+        ?int    $referenceId = null,
+        ?array  $metadata = null
+    ): WalletTransaction
+    {
         $wallet = $this->getOrCreateWallet($user);
 
         return $this->spendPointsAction->execute(
@@ -95,13 +98,14 @@ class WalletService
      * Add kill points to a user's wallet.
      */
     public function addKillPoints(
-        User $user,
-        int $amount,
-        string $description,
+        User    $user,
+        int     $amount,
+        string  $description,
         ?string $referenceType = null,
-        ?int $referenceId = null,
-        ?array $metadata = null
-    ): WalletTransaction {
+        ?int    $referenceId = null,
+        ?array  $metadata = null
+    ): WalletTransaction
+    {
         $wallet = $this->getOrCreateWallet($user);
 
         return $this->addKillPointsAction->execute(
@@ -120,13 +124,14 @@ class WalletService
      * @throws InsufficientKillPointsException
      */
     public function spendKillPoints(
-        User $user,
-        int $amount,
-        string $description,
+        User    $user,
+        int     $amount,
+        string  $description,
         ?string $referenceType = null,
-        ?int $referenceId = null,
-        ?array $metadata = null
-    ): WalletTransaction {
+        ?int    $referenceId = null,
+        ?array  $metadata = null
+    ): WalletTransaction
+    {
         $wallet = $this->getOrCreateWallet($user);
 
         return $this->spendKillPointsAction->execute(
@@ -162,10 +167,11 @@ class WalletService
      * Get transaction history for a user.
      */
     public function getTransactionHistory(
-        User $user,
+        User                   $user,
         ?WalletTransactionType $type = null,
-        int $perPage = 15
-    ): LengthAwarePaginator {
+        int                    $perPage = 15
+    ): LengthAwarePaginator
+    {
         $wallet = $this->getOrCreateWallet($user);
 
         $query = $wallet->transactions()
@@ -185,11 +191,12 @@ class WalletService
      * @throws InsufficientPointsException
      */
     public function transferPoints(
-        User $fromUser,
-        User $toUser,
-        int $amount,
+        User   $fromUser,
+        User   $toUser,
+        int    $amount,
         string $description = 'Points transfer'
-    ): array {
+    ): array
+    {
         // Spend points from sender
         $spendTransaction = $this->spendPoints(
             $fromUser,
@@ -233,4 +240,35 @@ class WalletService
         $wallet = $this->getOrCreateWallet($user);
         return $wallet->hasEnoughKillPoints($amount);
     }
+
+    public function encodeWalletCode(Wallet $wallet): string
+    {
+
+        $data = [
+            "walletId" => $wallet->id,
+            "timestamp" => now()->timestamp,
+        ];
+
+        $encryptedData = encrypt(json_encode($data));
+
+        return $encryptedData;
+    }
+
+    public function decodeWalletCode(string $encodedCode): ?Wallet
+    {
+        try {
+            $decryptedData = decrypt($encodedCode);
+            $data = json_decode($decryptedData, true);
+
+            if (isset($data['walletId'])) {
+                return Wallet::find($data['walletId']);
+            }
+        } catch (\Exception $e) {
+            // Handle decryption errors or invalid data
+            return null;
+        }
+
+        return null;
+    }
+
 }

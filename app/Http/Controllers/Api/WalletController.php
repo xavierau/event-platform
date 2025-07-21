@@ -16,7 +16,9 @@ class WalletController extends Controller
 {
     public function __construct(
         protected WalletService $walletService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Get user's wallet balance
@@ -273,4 +275,43 @@ class WalletController extends Controller
             ], Response::HTTP_BAD_REQUEST);
         }
     }
+
+    public function decodeQrCode(Request $request): JsonResponse
+    {
+
+        // TODO: security that who can decode the QR code
+
+        $validated = $request->validate([
+            'code' => ['required', 'string'],
+        ]);
+
+        try {
+            $wallet = $this->walletService->decodeWalletCode($validated['code']);
+
+            if (!$wallet) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid QR code',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            // TODO: Check if the wallet belongs to the user or if the user has permission to view it
+
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'user_id' => $wallet->user_id,
+                    'points_balance' => $wallet->points_balance,
+                    'kill_points_balance' => $wallet->kill_points_balance,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid QR code',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
 }
