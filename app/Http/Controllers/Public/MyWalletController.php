@@ -12,7 +12,9 @@ class MyWalletController extends Controller
 {
     public function __construct(
         protected WalletService $walletService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Display the user's wallet page.
@@ -28,6 +30,7 @@ class MyWalletController extends Controller
         return Inertia::render('Public/MyWallet', [
             'balance' => $balance,
             'transactions' => $transactions,
+            'code' => $this->walletService->encodeWalletCode($this->walletService->getOrCreateWallet($user)), // Assuming the wallet has a code attribute
         ]);
     }
 }
