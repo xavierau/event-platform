@@ -125,7 +125,7 @@ return [
 
     'available_locales' => [
         'en' => 'Eng',
-        'zh-HK' => '繁',
+        'zh-TW' => '繁',
         'zh-CN' => '简'
     ],
 
