@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Models\TicketDefinition;
-use App\Services\TicketDefinitionService;
 use App\DataTransferObjects\TicketDefinitionData;
 use App\Enums\TicketDefinitionStatus;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Models\EventOccurrence;
+use App\Models\TicketDefinition;
+use App\Services\TicketDefinitionService;
+use DateTimeZone;
+use Exception;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Log;
-use Exception;
-use DateTimeZone;
-use App\Models\EventOccurrence;
 
 class TicketDefinitionController extends Controller
 {
@@ -33,8 +31,8 @@ class TicketDefinitionController extends Controller
 
         // Explicitly transform models to arrays before DTO hydration
         $dtoPaginator = $ticketDefinitionsPaginator->through(
-            // fn(TicketDefinition $definition) => dd($definition->toArray())
-            // );
+        // fn(TicketDefinition $definition) => dd($definition->toArray())
+        // );
             fn(TicketDefinition $definition) => TicketDefinitionData::fromModel($definition)
         );
 

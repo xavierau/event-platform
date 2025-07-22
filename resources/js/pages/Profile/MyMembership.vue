@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-
 const props = defineProps({
   membership: {
     type: Object,
@@ -23,6 +22,9 @@ const hasMembership = computed(() => props.membership && Object.keys(props.membe
     <div v-else>
       <p>You do not have an active membership.</p>
     </div>
+
+      <stripe-pricing-table pricing-table-id="prctbl_1RlPYoGkGJbeDaIk9zSYLgBl"
+                            publishable-key="pk_live_51REfHHGkGJbeDaIkqgQEUJfKfY0GdGTWyoISqmf3cMksLLnN1G8PNr5nGuhdRmq2njIf0zPYsZtTmpjKT7Pb9z5d00vibNZZxN"></stripe-pricing-table>
   </div>
 </template>
 
