@@ -1,31 +1,82 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { computed, onMounted, ref } from 'vue';
+import BottomNavbar from '../../components/Public/BottomNavbar.vue';
 
 const props = defineProps({
-  membership: {
-    type: Object,
-    default: null,
-  },
+    membership: {
+        type: Object,
+        default: null,
+    },
 });
 
+const stripePricingTable = ref<HTMLElement | null>(null);
 const hasMembership = computed(() => props.membership && Object.keys(props.membership).length > 0);
+
+onMounted(() => {
+    if (!stripePricingTable.value) {
+        console.error('Stripe pricing table element is not available.');
+        return;
+    }
+    stripePricingTable.value.innerHTML = `<stripe-pricing-table pricing-table-id="prctbl_1RlPYoGkGJbeDaIk9zSYLgBl" publishable-key="pk_live_51REfHHGkGJbeDaIkqgQEUJfKfY0GdGTWyoISqmf3cMksLLnN1G8PNr5nGuhdRmq2njIf0zPYsZtTmpjKT7Pb9z5d00vibNZZxN"></stripe-pricing-table>`;
+});
 </script>
 
 <template>
-  <div>
-    <h1>My Membership</h1>
+    <Head title="My Membership" />
 
-    <div v-if="hasMembership">
-      <h2>Current Plan: {{ membership.level.name.en }}</h2>
-      <p>Status: {{ membership.status }}</p>
-      <p>Expires on: {{ new Date(membership.expires_at).toLocaleDateString() }}</p>
+    <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+        <!-- Header Section -->
+        <header class="sticky top-0 z-50 border-b bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div class="relative container mx-auto flex items-center p-4">
+                <Link href="/" class="absolute left-4 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
+                    &larr; Back
+                </Link>
+                <h1 class="flex-1 text-center text-xl font-semibold text-gray-900 dark:text-gray-100">My Membership</h1>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 py-6 pb-24">
+            <!-- Current Membership Section -->
+            <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+                <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Current Membership</h2>
+
+                <div v-if="hasMembership" class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Plan:</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ membership.level.name.en }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Status:</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ membership.status }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Expires on:</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ new Date(membership.expires_at).toLocaleDateString() }}</span>
+                    </div>
+                </div>
+                <div v-else class="text-center py-8">
+                    <div class="mb-4 text-6xl">&#x1F4B3;</div>
+                    <h3 class="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">No Active Membership</h3>
+                    <p class="text-gray-600 dark:text-gray-300">You do not have an active membership.</p>
+                </div>
+            </section>
+
+            <!-- Membership Plans Section -->
+            <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+                <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Available Plans</h2>
+                <div ref="stripePricingTable"></div>
+            </section>
+        </main>
+
+        <BottomNavbar />
     </div>
-    <div v-else>
-      <p>You do not have an active membership.</p>
-    </div>
-  </div>
 </template>
 
 <style scoped>
-/* Add component-specific styles here */
+.shadow-top-lg {
+    box-shadow:
+        0 -4px 6px -1px rgb(0 0 0 / 0.05),
+        0 -2px 4px -2px rgb(0 0 0 / 0.05);
+}
 </style>
