@@ -15,7 +15,8 @@ class OrganizerInvitationNotification extends Notification
         public readonly string $organizerName,
         public readonly string $role,
         public readonly string $inviterName,
-        public readonly ?string $customMessage = null
+        public readonly ?string $customMessage = null,
+        public readonly ?string $invitationUrl = null
     ) {}
 
     public function via(object $notifiable): array
@@ -28,7 +29,7 @@ class OrganizerInvitationNotification extends Notification
         $message = (new MailMessage)
             ->line("You have been invited to join {$this->organizerName} as a {$this->role}.")
             ->line("Invited by: {$this->inviterName}")
-            ->action('Accept Invitation', url('/'))
+            ->action('Accept Invitation', $this->invitationUrl ?? url('/'))
             ->line('Thank you for using our application!');
 
         if ($this->customMessage) {
@@ -45,6 +46,7 @@ class OrganizerInvitationNotification extends Notification
             'role' => $this->role,
             'inviter_name' => $this->inviterName,
             'custom_message' => $this->customMessage,
+            'invitation_url' => $this->invitationUrl,
         ];
     }
 }

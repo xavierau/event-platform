@@ -1,40 +1,38 @@
 <?php
 
 use App\Enums\RoleNameEnum;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CmsPageController;
-use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ContactSubmissionController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\EditorUploadController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\EventOccurrenceController;
+use App\Http\Controllers\Admin\OrganizerController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\QrScannerController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TicketDefinitionController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VenueController;
-use App\Http\Controllers\Admin\ContactSubmissionController;
-use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Modules\Membership\MembershipPaymentController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Public\CmsPageController as PublicCmsPageController;
+use App\Http\Controllers\Public\ContactUsController;
 use App\Http\Controllers\Public\EventController as PublicEventController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\MyBookingsController;
 use App\Http\Controllers\Public\MyWalletController;
 use App\Http\Controllers\Public\MyWishlistController;
-use App\Http\Controllers\Public\ContactUsController;
 use App\Http\Controllers\Settings\ProfileController;
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\OrganizerController;
-use App\Http\Controllers\Admin\SettingsController;
-use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\CommentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +57,13 @@ Route::get('/pages', [PublicCmsPageController::class, 'index'])->name('cms.pages
 
 // Contact Form
 Route::post('/contact-us', [ContactUsController::class, 'store'])->name('contact.store');
+
+// Invitation Acceptance
+Route::get('/invitation/accept', [\App\Http\Controllers\InvitationController::class, 'accept'])
+    ->middleware('signed')
+    ->name('invitation.accept');
+Route::post('/invitation/complete-registration', [\App\Http\Controllers\InvitationController::class, 'completeRegistration'])
+    ->name('invitation.complete-registration');
 
 // --- AUTHENTICATED USER ROUTES ---
 Route::middleware(['auth', 'verified'])->group(function () {
