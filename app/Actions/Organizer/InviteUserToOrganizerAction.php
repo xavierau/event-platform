@@ -4,6 +4,7 @@ namespace App\Actions\Organizer;
 
 use App\DataTransferObjects\Organizer\InviteUserData;
 use App\Enums\OrganizerRoleEnum;
+use App\Enums\RoleNameEnum;
 use App\Exceptions\UnauthorizedOperationException;
 use App\Models\Organizer;
 use App\Models\User;
@@ -89,10 +90,18 @@ class InviteUserToOrganizerAction
      */
     private function validateInviter(int $inviterId, Organizer $organizer): User
     {
+        Log::info("check user can invite other user");
+
         $inviter = User::find($inviterId);
 
         if (!$inviter) {
             throw new InvalidArgumentException('Inviter not found');
+        }
+
+        // if inviterId is a platform then return true
+        if($inviter->hasRole(RoleNameEnum::ADMIN->value)){
+            Log::info("inviter is platform admim");
+            return $inviter;
         }
 
         // Check if inviter is a member of the organizer
@@ -105,12 +114,16 @@ class InviteUserToOrganizerAction
             throw new UnauthorizedOperationException('User is not a member of this organizer');
         }
 
+        Log::info('inviter is a member of the organizer');
+
         // Check if inviter has permission to invite (owners, managers can invite)
         $inviterRole = OrganizerRoleEnum::tryFrom($inviterMembership->pivot->role_in_organizer);
 
         if (!$inviterRole || !$this->canInviteUsers($inviterRole)) {
             throw new UnauthorizedOperationException('User does not have permission to invite others to this organizer');
         }
+
+        Log::info("User has permission to invite others to this organizer");
 
         return $inviter;
     }
