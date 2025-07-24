@@ -8,22 +8,23 @@ import { computed, ref } from 'vue';
 // For now, using a generic div, this should be replaced with the correct layout component
 // import PublicLayout from '@/Layouts/PublicLayout.vue';
 import type { WalletBalance, WalletTransaction } from '@/types/wallet'; // Define these types later
+import BottomNavbar from '../../components/Public/BottomNavbar.vue';
 
 dayjs.extend(utc);
 
 const props = defineProps({
     balance: {
         type: Object as () => WalletBalance,
-        required: true,
+        required: true
     },
     transactions: {
         type: Object as () => { data: WalletTransaction[]; links: any[]; meta: any }, // Basic pagination structure
-        required: true,
+        required: true
     },
     code: {
         type: String,
-        required: true,
-    },
+        required: true
+    }
 });
 
 // State for managing which transactions to show
@@ -44,7 +45,7 @@ const filteredTransactions = computed(() => {
                     t.transaction_type.startsWith('earn_') ||
                     t.transaction_type === 'transfer_in' ||
                     t.transaction_type === 'bonus' ||
-                    t.transaction_type === 'refund',
+                    t.transaction_type === 'refund'
             );
         case 'spent':
             return props.transactions.data.filter(
@@ -52,7 +53,7 @@ const filteredTransactions = computed(() => {
                     t.transaction_type.startsWith('spend_') ||
                     t.transaction_type === 'transfer_out' ||
                     t.transaction_type === 'penalty' ||
-                    t.transaction_type === 'membership_purchase',
+                    t.transaction_type === 'membership_purchase'
             );
         case 'all':
         default:
@@ -84,7 +85,7 @@ function getTransactionTypeLabel(type: string): string {
 console.log('Wallet Page Loaded', {
     balance: props.balance,
     transactions: props.transactions,
-    code: props.code,
+    code: props.code
 });
 </script>
 
@@ -97,7 +98,8 @@ console.log('Wallet Page Loaded', {
         <!-- Header Section -->
         <header class="sticky top-0 z-50 border-b bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div class="relative container mx-auto flex items-center p-4">
-                <Link href="/" class="absolute left-4 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
+                <Link href="/"
+                      class="absolute left-4 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
                     &larr; Back
                 </Link>
                 <h1 class="flex-1 text-center text-xl font-semibold text-gray-900 dark:text-gray-100">My Wallet</h1>
@@ -123,48 +125,50 @@ console.log('Wallet Page Loaded', {
                         class="h-32 w-32 rounded-lg shadow-md"
                     />
                 </div>
-<!--                <p class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">-->
-<!--                    Scan the QR code to access your membership details and wallet balance.-->
-<!--                </p>-->
+                <!--                <p class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">-->
+                <!--                    Scan the QR code to access your membership details and wallet balance.-->
+                <!--                </p>-->
             </section>
 
             <!-- Balance Section -->
-<!--            <section class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">-->
-<!--                <div class="rounded-lg bg-white p-6 text-center shadow dark:bg-gray-800">-->
-<!--                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Points Balance</h2>-->
-<!--                    <p class="mt-1 text-3xl font-bold text-indigo-600 dark:text-indigo-400">-->
-<!--                        {{ props.balance.points_balance?.toLocaleString() || 0 }}-->
-<!--                    </p>-->
-<!--                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">-->
-<!--                        Total Earned: {{ props.balance.total_points_earned?.toLocaleString() || 0 }}-->
-<!--                    </p>-->
-<!--                    <p class="text-xs text-gray-500 dark:text-gray-400">Total Spent: {{ props.balance.total_points_spent?.toLocaleString() || 0 }}</p>-->
-<!--                </div>-->
-<!--                <div class="rounded-lg bg-white p-6 text-center shadow dark:bg-gray-800">-->
-<!--                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Kill Points Balance</h2>-->
-<!--                    <p class="mt-1 text-3xl font-bold text-red-600 dark:text-red-400">-->
-<!--                        {{ props.balance.kill_points_balance?.toLocaleString() || 0 }}-->
-<!--                    </p>-->
-<!--                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">-->
-<!--                        Total Earned: {{ props.balance.total_kill_points_earned?.toLocaleString() || 0 }}-->
-<!--                    </p>-->
-<!--                    <p class="text-xs text-gray-500 dark:text-gray-400">-->
-<!--                        Total Spent: {{ props.balance.total_kill_points_spent?.toLocaleString() || 0 }}-->
-<!--                    </p>-->
-<!--                </div>-->
-<!--            </section>-->
+            <!--            <section class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">-->
+            <!--                <div class="rounded-lg bg-white p-6 text-center shadow dark:bg-gray-800">-->
+            <!--                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Points Balance</h2>-->
+            <!--                    <p class="mt-1 text-3xl font-bold text-indigo-600 dark:text-indigo-400">-->
+            <!--                        {{ props.balance.points_balance?.toLocaleString() || 0 }}-->
+            <!--                    </p>-->
+            <!--                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">-->
+            <!--                        Total Earned: {{ props.balance.total_points_earned?.toLocaleString() || 0 }}-->
+            <!--                    </p>-->
+            <!--                    <p class="text-xs text-gray-500 dark:text-gray-400">Total Spent: {{ props.balance.total_points_spent?.toLocaleString() || 0 }}</p>-->
+            <!--                </div>-->
+            <!--                <div class="rounded-lg bg-white p-6 text-center shadow dark:bg-gray-800">-->
+            <!--                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Kill Points Balance</h2>-->
+            <!--                    <p class="mt-1 text-3xl font-bold text-red-600 dark:text-red-400">-->
+            <!--                        {{ props.balance.kill_points_balance?.toLocaleString() || 0 }}-->
+            <!--                    </p>-->
+            <!--                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">-->
+            <!--                        Total Earned: {{ props.balance.total_kill_points_earned?.toLocaleString() || 0 }}-->
+            <!--                    </p>-->
+            <!--                    <p class="text-xs text-gray-500 dark:text-gray-400">-->
+            <!--                        Total Spent: {{ props.balance.total_kill_points_spent?.toLocaleString() || 0 }}-->
+            <!--                    </p>-->
+            <!--                </div>-->
+            <!--            </section>-->
 
             <!-- Placeholder: Top-up Points Section -->
             <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
                 <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Top-up Points</h2>
-                <p class="text-gray-600 dark:text-gray-300">This section will allow users to purchase more points. (Coming Soon)</p>
+                <p class="text-gray-600 dark:text-gray-300">This section will allow users to purchase more points.
+                    (Coming Soon)</p>
                 <!-- Add top-up options and payment integration here -->
             </section>
 
             <!-- Transaction History Section -->
             <section>
                 <div class="mb-6 flex flex-col items-start justify-between sm:flex-row sm:items-center">
-                    <h2 class="mb-4 text-2xl font-semibold text-gray-800 sm:mb-0 dark:text-gray-200">Transaction History</h2>
+                    <h2 class="mb-4 text-2xl font-semibold text-gray-800 sm:mb-0 dark:text-gray-200">Transaction
+                        History</h2>
                     <div class="flex flex-wrap space-x-2 text-sm">
                         <button
                             @click="setFilter('all')"
@@ -224,7 +228,8 @@ console.log('Wallet Page Loaded', {
                     </div>
                 </div>
 
-                <div v-if="filteredTransactions.length > 0" class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                <div v-if="filteredTransactions.length > 0"
+                     class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
                     <ul class="divide-y divide-gray-200 dark:divide-gray-700">
                         <li
                             v-for="transaction in filteredTransactions"
@@ -262,7 +267,9 @@ console.log('Wallet Page Loaded', {
                                         }"
                                     >
                                         {{ formatAmount(transaction.amount, transaction.transaction_type) }}
-                                        <span class="text-xs">{{ transaction.transaction_type.includes('_kill_points') ? 'KP' : 'Pts' }}</span>
+                                        <span
+                                            class="text-xs">{{ transaction.transaction_type.includes('_kill_points') ? 'KP' : 'Pts'
+                                            }}</span>
                                     </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">
                                         {{ formatTransactionDate(transaction.created_at) }}
@@ -288,46 +295,19 @@ console.log('Wallet Page Loaded', {
             <!-- Placeholder: Spending Charts Section -->
             <section class="mt-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
                 <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Spending Overview</h2>
-                <p class="text-gray-600 dark:text-gray-300">Charts and graphs visualizing spending patterns will be displayed here. (Coming Soon)</p>
+                <p class="text-gray-600 dark:text-gray-300">Charts and graphs visualizing spending patterns will be
+                    displayed here. (Coming Soon)</p>
                 <!-- Add chart components here -->
             </section>
         </main>
-
-        <!-- Fixed Footer/Bottom Bar (Example from MyBookings, adapt as needed) -->
-        <footer class="shadow-top-lg fixed right-0 bottom-0 left-0 z-50 border-t border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
-            <div class="container mx-auto flex items-center justify-around">
-                <Link href="/" class="text-center text-xs text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-300">
-                    <span class="block text-xl">&#x1F3E0;</span>
-                    <!-- Home Icon -->
-                    <span>Home</span>
-                </Link>
-                <Link
-                    :href="route('my-bookings')"
-                    class="text-center text-xs text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-300"
-                >
-                    <span class="block text-xl">&#x1F39F;&#xFE0F;</span>
-                    <!-- Ticket Icon -->
-                    <span>My Bookings</span>
-                </Link>
-                <Link
-                    :href="route('my-wishlist')"
-                    class="text-center text-xs text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-300"
-                >
-                    <span class="block text-xl">&#x2764;&#xFE0F;</span>
-                    <!-- Heart Icon -->
-                    <span>My Wishlist</span>
-                </Link>
-                <!-- Add other relevant links if needed -->
-            </div>
-        </footer>
+        <BottomNavbar />
     </div>
     <!-- </PublicLayout> -->
 </template>
 
 <style scoped>
 .shadow-top-lg {
-    box-shadow:
-        0 -4px 6px -1px rgb(0 0 0 / 0.05),
-        0 -2px 4px -2px rgb(0 0 0 / 0.05);
+    box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.05),
+    0 -2px 4px -2px rgb(0 0 0 / 0.05);
 }
 </style>

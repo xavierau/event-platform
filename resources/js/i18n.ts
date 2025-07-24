@@ -8,6 +8,7 @@ import zhHK from '../../lang/zh-HK.json';
 
 const messages = {
     en,
+    'zh-TW': zhHK,
     'zh-HK': zhHK,
     'zh-CN': zhCN,
 };
