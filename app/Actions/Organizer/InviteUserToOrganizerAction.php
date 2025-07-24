@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\OrganizerInvitationNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -20,27 +21,53 @@ class InviteUserToOrganizerAction
      */
     public function execute(InviteUserData $inviteData): bool
     {
-        return DB::transaction(function () use ($inviteData) {
-            // Validate organizer exists
+
+        Log::info("going to invite user to organizer", $inviteData);
+
+        DB::beginTransaction();
+
+        try{
+
             $organizer = $this->validateOrganizer($inviteData->organizer_id);
+
+            Log::info("organizer is invited", $organizer);
 
             // Validate inviter exists and has permission
             $inviter = $this->validateInviter($inviteData->invited_by, $organizer);
 
+            Log::info("inviter is invited", $inviter);
+
             // Get or create the user
             $user = $this->getOrCreateUser($inviteData);
+
+            Log::info("user is invited", $user);
 
             // Check if user is already a member (unless they're inactive)
             $this->validateMembership($organizer, $user);
 
+            Log::info("user is not a member of organizer");
+
             // Create or update organizer-user relationship
             $this->createOrganizerUserRelationship($organizer, $user, $inviteData);
+
+            Log::info("organizer-user relationship created");
 
             // Send invitation notification
             $this->sendInvitationNotification($user, $organizer, $inviter, $inviteData);
 
+            Log::info("invitation notification sent");
+
+            DB::commit();
+
             return true;
-        });
+
+        }catch(\Exception $e){
+
+            DB::rollBack();
+
+            throw $e;
+        }
+
     }
 
     /**
