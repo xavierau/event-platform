@@ -245,3 +245,12 @@
 | USR-004 | Backend: Create `manage-users` permission | Low | USR-002 | Done | Create permission and protect user management admin routes. |
 | USR-005 | Admin FE: Add "User Management" to sidebar | Low | USR-004 | Done | Menu item visible only to users with `manage-users` permission. |
 | USR-006 | Admin FE: Create User Management pages | Medium | USR-005 | Done | List, Show, and Edit pages for User Management, allowing platform admins to toggle comment-blocking status. |
+| **ORGANIZER INVITATION ENHANCEMENT** | | | | | |
+| ORG-INV-001 | Analyze current invitation system and user authentication flow | Medium | ORG-007.2 | Pending | Understand existing invitation workflow in OrganizerInvitationNotification and acceptance flow. |
+| ORG-INV-002 | Create unique invitation tokens/URLs for organizer invitations | High | ORG-INV-001 | Pending | Generate secure, unique invitation tokens with expiration and user identification. |
+| ORG-INV-003 | Implement invitation acceptance route that checks user status | High | ORG-INV-002 | Pending | Route handler to process invitation tokens and differentiate new vs existing users. |
+| ORG-INV-004 | Handle new user flow - redirect to password reset/setup | High | ORG-INV-003 | Pending | For new users, redirect to password setup/reset after invitation acceptance. |
+| ORG-INV-005 | Handle existing user flow - confirm organization relationship | High | ORG-INV-003 | Pending | For existing users, confirm and activate organizer relationship status. |
+| ORG-INV-006 | Update OrganizerInvitationNotification to use unique invitation URLs | Medium | ORG-INV-002 | Pending | Replace generic url('/') with unique invitation URL in notification email. |
+| ORG-INV-007 | Add invitation token expiration and security measures | Medium | ORG-INV-002 | Pending | Implement token expiration, rate limiting, and security validation. |
+| ORG-INV-008 | Test invitation flow for both new and existing users | Medium | ORG-INV-004, ORG-INV-005 | Pending | Comprehensive testing of invitation acceptance workflows. |
