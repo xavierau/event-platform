@@ -8,6 +8,7 @@ use App\Exceptions\UnauthorizedOperationException;
 use App\Models\Organizer;
 use App\Models\User;
 use App\Notifications\OrganizerInvitationNotification;
+use App\Services\InvitationTokenService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,10 @@ use InvalidArgumentException;
 
 class InviteUserToOrganizerAction
 {
+    public function __construct(
+        private InvitationTokenService $tokenService
+    ) {}
+
     /**
      * Execute the invitation process.
      */
@@ -52,8 +57,11 @@ class InviteUserToOrganizerAction
 
             Log::info("organizer-user relationship created");
 
+            // Generate invitation URL
+            $invitationUrl = $this->generateInvitationUrl($user, $organizer, $inviteData);
+
             // Send invitation notification
-            $this->sendInvitationNotification($user, $organizer, $inviter, $inviteData);
+            $this->sendInvitationNotification($user, $organizer, $inviter, $inviteData, $invitationUrl);
 
             Log::info("invitation notification sent");
 
@@ -228,13 +236,37 @@ class InviteUserToOrganizerAction
     }
 
     /**
+     * Generate invitation URL based on user status.
+     */
+    private function generateInvitationUrl(User $user, Organizer $organizer, InviteUserData $inviteData): string
+    {
+        if ($inviteData->isForExistingUser()) {
+            return $this->tokenService->generateExistingUserInvitationUrl(
+                organizerId: $organizer->id,
+                userId: $user->id,
+                email: $user->email,
+                role: $inviteData->role_in_organizer,
+                expiresAt: $inviteData->expires_at
+            );
+        }
+
+        return $this->tokenService->generateNewUserInvitationUrl(
+            organizerId: $organizer->id,
+            email: $user->email,
+            role: $inviteData->role_in_organizer,
+            expiresAt: $inviteData->expires_at
+        );
+    }
+
+    /**
      * Send invitation notification to the user.
      */
     private function sendInvitationNotification(
         User $user,
         Organizer $organizer,
         User $inviter,
-        InviteUserData $inviteData
+        InviteUserData $inviteData,
+        string $invitationUrl
     ): void {
         $organizerName = is_array($organizer->name)
             ? ($organizer->name['en'] ?? $organizer->name[array_key_first($organizer->name)] ?? 'Unknown Organizer')
@@ -244,7 +276,8 @@ class InviteUserToOrganizerAction
             organizerName: $organizerName,
             role: $inviteData->role_in_organizer,
             inviterName: $inviter->name,
-            customMessage: $inviteData->invitation_message
+            customMessage: $inviteData->invitation_message,
+            invitationUrl: $invitationUrl
         );
 
         $user->notify($notification);

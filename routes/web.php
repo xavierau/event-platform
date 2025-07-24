@@ -58,6 +58,13 @@ Route::get('/pages', [PublicCmsPageController::class, 'index'])->name('cms.pages
 // Contact Form
 Route::post('/contact-us', [ContactUsController::class, 'store'])->name('contact.store');
 
+// Invitation Acceptance
+Route::get('/invitation/accept', [\App\Http\Controllers\InvitationController::class, 'accept'])
+    ->middleware('signed')
+    ->name('invitation.accept');
+Route::post('/invitation/complete-registration', [\App\Http\Controllers\InvitationController::class, 'completeRegistration'])
+    ->name('invitation.complete-registration');
+
 // --- AUTHENTICATED USER ROUTES ---
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard & Profile
