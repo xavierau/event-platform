@@ -22,7 +22,7 @@ class InviteUserToOrganizerAction
     public function execute(InviteUserData $inviteData): bool
     {
 
-        Log::info("going to invite user to organizer", $inviteData);
+        Log::info("going to invite user to organizer", [$inviteData]);
 
         DB::beginTransaction();
 
@@ -30,17 +30,17 @@ class InviteUserToOrganizerAction
 
             $organizer = $this->validateOrganizer($inviteData->organizer_id);
 
-            Log::info("organizer is invited", $organizer);
+            Log::info("organizer is invited", [$organizer]);
 
             // Validate inviter exists and has permission
             $inviter = $this->validateInviter($inviteData->invited_by, $organizer);
 
-            Log::info("inviter is invited", $inviter);
+            Log::info("inviter is invited", [$inviter]);
 
             // Get or create the user
             $user = $this->getOrCreateUser($inviteData);
 
-            Log::info("user is invited", $user);
+            Log::info("user is invited", [$user]);
 
             // Check if user is already a member (unless they're inactive)
             $this->validateMembership($organizer, $user);
