@@ -71,11 +71,11 @@
 </template>
 
 <script setup lang="ts">
-import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/ui/label/Label.vue';
-import PrimaryButton from '@/Components/ui/button/Button.vue';
-import TextInput from '@/Components/ui/input/Input.vue';
+import Checkbox from '@/components/ui/checkbox/Checkbox.vue';
+import InputError from '@/components/InputError.vue';
+import InputLabel from '@/components/ui/label/Label.vue';
+import PrimaryButton from '@/components/ui/button/Button.vue';
+import TextInput from '@/components/ui/input/Input.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 
