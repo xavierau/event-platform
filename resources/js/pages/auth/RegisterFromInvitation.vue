@@ -1,5 +1,5 @@
 <template>
-    <GuestLayout>
+    <AppLayout>
         <Head title="Complete Registration" />
 
         <div class="mb-4 text-sm text-gray-600">
@@ -80,16 +80,16 @@
 
             <InputError class="mt-2" :message="form.errors.error" />
         </form>
-    </GuestLayout>
+    </AppLayout>
 </template>
 
-<script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue'
+<script setup lang="ts">
 import InputError from '@/Components/InputError.vue'
-import InputLabel from '@/Components/InputLabel.vue'
-import PrimaryButton from '@/Components/PrimaryButton.vue'
-import TextInput from '@/Components/TextInput.vue'
+import InputLabel from '@/Components/ui/label/Label.vue'
+import PrimaryButton from '@/Components/ui/button/Button.vue'
+import TextInput from '@/Components/ui/input/Input.vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
+import AppLayout from '@/layouts/AppLayout.vue';
 
 const props = defineProps({
     invitation: {
