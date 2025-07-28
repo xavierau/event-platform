@@ -112,11 +112,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // --- ADMIN ROUTES ---
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', 'role:super_admin|' . RoleNameEnum::ADMIN->value])->withMiddleware(function (Middleware $middleware) {
-        $middleware->validateCsrfTokens(except: [
-            'https://showeasy.ai/*',
-        ]);
-    })
+    ->middleware(['auth', 'role:super_admin|' . RoleNameEnum::ADMIN->value])
     ->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
@@ -162,11 +158,7 @@ Route::prefix('admin')
 Route::prefix('admin')
     ->name('admin.')
     ->middleware(['auth'])
-    ->middleware(['auth', 'role:super_admin|' . RoleNameEnum::ADMIN->value])->withMiddleware(function (Middleware $middleware) {
-        $middleware->validateCsrfTokens(except: [
-            'https://showeasy.ai/*',
-        ]);
-    })
+    ->middleware(['auth', 'role:super_admin|' . RoleNameEnum::ADMIN->value])
     ->group(function () {
     Route::resource('coupons', CouponController::class);
     Route::get('coupon-scanner', [CouponController::class, 'scanner'])->name('coupons.scanner');
@@ -198,11 +190,7 @@ Route::get('/membership/payment/cancel', [MembershipPaymentController::class, 'h
 
 // Stripe Webhook (must be outside CSRF protection)
 Route::post('/webhook/stripe', [PaymentController::class, 'handleWebhook'])->name('webhook.stripe');
-Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook'])->withMiddleware(function (Middleware $middleware) {
-    $middleware->validateCsrfTokens(except: [
-        'stripe/*'
-    ]);
-})->name('webhook.stripe');
+Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook'])->name('webhook.stripe');
 
 // New coupon scanner API routes
 // THIS SECTION APPEARS TO BE A DUPLICATE/INCORRECT - REMOVING
