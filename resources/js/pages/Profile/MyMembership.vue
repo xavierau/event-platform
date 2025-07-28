@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import { Head, Link } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import BottomNavbar from '../../components/Public/BottomNavbar.vue';
@@ -11,6 +10,9 @@ const props = defineProps({
     },
 });
 
+const page = usePage()
+const auth = computed(() => page.props.auth as { user?: User });
+
 const stripePricingTable = ref<HTMLElement | null>(null);
 const hasMembership = computed(() => props.membership && Object.keys(props.membership).length > 0);
 
@@ -19,7 +21,7 @@ onMounted(() => {
         console.error('Stripe pricing table element is not available.');
         return;
     }
-    stripePricingTable.value.innerHTML = `<stripe-pricing-table pricing-table-id="prctbl_1RlPYoGkGJbeDaIk9zSYLgBl" publishable-key="pk_live_51REfHHGkGJbeDaIkqgQEUJfKfY0GdGTWyoISqmf3cMksLLnN1G8PNr5nGuhdRmq2njIf0zPYsZtTmpjKT7Pb9z5d00vibNZZxN"></stripe-pricing-table>`;
+    stripePricingTable.value.innerHTML = `<stripe-pricing-table pricing-table-id="prctbl_1RlPYoGkGJbeDaIk9zSYLgBl" publishable-key="pk_live_51REfHHGkGJbeDaIkqgQEUJfKfY0GdGTWyoISqmf3cMksLLnN1G8PNr5nGuhdRmq2njIf0zPYsZtTmpjKT7Pb9z5d00vibNZZxN" client-reference-id="${auth.value?.user?.id ?? ''}"></stripe-pricing-table>`;
 });
 </script>
 

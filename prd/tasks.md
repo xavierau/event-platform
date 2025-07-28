@@ -245,12 +245,3 @@
 | USR-004 | Backend: Create `manage-users` permission | Low | USR-002 | Done | Create permission and protect user management admin routes. |
 | USR-005 | Admin FE: Add "User Management" to sidebar | Low | USR-004 | Done | Menu item visible only to users with `manage-users` permission. |
 | USR-006 | Admin FE: Create User Management pages | Medium | USR-005 | Done | List, Show, and Edit pages for User Management, allowing platform admins to toggle comment-blocking status. |
-| **ORGANIZER INVITATION ENHANCEMENT** | | | | | |
-| ORG-INV-001 | Analyze current invitation system and user authentication flow | Medium | ORG-007.2 | Done | ✅ Analyzed existing InviteUserToOrganizerAction, AcceptInvitationAction, OrganizerInvitationNotification, and database structure. Current system lacks unique URLs. |
-| ORG-INV-002 | Create unique invitation tokens/URLs for organizer invitations | High | ORG-INV-001 | Done | ✅ Created InvitationTokenService with secure signed URL generation, token validation, and separate methods for new/existing users. |
-| ORG-INV-003 | Implement invitation acceptance route that checks user status | High | ORG-INV-002 | Done | ✅ Created InvitationController with accept() method, route with signed middleware, differentiates user types and handles authentication states. |
-| ORG-INV-004 | Handle new user flow - redirect to password reset/setup | High | ORG-INV-003 | Done | ✅ Implemented handleNewUserInvitation() with RegisterFromInvitation.vue component and completeRegistration() method for password setup. |
-| ORG-INV-005 | Handle existing user flow - confirm organization relationship | High | ORG-INV-003 | Done | ✅ Implemented handleExistingUserLogin() with LoginFromInvitation.vue component and processInvitationAcceptance() using existing AcceptInvitationAction. |
-| ORG-INV-006 | Update OrganizerInvitationNotification to use unique invitation URLs | Medium | ORG-INV-002 | Done | ✅ Modified notification constructor to accept invitationUrl parameter, updated email template to use unique URL instead of generic url('/'). |
-| ORG-INV-007 | Add invitation token expiration and security measures | Medium | ORG-INV-002 | Done | ✅ Implemented Laravel signed URLs with expiration, token validation, nonce generation, and existing InviteUserData expires_at support. |
-| ORG-INV-008 | Test invitation flow for both new and existing users | Medium | ORG-INV-004, ORG-INV-005 | Done | ✅ Verified syntax, route registration, Laravel config compilation. Vue components created for both user flows with proper form handling. |
