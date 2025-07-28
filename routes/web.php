@@ -190,7 +190,7 @@ Route::get('/membership/payment/cancel', [MembershipPaymentController::class, 'h
 
 // Stripe Webhook (must be outside CSRF protection)
 Route::post('/webhook/stripe', [PaymentController::class, 'handleWebhook'])->name('webhook.stripe');
-Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook'])->name('webhook.stripe');
+Route::post('/stripe/webhook', [PaymentController::class, 'handleWebhook']);
 
 // New coupon scanner API routes
 // THIS SECTION APPEARS TO BE A DUPLICATE/INCORRECT - REMOVING
