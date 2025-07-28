@@ -42,7 +42,7 @@ onMounted(() => {
 
         <main class="container mx-auto px-4 py-6 pb-24">
             <!-- Current Membership Section -->
-            <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800" v-if="hasMembership">
+            <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
                 <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Current Membership</h2>
 
                 <div v-if="hasMembership" class="space-y-3">

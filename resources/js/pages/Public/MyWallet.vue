@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { computed, ref } from 'vue';
@@ -9,22 +9,23 @@ import { computed, ref } from 'vue';
 // import PublicLayout from '@/Layouts/PublicLayout.vue';
 import type { WalletBalance, WalletTransaction } from '@/types/wallet'; // Define these types later
 import BottomNavbar from '../../components/Public/BottomNavbar.vue';
+import { User } from '@/types/index';
 
 dayjs.extend(utc);
 
 const props = defineProps({
     balance: {
         type: Object as () => WalletBalance,
-        required: true
+        required: true,
     },
     transactions: {
         type: Object as () => { data: WalletTransaction[]; links: any[]; meta: any }, // Basic pagination structure
-        required: true
+        required: true,
     },
     code: {
         type: String,
-        required: true
-    }
+        required: true,
+    },
 });
 
 // State for managing which transactions to show
@@ -45,7 +46,7 @@ const filteredTransactions = computed(() => {
                     t.transaction_type.startsWith('earn_') ||
                     t.transaction_type === 'transfer_in' ||
                     t.transaction_type === 'bonus' ||
-                    t.transaction_type === 'refund'
+                    t.transaction_type === 'refund',
             );
         case 'spent':
             return props.transactions.data.filter(
@@ -53,13 +54,19 @@ const filteredTransactions = computed(() => {
                     t.transaction_type.startsWith('spend_') ||
                     t.transaction_type === 'transfer_out' ||
                     t.transaction_type === 'penalty' ||
-                    t.transaction_type === 'membership_purchase'
+                    t.transaction_type === 'membership_purchase',
             );
         case 'all':
         default:
             return props.transactions.data;
     }
 });
+
+const page = usePage();
+
+const auth = computed(() => page.props.auth as { user?: User });
+
+const hasMembership = computed(() => auth.value.user?.membership_level);
 
 function setFilter(filter: string) {
     activeFilter.value = filter;
@@ -85,7 +92,7 @@ function getTransactionTypeLabel(type: string): string {
 console.log('Wallet Page Loaded', {
     balance: props.balance,
     transactions: props.transactions,
-    code: props.code
+    code: props.code,
 });
 </script>
 
@@ -98,8 +105,7 @@ console.log('Wallet Page Loaded', {
         <!-- Header Section -->
         <header class="sticky top-0 z-50 border-b bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div class="relative container mx-auto flex items-center p-4">
-                <Link href="/"
-                      class="absolute left-4 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
+                <Link href="/" class="absolute left-4 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
                     &larr; Back
                 </Link>
                 <h1 class="flex-1 text-center text-xl font-semibold text-gray-900 dark:text-gray-100">My Wallet</h1>
@@ -108,7 +114,7 @@ console.log('Wallet Page Loaded', {
 
         <main class="container mx-auto px-4 py-6 pb-24">
             <!-- My Membership Card with QR Code  -->
-            <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+            <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800" v-if="hasMembership">
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">My Membership Card</h2>
                     <Link
@@ -159,16 +165,14 @@ console.log('Wallet Page Loaded', {
             <!-- Placeholder: Top-up Points Section -->
             <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
                 <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Top-up Points</h2>
-                <p class="text-gray-600 dark:text-gray-300">This section will allow users to purchase more points.
-                    (Coming Soon)</p>
+                <p class="text-gray-600 dark:text-gray-300">This section will allow users to purchase more points. (Coming Soon)</p>
                 <!-- Add top-up options and payment integration here -->
             </section>
 
             <!-- Transaction History Section -->
             <section>
                 <div class="mb-6 flex flex-col items-start justify-between sm:flex-row sm:items-center">
-                    <h2 class="mb-4 text-2xl font-semibold text-gray-800 sm:mb-0 dark:text-gray-200">Transaction
-                        History</h2>
+                    <h2 class="mb-4 text-2xl font-semibold text-gray-800 sm:mb-0 dark:text-gray-200">Transaction History</h2>
                     <div class="flex flex-wrap space-x-2 text-sm">
                         <button
                             @click="setFilter('all')"
@@ -228,8 +232,7 @@ console.log('Wallet Page Loaded', {
                     </div>
                 </div>
 
-                <div v-if="filteredTransactions.length > 0"
-                     class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
+                <div v-if="filteredTransactions.length > 0" class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
                     <ul class="divide-y divide-gray-200 dark:divide-gray-700">
                         <li
                             v-for="transaction in filteredTransactions"
@@ -267,9 +270,7 @@ console.log('Wallet Page Loaded', {
                                         }"
                                     >
                                         {{ formatAmount(transaction.amount, transaction.transaction_type) }}
-                                        <span
-                                            class="text-xs">{{ transaction.transaction_type.includes('_kill_points') ? 'KP' : 'Pts'
-                                            }}</span>
+                                        <span class="text-xs">{{ transaction.transaction_type.includes('_kill_points') ? 'KP' : 'Pts' }}</span>
                                     </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">
                                         {{ formatTransactionDate(transaction.created_at) }}
@@ -295,8 +296,7 @@ console.log('Wallet Page Loaded', {
             <!-- Placeholder: Spending Charts Section -->
             <section class="mt-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
                 <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Spending Overview</h2>
-                <p class="text-gray-600 dark:text-gray-300">Charts and graphs visualizing spending patterns will be
-                    displayed here. (Coming Soon)</p>
+                <p class="text-gray-600 dark:text-gray-300">Charts and graphs visualizing spending patterns will be displayed here. (Coming Soon)</p>
                 <!-- Add chart components here -->
             </section>
         </main>
@@ -307,7 +307,8 @@ console.log('Wallet Page Loaded', {
 
 <style scoped>
 .shadow-top-lg {
-    box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.05),
-    0 -2px 4px -2px rgb(0 0 0 / 0.05);
+    box-shadow:
+        0 -4px 6px -1px rgb(0 0 0 / 0.05),
+        0 -2px 4px -2px rgb(0 0 0 / 0.05);
 }
 </style>
