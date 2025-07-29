@@ -29,6 +29,7 @@ use App\Http\Controllers\Public\EventController as PublicEventController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\MyBookingsController;
 use App\Http\Controllers\Public\MyWalletController;
+use App\Http\Controllers\Public\MyCouponsController;
 use App\Http\Controllers\Public\MyWishlistController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/my-bookings', [MyBookingsController::class, 'index'])->name('my-bookings');
     Route::get('/my-wishlist', [MyWishlistController::class, 'index'])->name('my-wishlist');
     Route::get('/my-wallet', [MyWalletController::class, 'index'])->name('my-wallet');
+    Route::get('/my-coupons', [MyCouponsController::class, 'index'])->name('my-coupons');
     Route::get('/my-membership', [ProfileController::class, 'myMembership'])->name('my-membership');
 
     // Wishlist API-like routes (session-based)
@@ -147,6 +149,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super_admin|' 
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     Route::resource('coupons', CouponController::class);
     Route::get('coupon-scanner', [CouponController::class, 'scanner'])->name('coupons.scanner');
+    
+    // Mass Coupon Assignment routes
+    Route::prefix('coupon-assignment')->name('coupon-assignment.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'index'])->name('index');
+        Route::post('/search-users', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'searchUsers'])->name('search-users');
+        Route::post('/user-stats', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'getUserStats'])->name('user-stats');
+        Route::post('/assign', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'assign'])->name('assign');
+        Route::get('/history', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'history'])->name('history');
+    });
 });
 
 

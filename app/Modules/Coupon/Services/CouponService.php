@@ -7,6 +7,7 @@ use App\Modules\Coupon\Actions\IssueCouponToUserAction;
 use App\Modules\Coupon\Actions\RedeemUserCouponAction;
 use App\Modules\Coupon\Actions\ValidateUserCouponForRedemptionAction;
 use App\Modules\Coupon\Actions\FindUserCouponByCodeAction;
+use App\Modules\Coupon\Actions\ValidateMerchantPinAction;
 use App\Modules\Coupon\DataTransferObjects\CouponData;
 use App\Modules\Coupon\DataTransferObjects\IssueCouponData;
 use App\Modules\Coupon\Exceptions\CouponAlreadyUsedException;
@@ -15,6 +16,7 @@ use App\Modules\Coupon\Exceptions\InvalidCouponException;
 use App\Modules\Coupon\Models\Coupon;
 use App\Modules\Coupon\Models\UserCoupon;
 use Illuminate\Support\Collection;
+use Throwable;
 
 class CouponService
 {
@@ -23,7 +25,8 @@ class CouponService
         private IssueCouponToUserAction $issueCouponAction,
         private RedeemUserCouponAction $redeemCouponAction,
         private ValidateUserCouponForRedemptionAction $validateCouponAction,
-        private FindUserCouponByCodeAction $findCouponByCodeAction
+        private FindUserCouponByCodeAction $findCouponByCodeAction,
+        private ValidateMerchantPinAction $validateMerchantPinAction
     ) {}
 
     /**
@@ -235,5 +238,145 @@ class CouponService
         }
 
         return !$query->exists();
+    }
+
+    /**
+     * Validate a coupon for redemption and return array result (for API controllers)
+     *
+     * @param string $uniqueCode The unique code of the user coupon
+     * @return array Array with validation result, user_coupon, details, and reasons
+     */
+    public function validateCouponForApi(string $uniqueCode): array
+    {
+        $userCoupon = $this->findCouponByCodeAction->execute($uniqueCode);
+
+        if (!$userCoupon) {
+            return [
+                'valid' => false,
+                'reasons' => ['Coupon not found'],
+                'user_coupon' => null,
+                'details' => null,
+            ];
+        }
+
+        $validation = $this->validateCouponAction->execute($userCoupon);
+
+        return [
+            'valid' => $validation['valid'],
+            'reasons' => $validation['reasons'],
+            'user_coupon' => $validation['valid'] ? $userCoupon : null,
+            'details' => $validation['details'] ?? null,
+        ];
+    }
+
+    /**
+     * Redeem a coupon using PIN validation
+     *
+     * @param string $uniqueCode The unique code of the user coupon
+     * @param string $merchantPin The PIN provided by the merchant
+     * @param string|null $location Optional location where redemption occurs
+     * @param array|null $details Optional additional details for the redemption
+     * @return array Result array with success status, message, and data
+     */
+    public function redeemCouponByPin(
+        string $uniqueCode,
+        string $merchantPin,
+        ?string $location = null,
+        ?array $details = null
+    ): array {
+        try {
+            // Step 1: Find the coupon
+            $userCoupon = $this->findCouponByCodeAction->execute($uniqueCode);
+            if (!$userCoupon) {
+                return [
+                    'success' => false,
+                    'message' => 'Coupon not found',
+                    'reasons' => ['Coupon not found'],
+                    'data' => null,
+                ];
+            }
+
+            // Step 2: Validate PIN first
+            $pinValidation = $this->validateMerchantPinAction->execute($userCoupon, $merchantPin);
+            if (!$pinValidation['valid']) {
+                return [
+                    'success' => false,
+                    'message' => 'PIN validation failed',
+                    'reasons' => $pinValidation['reasons'],
+                    'data' => null,
+                ];
+            }
+
+            // Step 3: Validate coupon status
+            $validation = $this->validateCouponAction->execute($userCoupon);
+            if (!$validation['valid']) {
+                return [
+                    'success' => false,
+                    'message' => 'Coupon validation failed',
+                    'reasons' => $validation['reasons'],
+                    'data' => null,
+                ];
+            }
+
+            // Step 4: Redeem the coupon
+            $redeemedCoupon = $this->redeemCouponAction->execute($userCoupon, $location, $details);
+
+            return [
+                'success' => true,
+                'message' => 'Coupon redeemed successfully via PIN',
+                'reasons' => [],
+                'data' => [
+                    'user_coupon' => $redeemedCoupon,
+                    'redemption_method' => 'pin',
+                ],
+            ];
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'An error occurred during PIN redemption',
+                'reasons' => [$e->getMessage()],
+                'data' => null,
+            ];
+        }
+    }
+
+    /**
+     * Validate PIN for a coupon without redeeming it
+     *
+     * @param string $uniqueCode The unique code of the user coupon
+     * @param string $merchantPin The PIN provided by the merchant
+     * @return array Result array with PIN validation status
+     */
+    public function validateCouponPin(string $uniqueCode, string $merchantPin): array
+    {
+        $userCoupon = $this->findCouponByCodeAction->execute($uniqueCode);
+
+        if (!$userCoupon) {
+            return [
+                'valid' => false,
+                'reasons' => ['Coupon not found'],
+                'user_coupon' => null,
+            ];
+        }
+
+        $pinValidation = $this->validateMerchantPinAction->execute($userCoupon, $merchantPin);
+
+        if (!$pinValidation['valid']) {
+            return [
+                'valid' => false,
+                'reasons' => $pinValidation['reasons'],
+                'user_coupon' => null,
+            ];
+        }
+
+        // Also validate the coupon status
+        $validation = $this->validateCouponAction->execute($userCoupon);
+
+        return [
+            'valid' => $validation['valid'],
+            'reasons' => array_merge($pinValidation['reasons'], $validation['reasons']),
+            'user_coupon' => $validation['valid'] ? $userCoupon : null,
+            'details' => $validation['details'] ?? null,
+        ];
     }
 }

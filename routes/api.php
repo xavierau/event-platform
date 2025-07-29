@@ -56,6 +56,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // Coupon Scanner
     Route::get('/coupon-scanner/{uniqueCode}', [\App\Http\Controllers\Api\V1\CouponScannerController::class, 'show'])->name('coupon-scanner.show');
     Route::post('/coupon-scanner/{uniqueCode}/redeem', [\App\Http\Controllers\Api\V1\CouponScannerController::class, 'store'])->name('coupon-scanner.redeem');
+    
+    // PIN-based Coupon Redemption
+    Route::post('/coupons/validate-pin', [\App\Http\Controllers\Api\V1\CouponScannerController::class, 'validatePin'])->name('coupons.validate-pin');
+    Route::post('/coupons/redeem-by-pin', [\App\Http\Controllers\Api\V1\CouponScannerController::class, 'redeemByPin'])->name('coupons.redeem-by-pin');
 });
 
 // Note: Wishlist routes moved to web.php for session-based authentication

@@ -7,6 +7,7 @@ use App\Modules\Coupon\Actions\AssignCouponToUserManuallyAction;
 use App\Modules\Coupon\DataTransferObjects\AssignCouponToUserData;
 use App\Modules\Coupon\Models\Coupon;
 use App\Modules\Coupon\Models\UserCoupon;
+use App\Modules\Coupon\Enums\UserCouponStatusEnum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
@@ -64,7 +65,7 @@ describe('AssignCouponToUserManuallyAction', function () {
             ->and($result->assignment_notes)->toBe('Long-term customer appreciation')
             ->and($result->times_can_be_used)->toBe(3)
             ->and($result->quantity)->toBe(1)
-            ->and($result->status)->toBe('available');
+            ->and($result->status)->toBe(UserCouponStatusEnum::AVAILABLE);
     });
 
     test('creates user coupon record in database', function () {
@@ -311,7 +312,7 @@ describe('AssignCouponToUserManuallyAction', function () {
 
         // Verify assignment was recorded
         $totalIssuedQuantity = UserCoupon::getCouponCurrentIssueCount($this->coupon->id);
-        expect($totalIssuedQuantity)->toBe(3);
+        expect($totalIssuedQuantity)->toBe('3');
     });
 
     test('provides helpful error message for duplicate assignment', function () {
@@ -329,7 +330,7 @@ describe('AssignCouponToUserManuallyAction', function () {
         try {
             $this->action->execute($assignmentData);
         } catch (ValidationException $e) {
-            expect($e->getMessage())->toContain('already assigned');
+            expect($e->getMessage())->toContain('already been assigned');
         }
     });
 
