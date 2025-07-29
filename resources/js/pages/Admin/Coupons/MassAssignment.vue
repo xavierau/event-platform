@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ref, computed, watch, nextTick } from 'vue';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/Shared/PageHeader.vue';
 import { debounce } from 'lodash';
 import axios from 'axios';
@@ -82,14 +82,14 @@ const assignmentForm = useForm({
 const selectedUserIds = computed(() => selectedUsers.value.map(user => user.id));
 
 const pageTitle = computed(() => {
-  return props.preSelectedCoupon ? 
-    `Mass Assign: ${props.preSelectedCoupon.name}` : 
+  return props.preSelectedCoupon ?
+    `Mass Assign: ${props.preSelectedCoupon.name}` :
     'Mass Coupon Assignment';
 });
 
 const pageSubtitle = computed(() => {
-  return props.preSelectedCoupon ? 
-    `Assign "${props.preSelectedCoupon.code}" to multiple users at once` : 
+  return props.preSelectedCoupon ?
+    `Assign "${props.preSelectedCoupon.code}" to multiple users at once` :
     'Assign coupons to multiple users at once';
 });
 
@@ -102,8 +102,8 @@ const canProceedToStep3 = computed(() => {
 });
 
 const canSubmitAssignment = computed(() => {
-  return assignmentForm.coupon_id && 
-         assignmentForm.user_ids.length > 0 && 
+  return assignmentForm.coupon_id &&
+         assignmentForm.user_ids.length > 0 &&
          assignmentForm.quantity > 0;
 });
 
@@ -119,7 +119,7 @@ const debouncedSearch = debounce(async () => {
   }
 
   isSearching.value = true;
-  
+
   try {
     const response = await fetch(route('admin.coupon-assignment.search-users'), {
       method: 'POST',
@@ -172,7 +172,7 @@ const updateUserStats = async () => {
   }
 
   isLoadingStats.value = true;
-  
+
   try {
     const response = await fetch(route('admin.coupon-assignment.user-stats'), {
       method: 'POST',
@@ -202,9 +202,9 @@ const selectCoupon = (coupon: Coupon) => {
 const goToStep = (step: number) => {
   if (step === 2 && !canProceedToStep2.value) return;
   if (step === 3 && !canProceedToStep3.value) return;
-  
+
   currentStep.value = step;
-  
+
   if (step === 3) {
     // Prepare final assignment form
     assignmentForm.user_ids = selectedUserIds.value;
@@ -238,18 +238,19 @@ const submitAssignment = async () => {
       assignmentForm.coupon_id = props.preSelectedCouponId || null;
       assignmentForm.errors = {};
       userStats.value = null;
-      
+
       // Show success message
       alert(`Success: ${response.data.message}`);
-      
+
       // Log assignment details
       console.log('Assignment successful:', response.data);
     } else {
       alert(`Error: ${response.data.message}`);
     }
-  } catch (error) {
+  } catch (e) {
+      const error = e as any;
     console.error('Assignment failed:', error);
-    
+
     if (error.response?.data?.errors) {
       // Handle validation errors
       Object.keys(error.response.data.errors).forEach(key => {
@@ -298,13 +299,13 @@ watch(organizerFilter, debouncedSearch);
 <template>
   <div>
     <Head title="Mass Coupon Assignment" />
-    
+
     <AppLayout>
       <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
           <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
             <div class="p-6 lg:p-8 bg-white dark:bg-gray-800">
-              
+
               <!-- Page Header -->
               <PageHeader :title="pageTitle" :subtitle="pageSubtitle">
                 <template #actions>
@@ -314,8 +315,8 @@ watch(organizerFilter, debouncedSearch);
                   >
                     View History
                   </button>
-                  <Link 
-                    :href="route('admin.coupons.index')" 
+                  <Link
+                    :href="route('admin.coupons.index')"
                     class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:ring focus:ring-indigo-200 disabled:opacity-25 transition"
                   >
                     Back to Coupons
@@ -337,9 +338,9 @@ watch(organizerFilter, debouncedSearch);
                       </div>
                       <span class="ml-2 text-sm font-medium text-gray-900 dark:text-white">Select Users</span>
                     </div>
-                    
+
                     <div class="w-12 h-1 bg-gray-300 rounded"></div>
-                    
+
                     <!-- Step 2 -->
                     <div class="flex items-center">
                       <div :class="[
@@ -350,9 +351,9 @@ watch(organizerFilter, debouncedSearch);
                       </div>
                       <span class="ml-2 text-sm font-medium text-gray-900 dark:text-white">Choose Coupon</span>
                     </div>
-                    
+
                     <div class="w-12 h-1 bg-gray-300 rounded"></div>
-                    
+
                     <!-- Step 3 -->
                     <div class="flex items-center">
                       <div :class="[
@@ -370,7 +371,7 @@ watch(organizerFilter, debouncedSearch);
               <!-- Step 1: Select Users -->
               <div v-if="currentStep === 1" class="space-y-6">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-white">Step 1: Select Users</h3>
-                
+
                 <!-- Search Controls -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -410,16 +411,16 @@ watch(organizerFilter, debouncedSearch);
                       Select All ({{ searchResults.length }})
                     </button>
                   </div>
-                  
+
                   <div v-if="isSearching" class="text-center py-4">
                     <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
                     <span class="ml-2 text-sm text-gray-600">Searching...</span>
                   </div>
-                  
+
                   <div v-else-if="searchResults.length === 0 && searchQuery.length >= 2" class="text-center py-4 text-gray-500">
                     No users found matching your search.
                   </div>
-                  
+
                   <div v-else class="max-h-60 overflow-y-auto border border-gray-200 rounded-md">
                     <div
                       v-for="user in searchResults"
@@ -450,7 +451,7 @@ watch(organizerFilter, debouncedSearch);
                       Clear All
                     </button>
                   </div>
-                  
+
                   <div class="max-h-40 overflow-y-auto border border-gray-200 rounded-md">
                     <div
                       v-for="user in selectedUsers"
@@ -469,7 +470,7 @@ watch(organizerFilter, debouncedSearch);
                       </button>
                     </div>
                   </div>
-                  
+
                   <!-- User Statistics -->
                   <div v-if="userStats" class="bg-gray-50 p-4 rounded-md">
                     <h5 class="font-medium text-gray-900 mb-2">Selected User Statistics</h5>
@@ -497,8 +498,8 @@ watch(organizerFilter, debouncedSearch);
                     :disabled="!canProceedToStep2"
                     :class="[
                       'px-4 py-2 rounded-md font-semibold text-sm',
-                      canProceedToStep2 
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                      canProceedToStep2
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     ]"
                   >
@@ -510,7 +511,7 @@ watch(organizerFilter, debouncedSearch);
               <!-- Step 2: Choose Coupon -->
               <div v-if="currentStep === 2" class="space-y-6">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-white">Step 2: Choose Coupon</h3>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div
                     v-for="coupon in coupons"
@@ -556,8 +557,8 @@ watch(organizerFilter, debouncedSearch);
                     :disabled="!canProceedToStep3"
                     :class="[
                       'px-4 py-2 rounded-md font-semibold text-sm',
-                      canProceedToStep3 
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                      canProceedToStep3
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     ]"
                   >
@@ -569,11 +570,11 @@ watch(organizerFilter, debouncedSearch);
               <!-- Step 3: Confirm & Assign -->
               <div v-if="currentStep === 3" class="space-y-6">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-white">Step 3: Confirm & Assign</h3>
-                
+
                 <!-- Assignment Summary -->
                 <div class="bg-gray-50 p-6 rounded-lg space-y-4">
                   <h4 class="font-medium text-gray-900">Assignment Summary</h4>
-                  
+
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <h5 class="text-sm font-medium text-gray-700 mb-2">Selected Coupon</h5>
@@ -585,7 +586,7 @@ watch(organizerFilter, debouncedSearch);
                         </div>
                       </div>
                     </div>
-                    
+
                     <div>
                       <h5 class="text-sm font-medium text-gray-700 mb-2">Recipients</h5>
                       <div class="text-sm text-gray-600">
@@ -614,7 +615,7 @@ watch(organizerFilter, debouncedSearch);
                         {{ assignmentForm.errors.quantity }}
                       </div>
                     </div>
-                    
+
                     <div>
                       <label for="expires_at" class="block text-sm font-medium text-gray-700">Custom Expiry (Optional)</label>
                       <input
@@ -625,7 +626,7 @@ watch(organizerFilter, debouncedSearch);
                       >
                     </div>
                   </div>
-                  
+
                   <div>
                     <label for="notes" class="block text-sm font-medium text-gray-700">Notes (Optional)</label>
                     <textarea
@@ -660,7 +661,7 @@ watch(organizerFilter, debouncedSearch);
                     :class="[
                       'px-6 py-2 rounded-md font-semibold text-sm',
                       canSubmitAssignment && !assignmentForm.processing
-                        ? 'bg-green-600 text-white hover:bg-green-700' 
+                        ? 'bg-green-600 text-white hover:bg-green-700'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     ]"
                   >
@@ -686,7 +687,7 @@ watch(organizerFilter, debouncedSearch);
               </svg>
             </button>
           </div>
-          
+
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
