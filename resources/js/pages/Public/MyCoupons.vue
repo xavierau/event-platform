@@ -420,10 +420,10 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
 
     <!-- QR Code Modal -->
     <div v-if="showQrModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
         <div class="flex justify-between items-start mb-4">
-          <h3 class="text-lg font-semibold">QR Code for Redemption</h3>
-          <button @click="showQrModal = false" class="text-gray-400 hover:text-gray-600">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">QR Code for Redemption</h3>
+          <button @click="showQrModal = false" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -432,12 +432,12 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
 
         <div v-if="selectedCoupon" class="text-center">
           <div class="mb-4">
-            <h4 class="font-medium">{{ selectedCoupon.coupon.name }}</h4>
-            <p class="text-sm text-gray-600">{{ selectedCoupon.unique_code }}</p>
+            <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ selectedCoupon.coupon.name }}</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ selectedCoupon.unique_code }}</p>
           </div>
 
           <!-- QR Code -->
-          <div class="w-64 h-64 mx-auto bg-white border border-gray-200 rounded-lg flex items-center justify-center mb-4">
+          <div class="w-64 h-64 mx-auto bg-white border border-gray-200 dark:border-gray-600 rounded-lg flex items-center justify-center mb-4">
             <img
               v-if="qrCodeDataUrl"
               :src="qrCodeDataUrl"
@@ -446,21 +446,21 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
             />
             <div v-else class="text-center">
               <div class="text-gray-400 text-2xl mb-2">📱</div>
-              <div class="text-sm text-gray-600">Generating QR Code...</div>
+              <div class="text-sm text-gray-600 dark:text-gray-400">Generating QR Code...</div>
             </div>
           </div>
 
-          <p class="text-sm text-gray-600">Show this QR code to the merchant for scanning</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Show this QR code to the merchant for scanning</p>
         </div>
       </div>
     </div>
 
     <!-- PIN Redemption Modal -->
     <div v-if="showPinModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
         <div class="flex justify-between items-start mb-4">
-          <h3 class="text-lg font-semibold">PIN Redemption</h3>
-          <button @click="showPinModal = false" class="text-gray-400 hover:text-gray-600">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">PIN Redemption</h3>
+          <button @click="showPinModal = false" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -469,12 +469,12 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
 
         <div v-if="selectedCoupon" class="text-center">
           <div class="mb-6">
-            <h4 class="font-medium">{{ selectedCoupon.coupon.name }}</h4>
-            <p class="text-sm text-gray-600">{{ selectedCoupon.unique_code }}</p>
+            <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ selectedCoupon.coupon.name }}</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ selectedCoupon.unique_code }}</p>
           </div>
 
-          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div class="text-blue-800 text-sm">
+          <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+            <div class="text-blue-800 dark:text-blue-200 text-sm">
               <div class="font-medium mb-2">🔐 PIN Redemption Process</div>
               <ol class="text-left space-y-1 text-xs">
                 <li>1. Hand your device to the merchant</li>
@@ -487,7 +487,7 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
           <!-- PIN Input Form -->
           <div class="space-y-4">
             <div>
-              <label for="merchantPin" class="block text-sm font-medium text-gray-700 mb-2">
+              <label for="merchantPin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Merchant PIN (6 digits)
               </label>
               <input
@@ -498,14 +498,14 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
                 pattern="[0-9]{6}"
                 maxlength="6"
                 placeholder="Enter 6-digit PIN"
-                class="w-full px-4 py-3 text-center text-lg font-mono border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                class="w-full px-4 py-3 text-center text-lg font-mono border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                 :disabled="isProcessingPin"
                 @keyup.enter="submitPinRedemption"
               >
             </div>
             
             <!-- Error Message -->
-            <div v-if="pinError" class="text-red-600 text-sm text-center">
+            <div v-if="pinError" class="text-red-600 dark:text-red-400 text-sm text-center">
               {{ pinError }}
             </div>
             
@@ -516,8 +516,8 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
               class="w-full py-3 px-4 rounded-md text-white font-medium transition-colors"
               :class="[
                 isProcessingPin || merchantPin.length !== 6
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-green-600 hover:bg-green-700'
+                  ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800'
               ]"
             >
               <span v-if="isProcessingPin">Processing...</span>
