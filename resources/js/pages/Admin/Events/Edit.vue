@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { watchEffect, ref } from 'vue';
 import CommentModeration from '@/components/CommentModeration.vue';
 import RichTextEditor from '@/components/Form/RichTextEditor.vue';
-import MediaUploader from '@/components/Form/MediaUploader.vue';
+import MediaUploader from '@/components/Form/MediaUpload.vue';
 
 // Type definitions are complex and long, assuming they are correct for now.
 // If there are type errors, they will need to be addressed separately.

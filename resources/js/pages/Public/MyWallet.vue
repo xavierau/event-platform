@@ -4,11 +4,8 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { computed, ref } from 'vue';
 
-// Assuming a layout similar to MyBookings, potentially PublicLayout or AppLayout
-// For now, using a generic div, this should be replaced with the correct layout component
-// import PublicLayout from '@/Layouts/PublicLayout.vue';
-import type { WalletBalance, WalletTransaction } from '@/types/wallet'; // Define these types later
-import BottomNavbar from '../../components/Public/BottomNavbar.vue';
+import FrontendFooter from '@/components/FrontendFooter.vue'; // Define these types later
+import type { WalletBalance, WalletTransaction } from '@/types/wallet';
 import { User } from '@/types/index';
 
 dayjs.extend(utc);
@@ -25,7 +22,7 @@ const props = defineProps({
     code: {
         type: String,
         required: true,
-    },
+    }
 });
 
 // State for managing which transactions to show
@@ -113,54 +110,31 @@ console.log('Wallet Page Loaded', {
         </header>
 
         <main class="container mx-auto px-4 py-6 pb-24">
-            <!-- My Membership Card with QR Code  -->
-            <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800" v-if="hasMembership">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">My Membership Card</h2>
-                    <Link
-                        :href="route('my-membership')"
-                        class="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
-                    >
-                        View Membership Details
-                    </Link>
-                </div>
-                <div class="mt-4 flex items-center justify-center">
-                    <img
-                        :src="`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(props.code)}&size=300x300`"
-                        alt="Membership QR Code"
-                        class="h-32 w-32 rounded-lg shadow-md"
-                    />
-                </div>
-                <!--                <p class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">-->
-                <!--                    Scan the QR code to access your membership details and wallet balance.-->
-                <!--                </p>-->
-            </section>
-
             <!-- Balance Section -->
-            <!--            <section class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">-->
-            <!--                <div class="rounded-lg bg-white p-6 text-center shadow dark:bg-gray-800">-->
-            <!--                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Points Balance</h2>-->
-            <!--                    <p class="mt-1 text-3xl font-bold text-indigo-600 dark:text-indigo-400">-->
-            <!--                        {{ props.balance.points_balance?.toLocaleString() || 0 }}-->
-            <!--                    </p>-->
-            <!--                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">-->
-            <!--                        Total Earned: {{ props.balance.total_points_earned?.toLocaleString() || 0 }}-->
-            <!--                    </p>-->
-            <!--                    <p class="text-xs text-gray-500 dark:text-gray-400">Total Spent: {{ props.balance.total_points_spent?.toLocaleString() || 0 }}</p>-->
-            <!--                </div>-->
-            <!--                <div class="rounded-lg bg-white p-6 text-center shadow dark:bg-gray-800">-->
-            <!--                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Kill Points Balance</h2>-->
-            <!--                    <p class="mt-1 text-3xl font-bold text-red-600 dark:text-red-400">-->
-            <!--                        {{ props.balance.kill_points_balance?.toLocaleString() || 0 }}-->
-            <!--                    </p>-->
-            <!--                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">-->
-            <!--                        Total Earned: {{ props.balance.total_kill_points_earned?.toLocaleString() || 0 }}-->
-            <!--                    </p>-->
-            <!--                    <p class="text-xs text-gray-500 dark:text-gray-400">-->
-            <!--                        Total Spent: {{ props.balance.total_kill_points_spent?.toLocaleString() || 0 }}-->
-            <!--                    </p>-->
-            <!--                </div>-->
-            <!--            </section>-->
+            <section class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div class="rounded-lg bg-white p-6 text-center shadow dark:bg-gray-800">
+                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Points Balance</h2>
+                    <p class="mt-1 text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                        {{ props.balance.points_balance?.toLocaleString() || 0 }}
+                    </p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Total Earned: {{ props.balance.total_points_earned?.toLocaleString() || 0 }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Total Spent: {{ props.balance.total_points_spent?.toLocaleString() || 0 }}</p>
+                </div>
+                <div class="rounded-lg bg-white p-6 text-center shadow dark:bg-gray-800">
+                    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400">Kill Points Balance</h2>
+                    <p class="mt-1 text-3xl font-bold text-red-600 dark:text-red-400">
+                        {{ props.balance.kill_points_balance?.toLocaleString() || 0 }}
+                    </p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Total Earned: {{ props.balance.total_kill_points_earned?.toLocaleString() || 0 }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Total Spent: {{ props.balance.total_kill_points_spent?.toLocaleString() || 0 }}
+                    </p>
+                </div>
+            </section>
 
             <!-- Placeholder: Top-up Points Section -->
             <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
@@ -300,7 +274,8 @@ console.log('Wallet Page Loaded', {
                 <!-- Add chart components here -->
             </section>
         </main>
-        <BottomNavbar />
+
+        <FrontendFooter />
     </div>
     <!-- </PublicLayout> -->
 </template>

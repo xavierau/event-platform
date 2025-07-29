@@ -36,12 +36,12 @@ defineProps<Props>();
                 My Wishlist
             </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem :as-child="true">
-            <Link class="block w-full" :href="route('my-wallet')" prefetch as="button">
-                <Wallet class="mr-2 h-4 w-4" />
-                My Wallet
-            </Link>
-        </DropdownMenuItem>
+<!--        <DropdownMenuItem :as-child="true">-->
+<!--            <Link class="block w-full" :href="route('my-wallet')" prefetch as="button">-->
+<!--                <Wallet class="mr-2 h-4 w-4" />-->
+<!--                My Wallet-->
+<!--            </Link>-->
+<!--        </DropdownMenuItem>-->
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="route('my-membership')" prefetch as="button">
                 <Ticket class="mr-2 h-4 w-4" />

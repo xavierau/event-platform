@@ -63,8 +63,13 @@ class IssueBulkCouponsAction
                 'status' => UserCouponStatusEnum::ACTIVE,
                 'times_can_be_used' => $issuanceData->times_can_be_used,
                 'times_used' => 0,
-                'expires_at' => $coupon->expires_at,
+                'expires_at' => $issuanceData->expires_at ?: $coupon->expires_at,
                 'issued_at' => $issuedAt,
+                'assigned_by' => $issuanceData->issued_by_user_id,
+                'assignment_method' => $issuanceData->assignment_method ?: 'auto',
+                'assignment_reason' => $issuanceData->assignment_reason,
+                'assignment_notes' => $issuanceData->assignment_notes,
+                'quantity' => $issuanceData->quantity,
             ]);
 
             $userCoupons[] = $userCoupon;
