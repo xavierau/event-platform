@@ -3,7 +3,8 @@
     "allow": [
       "Bash(php artisan test:*)",
       "Bash(php artisan:*)",
-      "Bash(php:*)"
+      "Bash(php:*)",
+      "Bash(git tag:*)"
     ],
     "deny": []
   }

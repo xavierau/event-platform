@@ -23,6 +23,13 @@
                 <!-- Heart Icon -->
                 <span>My Wishlist</span>
             </Link>
+            <Link
+                :href="route('my-coupons')"
+                class="text-center text-xs text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-300"
+            >
+                <span class="block text-xl">🎫</span>
+                <span>My Coupons</span>
+            </Link>
             <!-- Add other relevant links if needed -->
         </div>
     </footer>
