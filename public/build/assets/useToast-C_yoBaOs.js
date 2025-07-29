@@ -1,1 +1,0 @@
-import{s}from"./app-CBcdSYGl.js";const u=s(""),c=s("success"),a=s(!1);function f(e,t="success",o=2500){u.value=e,c.value=t,a.value=!0,setTimeout(()=>{a.value=!1},o)}export{c as a,u as b,f as s,a as t};
