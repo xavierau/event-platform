@@ -1,6 +1,21 @@
 {
   "permissions": {
     "allow": [
+      "Bash(./vendor/bin/pest:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(php artisan tinker:*)",
+      "Bash(./vendor/bin/pest:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(php artisan route:list:*)",
+      "Bash(ls:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(timeout 30s npm run build)",
+      "Bash(sed:*)",
+      "Bash(cp:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)"
       "Bash(php artisan test:*)",
       "Bash(php artisan:*)",
       "Bash(php:*)",

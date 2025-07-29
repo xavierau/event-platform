@@ -29,18 +29,22 @@ class UserCoupon extends Model
         'times_used',
         'expires_at',
         'issued_at',
+        'assigned_by',
+        'assignment_method',
+        'assignment_reason',
+        'assignment_notes',
+        'quantity',
+        'acquired_at',
     ];
 
     protected $casts = [
         'status' => UserCouponStatusEnum::class,
         'expires_at' => 'datetime',
         'issued_at' => 'datetime',
+        'acquired_at' => 'datetime',
         'times_can_be_used' => 'integer',
         'times_used' => 'integer',
-        'times_can_be_used' => 'integer',
-        'times_used' => 'integer',
-        'expires_at' => 'datetime',
-        'issued_at' => 'datetime',
+        'quantity' => 'integer',
     ];
 
     public function user(): BelongsTo
@@ -57,4 +61,15 @@ class UserCoupon extends Model
     {
         return $this->hasMany(CouponUsageLog::class);
     }
+
+    public function assignedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    public static function getCouponCurrentIssueCount(int $couponId)
+    {
+        return static::where('coupon_id', $couponId)->sum('quantity');
+    }
+
 }

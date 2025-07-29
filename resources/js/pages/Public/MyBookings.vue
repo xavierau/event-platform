@@ -7,6 +7,7 @@ import utc from 'dayjs/plugin/utc';
 import BookingItemComponent from '@/components/Shared/BookingItem.vue';
 import BookingDetailsModal from '@/components/Modals/BookingDetailsModal.vue';
 import type { BookingItem } from '@/types/booking';
+import FrontendFooter from '@/components/FrontendFooter.vue';
 
 dayjs.extend(utc);
 
@@ -226,30 +227,7 @@ function refreshBookings() {
 
     </main>
 
-    <!-- Fixed Footer/Bottom Bar -->
-    <footer class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 shadow-top-lg z-50">
-      <div class="container mx-auto flex justify-between items-center">
-        <div class="flex space-x-4 text-center">
-          <Link href="/" class="text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300">
-            <span class="block text-xl">🏠</span>
-            <span>Home</span>
-          </Link>
-        </div>
-        <div class="flex space-x-2">
-             <Link href="/my-wishlist"
-            class="px-4 py-2 text-sm border border-pink-500 dark:border-pink-700 text-pink-500 dark:text-pink-400 rounded-full hover:bg-pink-50 dark:hover:bg-pink-700/30"
-          >
-            <!-- Placeholder for Heart Icon --> ❤️ My Wishlist
-          </Link>
-          <Link
-            href="/"
-            class="px-6 py-2 text-sm bg-indigo-500 dark:bg-indigo-600 text-white rounded-full hover:bg-indigo-600 dark:hover:bg-indigo-700 font-semibold"
-          >
-            Browse Events
-          </Link>
-        </div>
-      </div>
-    </footer>
+   <FrontendFooter />
 
     <!-- Booking Details Modal -->
     <BookingDetailsModal

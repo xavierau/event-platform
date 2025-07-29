@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Modules\Coupon\Models\UserCoupon;
 
 class Coupon extends Model
 {
@@ -29,6 +28,8 @@ class Coupon extends Model
         'discount_value',
         'discount_type',
         'max_issuance',
+        'used_count',
+        'is_active',
         'valid_from',
         'expires_at',
         'redemption_methods',
@@ -41,11 +42,9 @@ class Coupon extends Model
         'expires_at' => 'datetime',
         'discount_value' => 'integer',
         'max_issuance' => 'integer',
+        'used_count' => 'integer',
+        'is_active' => 'boolean',
         'redemption_methods' => 'array',
-        'discount_value' => 'integer',
-        'valid_from' => 'datetime',
-        'expires_at' => 'datetime',
-        'max_issuance' => 'integer',
     ];
 
     public function organizer(): BelongsTo
@@ -56,5 +55,24 @@ class Coupon extends Model
     public function userCoupons(): HasMany
     {
         return $this->hasMany(UserCoupon::class);
+    }
+
+    public function getCurrentIssueCount()
+    {
+        return $this->userCoupons()->sum('quantity');
+    }
+
+    public function getRemainingIssuance()
+    {
+        if ($this->max_issuance === null) return PHP_INT_MAX;
+
+        return $this->max_issuance - $this->getCurrentIssueCount();
+    }
+
+    public function hasEnoughIssuance(int $requiredQuantity)
+    {
+        if ($this->max_issuance === null) return true;
+
+        return $this->getRemainingIssuance() >= $requiredQuantity;
     }
 }

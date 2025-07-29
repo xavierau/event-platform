@@ -36,7 +36,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('coupon_id')->constrained('coupons')->onDelete('cascade');
-            $table->string('unique_code', 12)->unique();
+            $table->string('unique_code', 50)->unique();
             $table->enum('status', ['active', 'fully_used', 'expired'])->default('active');
             $table->integer('times_can_be_used')->default(1);
             $table->integer('times_used')->default(0);
@@ -54,7 +54,7 @@ return new class extends Migration
             $table->foreignId('user_coupon_id')->constrained('user_coupons')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamp('used_at');
-            $table->string('location')->nullable();
+            $table->string('location', 500)->nullable();
             $table->json('details')->nullable();
             $table->timestamps();
 
