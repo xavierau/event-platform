@@ -28,6 +28,7 @@ class MembershipLevel extends Model
         'max_users',
         'is_active',
         'sort_order',
+        'metadata',
     ];
 
     protected $casts = [
@@ -41,6 +42,7 @@ class MembershipLevel extends Model
         'max_users' => 'integer',
         'is_active' => 'boolean',
         'sort_order' => 'integer',
+        'metadata' => 'array',
     ];
 
     /**
