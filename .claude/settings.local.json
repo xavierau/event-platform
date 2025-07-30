@@ -15,11 +15,12 @@
       "Bash(sed:*)",
       "Bash(cp:*)",
       "Bash(npm run build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
       "Bash(php artisan test:*)",
       "Bash(php artisan:*)",
       "Bash(php:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "mcp__zen__thinkdeep"
     ],
     "deny": []
   }
