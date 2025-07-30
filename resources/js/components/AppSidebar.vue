@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import type { NavItem, SharedData } from '@/types/index.d';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid,Calendar, MapPin, Tag, Settings, Ticket, Megaphone, FileText, MessageSquare, Users, Percent, UserCog } from 'lucide-vue-next';
+import { LayoutGrid,Calendar, MapPin, Tag, Settings, Ticket, Megaphone, FileText, MessageSquare, Users, Percent, UserCog, ScanLine, QrCode } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { computed } from 'vue';
 
@@ -17,7 +17,7 @@ const canManageUsers = computed(() => userPermissions.value.includes('manage-use
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: '/dashboard',
+        href: '/admin/dashboard',
         icon: LayoutGrid,
     },
     {
@@ -33,11 +33,6 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Coupons',
         href: '/admin/coupons',
-        icon: Percent,
-    },
-    {
-        title: 'Coupon Scanner',
-        href: '/admin/coupon-scanner',
         icon: Percent,
     },
     {
@@ -119,7 +114,7 @@ const footerNavItems: NavItem[] = [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="route('dashboard')">
+                        <Link :href="route('admin.dashboard')">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>

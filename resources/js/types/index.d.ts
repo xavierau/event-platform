@@ -162,3 +162,21 @@ export interface CmsPage {
     updated_at: string;
     sort_order: number;
 }
+
+export interface MembershipLevel {
+    id: number;
+    name: Translatable;
+    slug: string;
+    description: Translatable;
+    price: number;
+    points_cost: number | null;
+    kill_points_cost: number | null;
+    duration_months: number;
+    benefits: string[];
+    max_users: number | null;
+    is_active: boolean;
+    sort_order: number;
+    metadata: Record<string, any> | null;
+    created_at?: string;
+    updated_at?: string;
+}

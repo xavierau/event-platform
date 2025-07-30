@@ -16,6 +16,6 @@ class AdminDashboardController extends Controller
     public function index()
     {
         // Placeholder for data fetching logic
-        return Inertia::render('Admin/Dashboard');
+        return Inertia::render('Admin/Dashboard/Index');
     }
 }
