@@ -19,8 +19,44 @@
                             </div>
 
                             <div>
-                                <Label for="membership_level">{{ t('fields.membership_level') }}</Label>
-                                <Input id="membership_level" type="text" :defaultValue="props.user.membership_level" class="mt-1 block w-full" disabled />
+                                <Label for="current_membership">{{ t('fields.current_membership') }}</Label>
+                                <Input id="current_membership" type="text" :defaultValue="props.user.membership_level" class="mt-1 block w-full" disabled />
+                            </div>
+
+                            <div>
+                                <Label for="membership_level_id">{{ t('fields.assign_membership_level') }}</Label>
+                                <select
+                                    id="membership_level_id"
+                                    v-model="form.membership_level_id"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+                                >
+                                    <option :value="null">{{ t('common.select_option') }}</option>
+                                    <option v-for="level in membershipLevels" :key="level.id" :value="level.id">
+                                        {{ level.name[locale] || level.name.en }} ({{ level.duration_months }} {{ t('common.months') }})
+                                    </option>
+                                </select>
+                                <div v-if="form.errors.membership_level_id" class="text-sm text-red-600">
+                                    {{ form.errors.membership_level_id }}
+                                </div>
+                            </div>
+
+                            <div v-if="form.membership_level_id">
+                                <Label for="membership_duration_months">{{ t('fields.custom_duration_months') }}</Label>
+                                <Input
+                                    id="membership_duration_months"
+                                    type="number"
+                                    v-model="form.membership_duration_months"
+                                    class="mt-1 block w-full"
+                                    min="1"
+                                    max="120"
+                                    :placeholder="t('placeholders.leave_empty_for_default')"
+                                />
+                                <div v-if="form.errors.membership_duration_months" class="text-sm text-red-600">
+                                    {{ form.errors.membership_duration_months }}
+                                </div>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    {{ t('helpers.custom_duration_help') }}
+                                </p>
                             </div>
 
                             <div>
@@ -60,16 +96,23 @@ import { Switch } from '@/components/ui/switch';
 import Label from '@/components/ui/label/Label.vue';
 import Input from '@/components/ui/input/Input.vue';
 import Button from '@/components/ui/button/Button.vue';
-import type { User } from '@/types';
+import type { User, MembershipLevel } from '@/types';
 
 const props = defineProps<{
-    user: User;
+    user: User & {
+        current_membership_level_id?: number;
+        membership_level?: string;
+        organizer_info?: string;
+    };
+    membershipLevels: MembershipLevel[];
 }>();
 
 const { t, locale } = useI18n();
 
 const form = useForm({
     is_commenting_blocked: props.user ? props.user.is_commenting_blocked : false,
+    membership_level_id: props.user?.current_membership_level_id || null,
+    membership_duration_months: null as number | null,
 });
 
 const pageTitle = computed(() => t('users.edit_title', { name: props.user.name }));
