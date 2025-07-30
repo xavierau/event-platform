@@ -23,6 +23,7 @@ use Stripe\Webhook;
 use Stripe\Event;
 use App\Modules\Membership\Actions\PurchaseMembershipAction;
 use App\Modules\Membership\DataTransferObjects\MembershipPurchaseData;
+use App\Services\StripeSubscriptionSyncService;
 
 class PaymentController extends Controller
 {
@@ -437,13 +438,21 @@ class PaymentController extends Controller
                 case 'payment_intent.payment_failed':
                     $this->handlePaymentIntentFailed($event);
                     break;
-                // Add other event types your application needs to handle
-                // case 'invoice.payment_succeeded':
-                //    $this->handleInvoicePaymentSucceeded($event['data']['object']);
-                //    break;
-                // case 'invoice.payment_failed':
-                //    $this->handleInvoicePaymentFailed($event['data']['object']);
-                //    break;
+                case 'customer.subscription.created':
+                    $this->handleSubscriptionCreated($event);
+                    break;
+                case 'customer.subscription.updated':
+                    $this->handleSubscriptionUpdated($event);
+                    break;
+                case 'customer.subscription.deleted':
+                    $this->handleSubscriptionDeleted($event);
+                    break;
+                case 'invoice.payment_succeeded':
+                    $this->handleInvoicePaymentSucceeded($event);
+                    break;
+                case 'invoice.payment_failed':
+                    $this->handleInvoicePaymentFailed($event);
+                    break;
                 default:
                     Log::info('[PaymentController] Unhandled Stripe webhook event type: ' . $event->type, ['event_id' => $event->id]);
             }
@@ -612,5 +621,176 @@ class PaymentController extends Controller
     {
         Booking::where('transaction_id', $transaction->id)->update(['status' => BookingStatusEnum::CONFIRMED]);
         Log::info('Booking statuses updated to confirmed.', ['transaction_id' => $transaction->id]);
+    }
+
+    /**
+     * Handle customer subscription created event.
+     */
+    protected function handleSubscriptionCreated(Event $event): void
+    {
+        $subscription = $event->data->object;
+        Log::info('[PaymentController] Handling customer.subscription.created event.', [
+            'subscription_id' => $subscription->id,
+            'customer_id' => $subscription->customer,
+            'status' => $subscription->status,
+            'event_id' => $event->id
+        ]);
+
+        try {
+            $syncService = app(StripeSubscriptionSyncService::class);
+            $membership = $syncService->handleSubscriptionCreated($subscription);
+            
+            if ($membership) {
+                Log::info('[PaymentController] Successfully created membership from subscription.created', [
+                    'membership_id' => $membership->id,
+                    'subscription_id' => $subscription->id,
+                    'user_id' => $membership->user_id
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('[PaymentController] Error processing subscription.created: ' . $e->getMessage(), [
+                'subscription_id' => $subscription->id,
+                'event_id' => $event->id,
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Handle customer subscription updated event.
+     */
+    protected function handleSubscriptionUpdated(Event $event): void
+    {
+        $subscription = $event->data->object;
+        Log::info('[PaymentController] Handling customer.subscription.updated event.', [
+            'subscription_id' => $subscription->id,
+            'status' => $subscription->status,
+            'cancel_at_period_end' => $subscription->cancel_at_period_end,
+            'event_id' => $event->id
+        ]);
+
+        try {
+            $syncService = app(StripeSubscriptionSyncService::class);
+            $membership = $syncService->handleSubscriptionUpdated($subscription);
+            
+            if ($membership) {
+                Log::info('[PaymentController] Successfully updated membership from subscription.updated', [
+                    'membership_id' => $membership->id,
+                    'subscription_id' => $subscription->id,
+                    'new_status' => $membership->status
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('[PaymentController] Error processing subscription.updated: ' . $e->getMessage(), [
+                'subscription_id' => $subscription->id,
+                'event_id' => $event->id,
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Handle customer subscription deleted event.
+     */
+    protected function handleSubscriptionDeleted(Event $event): void
+    {
+        $subscription = $event->data->object;
+        Log::info('[PaymentController] Handling customer.subscription.deleted event.', [
+            'subscription_id' => $subscription->id,
+            'status' => $subscription->status,
+            'ended_at' => $subscription->ended_at,
+            'event_id' => $event->id
+        ]);
+
+        try {
+            $syncService = app(StripeSubscriptionSyncService::class);
+            $membership = $syncService->handleSubscriptionDeleted($subscription);
+            
+            if ($membership) {
+                Log::info('[PaymentController] Successfully cancelled membership from subscription.deleted', [
+                    'membership_id' => $membership->id,
+                    'subscription_id' => $subscription->id,
+                    'final_status' => $membership->status
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('[PaymentController] Error processing subscription.deleted: ' . $e->getMessage(), [
+                'subscription_id' => $subscription->id,
+                'event_id' => $event->id,
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Handle invoice payment succeeded event.
+     */
+    protected function handleInvoicePaymentSucceeded(Event $event): void
+    {
+        $invoice = $event->data->object;
+        Log::info('[PaymentController] Handling invoice.payment_succeeded event.', [
+            'invoice_id' => $invoice->id,
+            'subscription_id' => $invoice->subscription,
+            'amount_paid' => $invoice->amount_paid,
+            'event_id' => $event->id
+        ]);
+
+        try {
+            $syncService = app(StripeSubscriptionSyncService::class);
+            $membership = $syncService->handleInvoicePaymentSucceeded($invoice);
+            
+            if ($membership) {
+                Log::info('[PaymentController] Successfully renewed membership from invoice payment', [
+                    'membership_id' => $membership->id,
+                    'invoice_id' => $invoice->id,
+                    'new_expiry' => $membership->expires_at
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('[PaymentController] Error processing invoice.payment_succeeded: ' . $e->getMessage(), [
+                'invoice_id' => $invoice->id,
+                'event_id' => $event->id,
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Handle invoice payment failed event.
+     */
+    protected function handleInvoicePaymentFailed(Event $event): void
+    {
+        $invoice = $event->data->object;
+        Log::info('[PaymentController] Handling invoice.payment_failed event.', [
+            'invoice_id' => $invoice->id,
+            'subscription_id' => $invoice->subscription,
+            'amount_due' => $invoice->amount_due,
+            'attempt_count' => $invoice->attempt_count,
+            'event_id' => $event->id
+        ]);
+
+        try {
+            $syncService = app(StripeSubscriptionSyncService::class);
+            $membership = $syncService->handleInvoicePaymentFailed($invoice);
+            
+            if ($membership) {
+                Log::info('[PaymentController] Successfully suspended membership due to payment failure', [
+                    'membership_id' => $membership->id,
+                    'invoice_id' => $invoice->id,
+                    'attempt_count' => $invoice->attempt_count
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('[PaymentController] Error processing invoice.payment_failed: ' . $e->getMessage(), [
+                'invoice_id' => $invoice->id,
+                'event_id' => $event->id,
+                'exception' => $e
+            ]);
+            throw $e;
+        }
     }
 }
