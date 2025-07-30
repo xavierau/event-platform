@@ -67,12 +67,21 @@ class TicketDefinitionController extends Controller
         ]);
     }
 
-    public function store(TicketDefinitionData $ticketDefinitionData): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
+        logger()->info('TicketDefinition store request data:', $request->all());
+        
         try {
+            $ticketDefinitionData = TicketDefinitionData::from($request->all());
             $this->ticketDefinitionService->createTicketDefinition($ticketDefinitionData);
 
             return redirect()->route('admin.ticket-definitions.index')->with('success', 'Ticket definition created successfully.');
+        } catch (\Spatie\LaravelData\Exceptions\InvalidDataClass $e) {
+            logger()->error('DTO Validation Error in TicketDefinition: ' . $e->getMessage(), [
+                'payload' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         } catch (Exception $e) {
             // Log the exception
             logger()->error('Error creating ticket definition: ' . $e->getMessage(), ['exception' => $e]);

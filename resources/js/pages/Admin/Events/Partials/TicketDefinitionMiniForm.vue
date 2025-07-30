@@ -32,6 +32,7 @@ const form = useForm({
     name: Object.fromEntries(Object.keys(props.availableLocales).map((locale) => [locale, ''])) as Record<string, string>,
     description: Object.fromEntries(Object.keys(props.availableLocales).map((locale) => [locale, ''])) as Record<string, string>,
     price: undefined as number | undefined,
+    currency: 'HKD', // Default currency - required field
     total_quantity: undefined as number | undefined,
     status:
         props.statuses && props.statuses.length > 0 ? props.statuses.find((s) => s.value === 'active')?.value || props.statuses[0].value : 'draft',
@@ -56,6 +57,8 @@ watch(
             // Reset translatable fields based on current availableLocales
             form.name = Object.fromEntries(Object.keys(props.availableLocales).map((locale) => [locale, '']));
             form.description = Object.fromEntries(Object.keys(props.availableLocales).map((locale) => [locale, '']));
+            // Reset currency to default
+            form.currency = 'HKD';
             // Reset active tab
             activeLocaleTab.value = i18nLocale.value || (localeTabs.value.length > 0 ? localeTabs.value[0].key : 'en');
         }
@@ -67,13 +70,18 @@ const statusOptions = computed(() => {
 });
 
 const submit = () => {
-    form.transform((data) => ({
-        ...data,
-        price:
-            typeof data.price === 'number' && data.price !== null
-                ? Math.round(data.price * 100) // Convert to cents
-                : data.price,
-    })).post(route('admin.ticket-definitions.store'), {
+    console.log('Form data before transform:', form.data());
+    form.transform((data) => {
+        const transformed = {
+            ...data,
+            price:
+                typeof data.price === 'number' && data.price !== null
+                    ? Math.round(data.price * 100) // Convert to cents
+                    : data.price,
+        };
+        console.log('Form data after transform:', transformed);
+        return transformed;
+    }).post(route('admin.ticket-definitions.store'), {
         preserveScroll: true,
         onSuccess: (page) => {
             // Assuming the created ticket definition data might be in page.props
