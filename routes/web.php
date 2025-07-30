@@ -114,7 +114,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // --- ADMIN ROUTES ---
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', 'role:super_admin|' . RoleNameEnum::ADMIN->value])
+    ->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value])
     ->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
@@ -159,8 +159,7 @@ Route::prefix('admin')
 // Coupon routes are managed by CouponPolicy
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth'])
-    ->middleware(['auth', 'role:super_admin|' . RoleNameEnum::ADMIN->value])
+    ->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value])
     ->group(function () {
     Route::resource('coupons', CouponController::class);
     Route::get('coupon-scanner', [CouponController::class, 'scanner'])->name('coupons.scanner');
