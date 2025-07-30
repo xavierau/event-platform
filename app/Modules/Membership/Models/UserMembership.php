@@ -24,6 +24,9 @@ class UserMembership extends Model
         'status',
         'payment_method',
         'transaction_reference',
+        'stripe_subscription_id',
+        'stripe_customer_id', 
+        'subscription_metadata',
         'auto_renew',
     ];
 
@@ -32,6 +35,7 @@ class UserMembership extends Model
         'expires_at' => 'datetime',
         'status' => MembershipStatus::class,
         'payment_method' => PaymentMethod::class,
+        'subscription_metadata' => 'json',
         'auto_renew' => 'boolean',
     ];
 
@@ -153,5 +157,67 @@ class UserMembership extends Model
         $this->expires_at = ($this->isActive() ? $this->expires_at : now())->addMonths($months);
         $this->status = MembershipStatus::ACTIVE;
         $this->save();
+    }
+
+    /**
+     * Check if this membership is managed by a Stripe subscription.
+     */
+    public function hasStripeSubscription(): bool
+    {
+        return !empty($this->stripe_subscription_id);
+    }
+
+    /**
+     * Scope for memberships with Stripe subscriptions.
+     */
+    public function scopeWithStripeSubscription($query)
+    {
+        return $query->whereNotNull('stripe_subscription_id');
+    }
+
+    /**
+     * Find membership by Stripe subscription ID.
+     */
+    public static function findByStripeSubscription(string $subscriptionId): ?self
+    {
+        return static::where('stripe_subscription_id', $subscriptionId)->first();
+    }
+
+    /**
+     * Update membership from Stripe subscription data.
+     */
+    public function updateFromStripeSubscription(object $subscription): void
+    {
+        $this->stripe_customer_id = $subscription->customer;
+        $this->subscription_metadata = [
+            'stripe_status' => $subscription->status,
+            'current_period_start' => $subscription->current_period_start,
+            'current_period_end' => $subscription->current_period_end,
+            'cancel_at_period_end' => $subscription->cancel_at_period_end,
+        ];
+
+        // Update status based on Stripe subscription status
+        $this->status = $this->mapStripeStatusToMembershipStatus($subscription->status);
+        
+        // Update expiry based on current period end
+        if ($subscription->current_period_end) {
+            $this->expires_at = Carbon::createFromTimestamp($subscription->current_period_end);
+        }
+
+        $this->save();
+    }
+
+    /**
+     * Map Stripe subscription status to membership status.
+     */
+    private function mapStripeStatusToMembershipStatus(string $stripeStatus): MembershipStatus
+    {
+        return match ($stripeStatus) {
+            'active' => MembershipStatus::ACTIVE,
+            'past_due' => MembershipStatus::SUSPENDED,
+            'canceled', 'unpaid' => MembershipStatus::CANCELLED,
+            'incomplete', 'incomplete_expired' => MembershipStatus::PENDING,
+            default => MembershipStatus::PENDING,
+        };
     }
 }
