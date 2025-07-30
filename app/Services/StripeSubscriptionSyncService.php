@@ -286,8 +286,8 @@ class StripeSubscriptionSyncService
      */
     private function findUserByStripeCustomer(string $customerId): ?User
     {
-        // Tier 1: Try existing stripe_id (fast path for existing linked users)
-        $user = User::where('stripe_id', $customerId)->first();
+        // Tier 1: Try existing stripe_id or stripe_customer_ids (fast path for existing linked users)
+        $user = User::withStripeCustomerId($customerId)->first();
         if ($user) {
             return $user;
         }
@@ -321,29 +321,30 @@ class StripeSubscriptionSyncService
             $user = User::where('email', $stripeCustomer->email)->first();
             
             if ($user) {
-                // Link accounts by setting stripe_id and save
+                // Link accounts with enhanced multi-customer support
                 return DB::transaction(function () use ($user, $customerId, $stripeCustomer) {
                     // Double-check user wasn't linked by another process
                     $user->refresh();
-                    if ($user->stripe_id && $user->stripe_id !== $customerId) {
-                        Log::warning('[StripeSubscriptionSyncService] User already has different stripe_id', [
+                    
+                    // Check if user already has this customer ID
+                    if ($user->hasStripeCustomerId($customerId)) {
+                        Log::info('[StripeSubscriptionSyncService] User already linked to this Stripe customer', [
                             'user_id' => $user->id,
-                            'existing_stripe_id' => $user->stripe_id,
-                            'new_stripe_id' => $customerId
-                        ]);
-                        return null;
-                    }
-
-                    if (!$user->stripe_id) {
-                        $user->stripe_id = $customerId;
-                        $user->save();
-                        
-                        Log::info('[StripeSubscriptionSyncService] Successfully linked user to Stripe customer via email', [
-                            'user_id' => $user->id,
-                            'email' => $stripeCustomer->email,
                             'stripe_customer_id' => $customerId
                         ]);
+                        return $user;
                     }
+
+                    // Add the new customer ID to the user's collection
+                    $user->addStripeCustomerId($customerId);
+                    
+                    Log::info('[StripeSubscriptionSyncService] Successfully linked user to additional Stripe customer via email', [
+                        'user_id' => $user->id,
+                        'email' => $stripeCustomer->email,
+                        'stripe_customer_id' => $customerId,
+                        'primary_stripe_id' => $user->stripe_id,
+                        'all_customer_ids' => $user->getAllStripeCustomerIds()
+                    ]);
 
                     return $user;
                 });

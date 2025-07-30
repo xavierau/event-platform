@@ -301,16 +301,21 @@ class SyncStripeSubscriptionsCommand extends Command
             return null;
         }
 
-        // First try by stripe_id if customer has one set
+        // First try by any stripe customer ID (primary or additional)
         if ($customer->id) {
-            $user = User::where('stripe_id', $customer->id)->first();
+            $user = User::withStripeCustomerId($customer->id)->first();
             if ($user) {
                 return $user;
             }
         }
 
-        // Then try by email
-        return User::where('email', $customer->email)->first();
+        // Then try by email and link the customer ID
+        $user = User::where('email', $customer->email)->first();
+        if ($user && $customer->id) {
+            $user->addStripeCustomerId($customer->id);
+        }
+        
+        return $user;
     }
 
     private function findMembershipLevelForSubscription(object $subscription): ?MembershipLevel
