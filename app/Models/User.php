@@ -59,6 +59,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_commenting_blocked' => 'boolean',
+            'stripe_customer_ids' => 'array',
         ];
     }
 
@@ -309,5 +310,75 @@ class User extends Authenticatable
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Check if user has a specific Stripe customer ID.
+     */
+    public function hasStripeCustomerId(string $customerId): bool
+    {
+        // Check primary stripe_id
+        if ($this->stripe_id === $customerId) {
+            return true;
+        }
+
+        // Check additional customer IDs
+        $customerIds = $this->stripe_customer_ids ?? [];
+        return in_array($customerId, $customerIds);
+    }
+
+    /**
+     * Add a Stripe customer ID to the user's collection.
+     */
+    public function addStripeCustomerId(string $customerId): void
+    {
+        // If no primary stripe_id, set it as primary
+        if (!$this->stripe_id) {
+            $this->stripe_id = $customerId;
+            $this->save();
+            return;
+        }
+
+        // If already the primary, nothing to do
+        if ($this->stripe_id === $customerId) {
+            return;
+        }
+
+        // Add to additional customer IDs if not already present
+        $customerIds = $this->stripe_customer_ids ?? [];
+        if (!in_array($customerId, $customerIds)) {
+            $customerIds[] = $customerId;
+            $this->stripe_customer_ids = $customerIds;
+            $this->save();
+        }
+    }
+
+    /**
+     * Get all Stripe customer IDs for this user.
+     */
+    public function getAllStripeCustomerIds(): array
+    {
+        $ids = [];
+        
+        if ($this->stripe_id) {
+            $ids[] = $this->stripe_id;
+        }
+
+        if ($this->stripe_customer_ids) {
+            $ids = array_merge($ids, $this->stripe_customer_ids);
+        }
+
+        return array_unique($ids);
+    }
+
+    /**
+     * Scope to find users by any of their Stripe customer IDs.
+     */
+    public function scopeWithStripeCustomerId($query, string $customerId)
+    {
+        return $query->where(function ($q) use ($customerId) {
+            $q->where('stripe_id', $customerId)
+              ->orWhereJsonContains('stripe_customer_ids', $customerId);
+        });
     }
 }
