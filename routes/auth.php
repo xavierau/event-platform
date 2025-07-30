@@ -27,9 +27,9 @@ Route::middleware('guest')->group(function () {
     Route::post('admin/login', [AuthenticatedSessionController::class, 'storeAdminLogin']);
 
     // Organizer Login
-    Route::get('organizer/login', [AuthenticatedSessionController::class, 'createOrganizerLogin'])
-        ->name('organizer.login');
-    Route::post('organizer/login', [AuthenticatedSessionController::class, 'storeOrganizerLogin']);
+//    Route::get('organizer/login', [AuthenticatedSessionController::class, 'createOrganizerLogin'])
+//        ->name('organizer.login');
+//    Route::post('organizer/login', [AuthenticatedSessionController::class, 'storeOrganizerLogin']);
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');

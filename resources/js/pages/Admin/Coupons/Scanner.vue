@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import PrimaryButton from '@/components/ui/button/Button.vue';
-import SecondaryButton from '@/components/ui/button/Button.vue';
+import PrimaryButton from '../../../components/ui/button/Button.vue';
+import SecondaryButton from '../../../components/ui/button/Button.vue';
 import QRCodeLoadingModal from '@/components/QrScanner/QRCodeLoadingModal.vue';
 import { QrcodeStream } from 'vue-qrcode-reader';
 import type { DetectedBarcode } from 'vue-qrcode-reader';

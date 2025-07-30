@@ -7,9 +7,15 @@
                     <div class="p-6 lg:p-8 bg-white dark:bg-gray-800 dark:bg-gradient-to-bl dark:from-gray-700/50 dark:via-transparent border-b border-gray-200 dark:border-gray-700">
                         <PageHeader title="Coupon Management" subtitle="Manage coupon templates and campaigns">
                             <template #actions>
-                                <Link :href="route('admin.coupons.create')" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 active:bg-indigo-700 focus:outline-none focus:border-indigo-700 focus:ring focus:ring-indigo-200 disabled:opacity-25 transition">
-                                    Create New Coupon
-                                </Link>
+                                <div class="flex gap-2">
+                                    <Link :href="route('admin.coupons.scanner')" class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-500 active:bg-purple-700 focus:outline-none focus:border-purple-700 focus:ring focus:ring-purple-200 disabled:opacity-25 transition">
+                                        <Percent class="w-4 h-4 mr-2" />
+                                        Coupon Scanner
+                                    </Link>
+                                    <Link :href="route('admin.coupons.create')" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 active:bg-indigo-700 focus:outline-none focus:border-indigo-700 focus:ring focus:ring-indigo-200 disabled:opacity-25 transition">
+                                        Create New Coupon
+                                    </Link>
+                                </div>
                             </template>
                         </PageHeader>
 
@@ -141,6 +147,7 @@ import {
 import Button from '@/components/ui/button/Button.vue';
 import { getTranslation } from '@/Utils/i18n';
 import { throttle } from 'lodash';
+import { Percent } from 'lucide-vue-next';
 import PageHeader from '@/components/Shared/PageHeader.vue';
 import AdminPagination from '@/components/Shared/AdminPagination.vue';
 import { TableHead, TableRow, TableCell } from '@/components/ui/table';

@@ -210,7 +210,7 @@ class CouponController extends Controller
      */
     public function scanner(): InertiaResponse
     {
-        return Inertia::render('Admin/CouponScanner/Index', [
+        return Inertia::render('Admin/Coupons/Scanner', [
             'pageTitle' => 'Coupon Scanner',
             'breadcrumbs' => [
                 ['text' => 'Admin', 'href' => route('admin.dashboard')],
