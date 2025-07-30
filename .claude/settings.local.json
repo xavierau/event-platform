@@ -20,7 +20,9 @@
       "Bash(php artisan:*)",
       "Bash(php:*)",
       "Bash(git tag:*)",
-      "mcp__zen__thinkdeep"
+      "mcp__zen__thinkdeep",
+      "Bash(git commit:*)",
+      "Bash(git flow hotfix finish:*)"
     ],
     "deny": []
   }
