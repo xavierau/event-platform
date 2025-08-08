@@ -1,1 +1,0 @@
-import{c as o}from"./index-CyzG3B7Q.js";import{d as t,a as r,o as n,j as c,e as p,K as l}from"./app-_LMAJuVE.js";const f=t({__name:"CardDescription",props:{class:{}},setup(s){const e=s;return(a,m)=>(n(),r("p",{"data-slot":"card-description",class:c(p(o)("text-muted-foreground text-sm",e.class))},[l(a.$slots,"default")],2))}});export{f as _};
