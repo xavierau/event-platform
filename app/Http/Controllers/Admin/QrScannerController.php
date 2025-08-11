@@ -34,7 +34,7 @@ class QrScannerController extends Controller
         if (!$user->hasRole(RoleNameEnum::ADMIN)) {
             $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
                 $subQuery->where('user_id', $user->id);
-            })->pluck('id');
+            })->pluck('organizers.id');
 
             if ($userOrganizerIds->isEmpty()) {
                 abort(403, 'You do not have permission to access the QR scanner.');
@@ -196,7 +196,7 @@ class QrScannerController extends Controller
         // Users with organizer entity memberships can see events from organizer entities they belong to
         $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
             $subQuery->where('user_id', $user->id);
-        })->pluck('id');
+        })->pluck('organizers.id');
 
         if ($userOrganizerIds->isNotEmpty()) {
             return $query->whereIn('organizer_id', $userOrganizerIds)->get();
@@ -218,7 +218,7 @@ class QrScannerController extends Controller
         // Users with organizer entity memberships can access bookings for events from organizer entities they belong to
         $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
             $subQuery->where('user_id', $user->id);
-        })->pluck('id');
+        })->pluck('organizers.id');
 
         return $userOrganizerIds->contains($booking->event->organizer_id);
     }

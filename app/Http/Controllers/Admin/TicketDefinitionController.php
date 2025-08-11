@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\DataTransferObjects\TicketDefinitionData;
+use App\Enums\RoleNameEnum;
 use App\Enums\TicketDefinitionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\EventOccurrence;
@@ -12,6 +13,7 @@ use DateTimeZone;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -19,20 +21,36 @@ class TicketDefinitionController extends Controller
 {
     public function __construct(protected TicketDefinitionService $ticketDefinitionService)
     {
-        // Permissions can be added here later, e.g.:
-        // $this->authorizeResource(TicketDefinition::class, 'ticket_definition');
+        // Check authorization: only admins or users with organizer entity membership can access
+        $this->middleware(function ($request, $next) {
+            $user = Auth::user();
+            if (!$user->hasRole(RoleNameEnum::ADMIN) && !$user->hasOrganizerMembership()) {
+                abort(403, 'You do not have permission to manage ticket definitions.');
+            }
+            return $next($request);
+        });
     }
 
     public function index(Request $request): \Inertia\Response
     {
+        $user = Auth::user();
         $filters = $request->only(['search', 'status']); // Example filters
         $perPage = $request->input('perPage', 15);
-        $ticketDefinitionsPaginator = $this->ticketDefinitionService->getAllTicketDefinitions($filters, (int)$perPage);
+        
+        // For platform admins, get all ticket definitions
+        if ($user->hasRole(RoleNameEnum::ADMIN)) {
+            $ticketDefinitionsPaginator = $this->ticketDefinitionService->getAllTicketDefinitions($filters, (int)$perPage);
+        } else {
+            // For organizer members, only get ticket definitions for their organizers' events
+            $userOrganizerIds = $user->getOrganizerIds();
+            
+            $ticketDefinitionsPaginator = TicketDefinition::whereHas('eventOccurrences.event', function ($query) use ($userOrganizerIds) {
+                $query->whereIn('organizer_id', $userOrganizerIds);
+            })->latest()->paginate((int)$perPage);
+        }
 
         // Explicitly transform models to arrays before DTO hydration
         $dtoPaginator = $ticketDefinitionsPaginator->through(
-        // fn(TicketDefinition $definition) => dd($definition->toArray())
-        // );
             fn(TicketDefinition $definition) => TicketDefinitionData::fromModel($definition)
         );
 
@@ -44,9 +62,22 @@ class TicketDefinitionController extends Controller
 
     public function create(): InertiaResponse
     {
-        // Get available event occurrences for selection
-        $eventOccurrences = EventOccurrence::with('event:id,name')
-            ->select('id', 'name', 'event_id', 'start_at', 'end_at')
+        $user = Auth::user();
+        
+        // Get available event occurrences for selection, filtered by organizer access
+        $eventOccurrencesQuery = EventOccurrence::with('event:id,name')
+            ->select('id', 'name', 'event_id', 'start_at', 'end_at');
+            
+        // For organizer members, only show occurrences from their organizers' events
+        if (!$user->hasRole(RoleNameEnum::ADMIN)) {
+            $userOrganizerIds = $user->getOrganizerIds();
+            
+            $eventOccurrencesQuery->whereHas('event', function ($query) use ($userOrganizerIds) {
+                $query->whereIn('organizer_id', $userOrganizerIds);
+            });
+        }
+            
+        $eventOccurrences = $eventOccurrencesQuery
             ->orderBy('start_at', 'asc')
             ->get()
             ->map(function ($occurrence) {

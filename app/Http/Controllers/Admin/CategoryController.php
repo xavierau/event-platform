@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\DataTransferObjects\CategoryData;
 use App\Http\Controllers\Controller;
+use App\Enums\RoleNameEnum;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
 use App\Services\CategoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -17,7 +19,13 @@ class CategoryController extends Controller
 {
     public function __construct(protected CategoryService $categoryService)
     {
-        // TODO: Add permissions middleware (e.g., $this->middleware('can:manage categories'));
+        // Ensure only platform admins can access categories
+        $this->middleware(function ($request, $next) {
+            if (!Auth::user()->hasRole(RoleNameEnum::ADMIN)) {
+                abort(403, 'Only platform administrators can manage categories.');
+            }
+            return $next($request);
+        });
     }
 
     public function index(Request $request): InertiaResponse

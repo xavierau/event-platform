@@ -70,7 +70,7 @@ class MemberCheckInData extends Data
                     // Check if user has organizer entity membership (same permissions as QR scanner)
                     $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($query) use ($scanner) {
                         $query->where('user_id', $scanner->id);
-                    })->pluck('id');
+                    })->pluck('organizers.id');
 
                     if ($userOrganizerIds->isEmpty()) {
                         $fail('You are not authorized to perform member check-ins.');

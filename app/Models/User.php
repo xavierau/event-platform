@@ -222,6 +222,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get organizer IDs that the user belongs to.
+     */
+    public function getOrganizerIds(): \Illuminate\Support\Collection
+    {
+        return $this->activeOrganizers()->pluck('organizers.id');
+    }
+
+    /**
      * Check if user has a specific role in any organizer.
      */
     public function hasOrganizerRole(\App\Enums\OrganizerRoleEnum $role): bool

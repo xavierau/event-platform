@@ -11,10 +11,14 @@ import { computed } from 'vue';
 
 const page = usePage<SharedData>();
 const userPermissions = computed(() => page.props.auth.user.permissions || []);
+const user = computed(() => page.props.auth.user);
 
 const canManageUsers = computed(() => userPermissions.value.includes('manage-users'));
+const isAdmin = computed(() => user.value?.is_admin || false);
+const isOrganizerMember = computed(() => user.value?.is_organizer_member || false);
 
-const mainNavItems: NavItem[] = [
+// Items available to both platform admins and organizer members
+const sharedNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: '/admin/dashboard',
@@ -41,6 +45,15 @@ const mainNavItems: NavItem[] = [
         icon: Users,
     },
     {
+        title: 'Venues',
+        href: '/admin/venues',
+        icon: MapPin,
+    },
+];
+
+// Items only available to platform admins
+const adminOnlyNavItems: NavItem[] = [
+    {
         title: 'CMS Pages',
         href: '/admin/cms-pages',
         icon: FileText,
@@ -49,11 +62,6 @@ const mainNavItems: NavItem[] = [
         title: 'Contact Submissions',
         href: '/admin/contact-submissions',
         icon: MessageSquare,
-    },
-    {
-        title: 'Venues',
-        href: '/admin/venues',
-        icon: MapPin,
     },
     {
         title: 'Categories',
@@ -75,7 +83,6 @@ const mainNavItems: NavItem[] = [
         href: '/admin/settings',
         icon: Settings,
     }
-
 ];
 
 const userManagementNavItem: NavItem = {
@@ -85,16 +92,29 @@ const userManagementNavItem: NavItem = {
 };
 
 const filteredMainNavItems = computed(() => {
-    const items = [...mainNavItems];
-    if (canManageUsers.value) {
-        // find settings index
-        const settingsIndex = items.findIndex(item => item.title === 'Settings');
-        if (settingsIndex !== -1) {
-            items.splice(settingsIndex, 0, userManagementNavItem);
-        } else {
-            items.push(userManagementNavItem);
+    // Start with shared items that both admin and organizer members can access
+    let items = [...sharedNavItems];
+    
+    // Add admin-only items if user is platform admin
+    if (isAdmin.value) {
+        items = [...items, ...adminOnlyNavItems];
+        
+        // Add user management item if user has the specific permission
+        if (canManageUsers.value) {
+            const settingsIndex = items.findIndex(item => item.title === 'Settings');
+            if (settingsIndex !== -1) {
+                items.splice(settingsIndex, 0, userManagementNavItem);
+            } else {
+                items.push(userManagementNavItem);
+            }
         }
     }
+    
+    // Only show navigation if user is either admin or organizer member
+    if (!isAdmin.value && !isOrganizerMember.value) {
+        return [];
+    }
+    
     return items;
 });
 

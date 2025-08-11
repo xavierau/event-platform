@@ -22,7 +22,12 @@
       "Bash(git tag:*)",
       "mcp__zen__thinkdeep",
       "Bash(git commit:*)",
-      "Bash(git flow hotfix finish:*)"
+      "Bash(git flow hotfix finish:*)",
+      "Bash(npm install:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_close"
     ],
     "deny": []
   }
