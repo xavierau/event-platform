@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Enums\RoleNameEnum;
 use App\Modules\CMS\DataTransferObjects\CmsPageData;
 use App\Modules\CMS\Models\CmsPage;
 use App\Modules\CMS\Services\CmsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,7 +18,15 @@ class CmsPageController extends Controller
 {
     public function __construct(
         private CmsService $cmsService
-    ) {}
+    ) {
+        // Ensure only platform admins can access CMS pages
+        $this->middleware(function ($request, $next) {
+            if (!Auth::user()->hasRole(RoleNameEnum::ADMIN)) {
+                abort(403, 'Only platform administrators can manage CMS pages.');
+            }
+            return $next($request);
+        });
+    }
 
     public function index(Request $request): Response
     {

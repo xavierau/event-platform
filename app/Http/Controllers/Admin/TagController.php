@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Enums\RoleNameEnum;
 use App\Models\Tag;
 use App\Services\TagService;
 use App\DataTransferObjects\Tag\TagData;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Exception;
 
@@ -17,8 +19,13 @@ class TagController extends Controller
     public function __construct(TagService $tagService)
     {
         $this->tagService = $tagService;
-        // Add middleware for authorization if needed, e.g.:
-        // $this->middleware('can:manage_tags')->except(['index', 'show']);
+        // Ensure only platform admins can access tags
+        $this->middleware(function ($request, $next) {
+            if (!Auth::user()->hasRole(RoleNameEnum::ADMIN)) {
+                abort(403, 'Only platform administrators can manage tags.');
+            }
+            return $next($request);
+        });
     }
 
     /**

@@ -59,6 +59,18 @@ class EventService
     {
         $query = Event::query()->with(['category', 'organizer', 'tags', 'eventOccurrences']);
 
+        // Apply organizer-based filtering for non-platform admins
+        $user = Auth::user();
+        if ($user && !$user->hasRole(\App\Enums\RoleNameEnum::ADMIN)) {
+            $userOrganizerIds = $user->getOrganizerIds();
+            if ($userOrganizerIds->isNotEmpty()) {
+                $query->whereIn('organizer_id', $userOrganizerIds);
+            } else {
+                // User has no organizer membership, return empty result
+                $query->whereRaw('1 = 0'); // Force empty result
+            }
+        }
+
         // Example filter: by organizer_id
         if (isset($filters['organizer_id'])) {
             $query->where('organizer_id', $filters['organizer_id']);
