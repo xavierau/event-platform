@@ -27,9 +27,15 @@ class MemberScannerController extends Controller
     {
         $user = Auth::user();
 
-        // Check authorization: only admins can access member scanner
+        // Check authorization: only admins or users with organizer entity membership can access
         if (!$user->hasRole(RoleNameEnum::ADMIN)) {
-            abort(403, 'You do not have permission to access the member scanner.');
+            $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
+                $subQuery->where('user_id', $user->id);
+            })->pluck('id');
+
+            if ($userOrganizerIds->isEmpty()) {
+                abort(403, 'You do not have permission to access the member scanner.');
+            }
         }
 
         return Inertia::render('Admin/MemberScanner/Index', [
