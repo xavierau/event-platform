@@ -24,7 +24,8 @@ class CouponAssignmentController extends Controller
     public function __construct(protected CouponService $couponService)
     {
         $this->middleware('auth');
-        $this->middleware('role:' . RoleNameEnum::ADMIN->value);
+        // Remove ADMIN-only restriction - organizer members can assign their own coupons
+        // Authorization is handled in individual methods via canAssignCoupon()
     }
 
     /**

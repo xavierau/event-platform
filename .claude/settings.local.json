@@ -34,7 +34,9 @@
       "Bash(true)",
       "mcp__playwright__browser_evaluate",
       "mcp__playwright__browser_console_messages",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git branch:*)",
+      "Bash(git flow hotfix start:*)"
     ],
     "deny": []
   }

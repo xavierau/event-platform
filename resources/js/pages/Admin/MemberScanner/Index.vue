@@ -4,7 +4,7 @@ import MemberScannerLoadingModal from '@/components/MemberScanner/MemberScannerL
 import { default as PrimaryButton, default as SecondaryButton } from '@/components/ui/button/Button.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import type { DetectedBarcode } from 'vue-qrcode-reader';
 import { QrcodeStream } from 'vue-qrcode-reader';
 
@@ -134,7 +134,7 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
     try {
         // Detect QR type - member QR codes are JSON format
         const qrType = detectQrType(rawValue);
-        
+
         if (qrType.type !== 'member') {
             scanResult.value = { error: 'This QR code is not a member QR code. Please scan a member QR code from the user profile.' };
             showLoadingModal.value = false;
@@ -187,12 +187,12 @@ const onDetect = async (detectedCodes: DetectedBarcode[]) => {
 function detectQrType(rawValue: string): { type: string; data: any } {
     try {
         const parsed = JSON.parse(rawValue);
-        
+
         // Member QR codes have userId, userName, email, membershipLevel
         if (parsed.userId && parsed.userName && parsed.email && parsed.membershipLevel) {
             return { type: 'member', data: parsed };
         }
-        
+
         // Booking QR codes start with BK- or are UUIDs
         if (typeof rawValue === 'string' && (rawValue.startsWith('BK-') || rawValue.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i))) {
             return { type: 'booking', data: rawValue };
@@ -203,7 +203,7 @@ function detectQrType(rawValue: string): { type: string; data: any } {
             return { type: 'booking', data: rawValue };
         }
     }
-    
+
     return { type: 'unknown', data: rawValue };
 }
 
@@ -238,7 +238,7 @@ const handleCheckIn = async () => {
     // Set form data
     checkInForm.qr_code = lastScannedQr.value || '';
     checkInForm.location = checkInForm.location || 'Member Scanner';
-    
+
     isProcessing.value = true;
 
     try {
@@ -255,10 +255,10 @@ const handleCheckIn = async () => {
         // Handle 204 No Content response (successful check-in)
         if (response.status === 204) {
             checkInStatus.value = { success: true, message: 'Member check-in successful!' };
-            
+
             // Refresh check-in history
             await fetchCheckInHistory(memberDetails.value.id);
-            
+
             // Clear form
             checkInForm.location = '';
             checkInForm.notes = '';
@@ -431,7 +431,7 @@ onUnmounted(() => {
                                     Please grant camera permissions in your browser settings and ensure a camera is connected, then refresh the page.
                                 </p>
                             </div>
-                            
+
                             <qrcode-stream
                                 v-if="!cameraError && shouldShowScanner"
                                 :key="scannerKey"
@@ -449,7 +449,7 @@ onUnmounted(() => {
                                     <p class="text-gray-500 dark:text-gray-400">Initializing camera...</p>
                                 </div>
                             </qrcode-stream>
-                            
+
                             <div
                                 v-if="!shouldShowScanner"
                                 class="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700"
@@ -488,7 +488,7 @@ onUnmounted(() => {
                                     <div>🔄 Should Show Scanner: {{ shouldShowScanner ? 'Yes' : 'No' }}</div>
                                 </div>
                             </div>
-                            
+
                             <!-- Processing Status -->
                             <div
                                 v-if="isProcessing && !scanResult && !memberDetails && !checkInStatus"
@@ -509,7 +509,7 @@ onUnmounted(() => {
                                 </svg>
                                 Processing member QR code...
                             </div>
-                            
+
                             <!-- Success Messages -->
                             <div
                                 v-if="scanResult?.success"
@@ -517,7 +517,7 @@ onUnmounted(() => {
                             >
                                 {{ scanResult.success }}
                             </div>
-                            
+
                             <!-- Error Messages -->
                             <div
                                 v-if="scanResult?.error"
@@ -535,14 +535,14 @@ onUnmounted(() => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Action Buttons -->
                     <div class="mt-6 flex justify-between">
-                        <PrimaryButton @click="testCameraAccess" class="bg-blue-600 hover:bg-blue-700"> 
-                            Test Camera Access 
+                        <PrimaryButton @click="testCameraAccess" class="bg-blue-600 hover:bg-blue-700">
+                            Test Camera Access
                         </PrimaryButton>
-                        <SecondaryButton @click="resetScannerState" :disabled="isProcessing && !showDetailsModal"> 
-                            Reset Scanner 
+                        <SecondaryButton @click="resetScannerState" :disabled="isProcessing && !showDetailsModal">
+                            Reset Scanner
                         </SecondaryButton>
                     </div>
                 </div>
