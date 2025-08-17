@@ -118,7 +118,7 @@ class OrganizerService
 
     public function getPaginatedOrganizers(array $filters = [], array $with = [], int $perPage = 10)
     {
-        $defaultWith = ['media', 'users', 'events'];
+        $defaultWith = ['media', 'users', 'events', 'state', 'country'];
         $relationships = array_merge($defaultWith, $with);
 
         $query = Organizer::with($relationships);
@@ -127,30 +127,30 @@ class OrganizerService
         $user = Auth::user();
         if (!$user->hasRole(\App\Enums\RoleNameEnum::ADMIN)) {
             // Non-admin users can only see organizers they are members of
-            $userOrganizerIds = $user->activeOrganizers()->pluck('id');
-            $query->whereIn('id', $userOrganizerIds);
+            $userOrganizerIds = $user->activeOrganizers()->pluck('organizers.id');
+            $query->whereIn('organizers.id', $userOrganizerIds);
         }
 
         if (!empty($filters['search'])) {
             $searchTerm = $filters['search'];
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('name->' . app()->getLocale(), 'like', "%{$searchTerm}%")
-                    ->orWhere('name->' . config('app.fallback_locale', 'en'), 'like', "%{$searchTerm}%")
-                    ->orWhere('contact_email', 'like', "%{$searchTerm}%");
+                $q->where('organizers.name->' . app()->getLocale(), 'like', "%{$searchTerm}%")
+                    ->orWhere('organizers.name->' . config('app.fallback_locale', 'en'), 'like', "%{$searchTerm}%")
+                    ->orWhere('organizers.contact_email', 'like', "%{$searchTerm}%");
             });
         }
 
         if (isset($filters['is_active']) && $filters['is_active'] !== '') {
-            $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
+            $query->where('organizers.is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
         }
 
         $sort = $filters['sort'] ?? 'name';
         $direction = $filters['direction'] ?? 'asc';
 
         if ($sort === 'name') {
-            $query->orderBy('name->' . app()->getLocale(), $direction);
+            $query->orderBy('organizers.name->' . app()->getLocale(), $direction);
         } else {
-            $query->orderBy($sort, $direction);
+            $query->orderBy('organizers.' . $sort, $direction);
         }
 
         $paginated = $query->paginate($perPage)->withQueryString();
