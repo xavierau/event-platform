@@ -29,7 +29,8 @@ class BookingController extends Controller
             $bookings = $this->bookingService->getPaginatedBookings($filters);
             $events = $this->bookingService->getEventsForFilter();
             $statistics = $this->bookingService->getBookingStatistics();
-        } elseif ($user->hasRole('organizer')) {
+        } elseif ($user->activeOrganizers()->exists()) {
+            // User is a member of at least one organizer
             $bookings = $this->bookingService->getPaginatedBookingsForOrganizer($user, $filters);
             $events = $this->bookingService->getOrganizerEventsForFilter($user);
             $statistics = $this->bookingService->getBookingStatistics($user);
@@ -97,11 +98,10 @@ class BookingController extends Controller
 
         // Check if user has permission to view this booking
         if (!$user->hasRole(RoleNameEnum::ADMIN->value)) {
-            if ($user->hasRole('organizer')) {
-                // Check if the booking belongs to organizer's event
-                if ($booking->event->organizer_id !== $user->id) {
-                    return redirect()->route('admin.bookings.index')->with('error', 'Unauthorized to view this booking.');
-                }
+            // Check if user is a member of the event's organizer
+            $eventOrganizer = $booking->event->organizer;
+            if ($user->isMemberOfOrganizer($eventOrganizer)) {
+                // User is authorized as an organizer member
             } else {
                 // Regular users should only see their own bookings
                 if ($booking->transaction->user_id !== $user->id) {
