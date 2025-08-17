@@ -20,7 +20,11 @@ class VenueController extends Controller
 {
     public function __construct(protected VenueService $venueService)
     {
-        // TODO: Add permissions middleware (e.g., $this->middleware('can:manage venues'));
+        $this->middleware('can:viewAny,App\Models\Venue')->only(['index']);
+        $this->middleware('can:view,venue')->only(['show']);
+        $this->middleware('can:create,App\Models\Venue')->only(['create', 'store']);
+        $this->middleware('can:update,venue')->only(['edit', 'update']);
+        $this->middleware('can:delete,venue')->only(['destroy']);
     }
 
     public function index(Request $request): InertiaResponse

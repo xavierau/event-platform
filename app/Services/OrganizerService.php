@@ -123,6 +123,14 @@ class OrganizerService
 
         $query = Organizer::with($relationships);
 
+        // Apply user-based filtering
+        $user = Auth::user();
+        if (!$user->hasRole(\App\Enums\RoleNameEnum::ADMIN)) {
+            // Non-admin users can only see organizers they are members of
+            $userOrganizerIds = $user->activeOrganizers()->pluck('id');
+            $query->whereIn('id', $userOrganizerIds);
+        }
+
         if (!empty($filters['search'])) {
             $searchTerm = $filters['search'];
             $query->where(function ($q) use ($searchTerm) {
