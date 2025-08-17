@@ -48,7 +48,7 @@ class VenueService
         $user = Auth::user();
         if (!$user->hasRole(RoleNameEnum::ADMIN)) {
             // Non-admin users can only see public venues and venues from their organizers
-            $userOrganizerIds = $user->activeOrganizers()->pluck('id');
+            $userOrganizerIds = $user->activeOrganizers()->pluck('organizers.id');
             
             $query->where(function ($q) use ($userOrganizerIds) {
                 // Public venues (no organizer assigned)
