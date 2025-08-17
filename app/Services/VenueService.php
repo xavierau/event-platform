@@ -52,7 +52,7 @@ class VenueService
             
             $query->where(function ($q) use ($userOrganizerIds) {
                 // Public venues (no organizer assigned)
-                $q->where('is_public', true)
+                $q->whereNull('organizer_id')
                   // OR venues belonging to user's organizers
                   ->orWhereIn('organizer_id', $userOrganizerIds);
             });
@@ -69,7 +69,12 @@ class VenueService
         }
 
         if (isset($filters['is_public']) && $filters['is_public'] !== '') {
-            $query->where('is_public', filter_var($filters['is_public'], FILTER_VALIDATE_BOOLEAN));
+            $isPublic = filter_var($filters['is_public'], FILTER_VALIDATE_BOOLEAN);
+            if ($isPublic) {
+                $query->whereNull('organizer_id');
+            } else {
+                $query->whereNotNull('organizer_id');
+            }
         }
 
         return $query->orderBy($orderBy, $direction)->paginate();
