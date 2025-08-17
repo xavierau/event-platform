@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\DataTransferObjects\PromotionData;
 use App\Http\Controllers\Controller;
+use App\Enums\RoleNameEnum;
 use App\Models\Promotion;
 use App\Services\PromotionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,7 +17,15 @@ class PromotionController extends Controller
 {
     public function __construct(
         private readonly PromotionService $promotionService
-    ) {}
+    ) {
+        // Ensure only platform admins can access promotions
+        $this->middleware(function ($request, $next) {
+            if (!Auth::user()->hasRole(RoleNameEnum::ADMIN)) {
+                abort(403, 'Only platform administrators can manage promotions.');
+            }
+            return $next($request);
+        });
+    }
 
     /**
      * Display a listing of the promotions.

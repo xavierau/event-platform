@@ -83,7 +83,7 @@ class CheckInEligibilityService
         // Check if user has organizer entity membership for this event's organizer
         $userOrganizerIds = Organizer::whereHas('users', function ($query) use ($operator) {
             $query->where('user_id', $operator->id);
-        })->pluck('id');
+        })->pluck('organizers.id');
 
         if (!$userOrganizerIds->contains($booking->event->organizer_id)) {
             return 'You are not authorized to check in for this event.';

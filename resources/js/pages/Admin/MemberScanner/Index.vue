@@ -51,10 +51,25 @@ interface CustomPageProps extends InertiaSharedProps {
         USER: string;
     };
     user_role: string;
+    auth: {
+        user: {
+            id: number;
+            is_admin?: boolean;
+            is_organizer_member?: boolean;
+        } | null;
+    };
 }
 
 const page = usePage<CustomPageProps>();
 const props = page.props;
+
+// Debug logging
+console.log('Page props:', props);
+console.log('Auth user:', props.auth?.user);
+console.log('Auth user properties:', Object.keys(props.auth?.user || {}));
+console.log('Is admin?', props.auth?.user?.is_admin);
+console.log('Is organizer member?', props.auth?.user?.is_organizer_member);
+console.log('User role:', props.user_role);
 
 // Reactive state
 const scannerReady = ref(false);
@@ -86,11 +101,12 @@ const checkInForm = useForm({
 });
 
 // Computed properties
-const isAdmin = computed(() => props.user_role === 'admin');
+const isAdmin = computed(() => props.auth.user?.is_admin || false);
+const isOrganizerMember = computed(() => props.auth.user?.is_organizer_member || false);
 
 const shouldShowScanner = computed(() => {
-    // Only admins can access member scanner
-    return isAdmin.value;
+    // Both platform admins and organizer members can access member scanner
+    return isAdmin.value || isOrganizerMember.value;
 });
 
 // QR Detection - handles JSON format from MyProfile.vue
@@ -397,9 +413,9 @@ onUnmounted(() => {
             <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
                 <div class="bg-white p-6 shadow-sm sm:rounded-lg dark:bg-gray-800">
                     <!-- Access Control Notice -->
-                    <div v-if="!isAdmin" class="mb-4 border-l-4 border-red-400 bg-red-50 p-4 text-red-700">
+                    <div v-if="!shouldShowScanner" class="mb-4 border-l-4 border-red-400 bg-red-50 p-4 text-red-700">
                         <p>
-                            Access denied. Only administrators can access the member scanner.
+                            Access denied. Only platform administrators or organizer members can access the member scanner.
                         </p>
                     </div>
 
@@ -439,7 +455,7 @@ onUnmounted(() => {
                                 class="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700"
                             >
                                 <p class="p-4 text-center text-gray-500 dark:text-gray-400">
-                                    Admin access required to use member scanner.
+                                    Platform admin or organizer membership required to use member scanner.
                                 </p>
                             </div>
                         </div>

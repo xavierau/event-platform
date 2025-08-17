@@ -48,10 +48,13 @@ class HandleInertiaRequests extends Middleware
             'auth' => function () use ($request) {
                 $user = $request->user();
                 if ($user) {
-                    $user->loadMissing('roles');
+                    $user->loadMissing('roles', 'activeOrganizers');
                     return [
                         'user' => array_merge($user->toArray(), [
                             'permissions' => $user->getAllPermissions()->pluck('name'),
+                            'is_admin' => $user->hasRole(RoleNameEnum::ADMIN),
+                            'is_organizer_member' => $user->hasOrganizerMembership(),
+                            'organizer_ids' => $user->getOrganizerIds(),
                         ]),
                     ];
                 }

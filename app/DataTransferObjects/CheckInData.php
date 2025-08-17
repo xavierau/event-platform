@@ -98,7 +98,7 @@ class CheckInData extends Data
 
                         $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($query) use ($user) {
                             $query->where('user_id', $user->id);
-                        })->pluck('id');
+                        })->pluck('organizers.id');
 
                         if (!$userOrganizerIds->contains($booking->event->organizer_id)) {
                             $fail('You are not authorized to check in for this event.');

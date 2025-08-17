@@ -31,7 +31,7 @@ class MemberScannerController extends Controller
         if (!$user->hasRole(RoleNameEnum::ADMIN)) {
             $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
                 $subQuery->where('user_id', $user->id);
-            })->pluck('id');
+            })->pluck('organizers.id');
 
             if ($userOrganizerIds->isEmpty()) {
                 abort(403, 'You do not have permission to access the member scanner.');

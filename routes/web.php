@@ -111,52 +111,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-// --- ADMIN ROUTES ---
+// --- SHARED ADMIN ROUTES (Platform Admins OR Organizer Members) ---
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value])
+    ->middleware(['auth'])
     ->group(function () {
-
-
+        // Dashboard and core functionality
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-        Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
-        Route::put('settings', [SiteSettingController::class, 'update'])->name('settings.update');
-
-        // Explicit POST route for venue update must come before resource controller
-        Route::post('venues/{venue}', [VenueController::class, 'update'])->name('venues.update.post');
-        Route::resource('venues', VenueController::class);
-        Route::resource('categories', CategoryController::class);
-        Route::resource('tags', TagController::class);
-        Route::resource('promotions', PromotionController::class);
+        
+        // Events and related resources
         Route::post('editor/image-upload', [EditorUploadController::class, 'uploadImage'])->name('editor.image.upload');
         Route::resource('events', EventController::class)->except(['show']);
         Route::resource('events.occurrences', EventOccurrenceController::class)->shallow();
         Route::resource('ticket-definitions', TicketDefinitionController::class);
         Route::resource('bookings', AdminBookingController::class);
+        
+        // Organizer management
         Route::resource('organizers', OrganizerController::class);
         Route::post('organizers/{organizer}/invite', [OrganizerController::class, 'inviteUser'])->name('organizers.invite');
-
-        // CMS Routes
-        Route::resource('cms-pages', CmsPageController::class);
-        Route::patch('cms-pages/{cmsPage}/toggle-publish', [CmsPageController::class, 'togglePublish'])->name('cms-pages.toggle-publish');
-        Route::patch('cms-pages/sort-order', [CmsPageController::class, 'updateSortOrder'])->name('cms-pages.sort-order');
-
-        // Contact Submissions
-        Route::resource('contact-submissions', ContactSubmissionController::class)->only(['index', 'show', 'destroy']);
-        Route::patch('contact-submissions/{submission}/toggle-read', [ContactSubmissionController::class, 'toggleRead'])->name('contact-submissions.toggle-read');
-
-        // Comments
-        Route::get('/events/{event}/comments/moderation', [CommentController::class, 'indexForModeration']);
-        Route::post('/comments/{comment}/approve', [CommentController::class, 'approve']);
-        Route::put('/comments/{comment}/reject', [CommentController::class, 'reject']);
-        Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
-
-        // User Management
-        Route::resource('users', UserController::class)->middleware('permission:manage-users');
-
+        
+        // Venues
+        Route::post('venues/{venue}', [VenueController::class, 'update'])->name('venues.update.post');
+        Route::resource('venues', VenueController::class);
+        
+        // Coupons
         Route::resource('coupons', CouponController::class);
         Route::get('coupon-scanner', [CouponController::class, 'scanner'])->name('coupons.scanner');
-
+        
         // Mass Coupon Assignment routes
         Route::prefix('coupon-assignment')
             ->name('coupon-assignment.')->group(function () {
@@ -167,28 +148,54 @@ Route::prefix('admin')
             Route::get('/history', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'history'])->name('history');
         });
 
+        // Comments moderation (for events)
+        Route::get('/events/{event}/comments/moderation', [CommentController::class, 'indexForModeration']);
+        Route::post('/comments/{comment}/approve', [CommentController::class, 'approve']);
+        Route::put('/comments/{comment}/reject', [CommentController::class, 'reject']);
+        Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+        
+        // Scanner tools
+        Route::prefix('qr-scanner')->name('qr-scanner.')->group(function () {
+            Route::get('/', [QrScannerController::class, 'index'])->name('index');
+            Route::post('/validate', [QrScannerController::class, 'validateQrCode'])->name('validate');
+            Route::post('/check-in', [QrScannerController::class, 'checkIn'])->name('check-in');
+        });
+        
+        Route::prefix('member-scanner')->name('member-scanner.')->group(function () {
+            Route::get('/', [MemberScannerController::class, 'index'])->name('index');
+            Route::post('/validate', [MemberScannerController::class, 'validateMember'])->name('validate');
+            Route::post('/check-in', [MemberScannerController::class, 'checkIn'])->name('check-in');
+            Route::get('/history/{member}', [MemberScannerController::class, 'getCheckInHistory'])->name('history');
+        });
     });
 
-
-// --- ROLE-BASED ROUTES (Admin or Users with Organizer Entity Membership) ---
-Route::prefix('admin/qr-scanner')
-    ->name('admin.qr-scanner.')
-    ->middleware(['auth'])
+// --- PLATFORM ADMIN ONLY ROUTES ---
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value])
     ->group(function () {
-        Route::get('/', [QrScannerController::class, 'index'])->name('index');
-        Route::post('/validate', [QrScannerController::class, 'validateQrCode'])->name('validate');
-        Route::post('/check-in', [QrScannerController::class, 'checkIn'])->name('check-in');
+        // Site-wide settings and management
+        Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
+        Route::put('settings', [SiteSettingController::class, 'update'])->name('settings.update');
+        
+        // Platform-wide taxonomies
+        Route::resource('categories', CategoryController::class);
+        Route::resource('tags', TagController::class);
+        Route::resource('promotions', PromotionController::class);
+
+        // CMS Routes
+        Route::resource('cms-pages', CmsPageController::class);
+        Route::patch('cms-pages/{cmsPage}/toggle-publish', [CmsPageController::class, 'togglePublish'])->name('cms-pages.toggle-publish');
+        Route::patch('cms-pages/sort-order', [CmsPageController::class, 'updateSortOrder'])->name('cms-pages.sort-order');
+
+        // Contact Submissions
+        Route::resource('contact-submissions', ContactSubmissionController::class)->only(['index', 'show', 'destroy']);
+        Route::patch('contact-submissions/{submission}/toggle-read', [ContactSubmissionController::class, 'toggleRead'])->name('contact-submissions.toggle-read');
+
+        // User Management
+        Route::resource('users', UserController::class)->middleware('permission:manage-users');
     });
 
-Route::prefix('admin/member-scanner')
-    ->name('admin.member-scanner.')
-    ->middleware(['auth'])
-    ->group(function () {
-        Route::get('/', [MemberScannerController::class, 'index'])->name('index');
-        Route::post('/validate', [MemberScannerController::class, 'validateMember'])->name('validate');
-        Route::post('/check-in', [MemberScannerController::class, 'checkIn'])->name('check-in');
-        Route::get('/history/{member}', [MemberScannerController::class, 'getCheckInHistory'])->name('history');
-    });
 
 
 // --- AUTH & PAYMENT ROUTES ---
