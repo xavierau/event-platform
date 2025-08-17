@@ -269,3 +269,4 @@ The project follows **Git Flow** branching strategy:
 - Check `storage/logs/laravel.log` for errors
 
 This EventPlatform is designed for scalability, maintainability, and developer productivity through consistent patterns, comprehensive testing, and modern development practices.
+- there is a new mcp for the project which is Laravel Boost it accelerates AI-assisted development by providing the essential context and structure that AI needs to generate high-quality, Laravel-specific code. Use it proactively in this project

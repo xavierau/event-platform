@@ -32,11 +32,7 @@ class QrScannerController extends Controller
 
         // Check authorization: only admins or users with organizer entity membership can access
         if (!$user->hasRole(RoleNameEnum::ADMIN)) {
-            $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
-                $subQuery->where('user_id', $user->id);
-            })->pluck('organizers.id');
-
-            if ($userOrganizerIds->isEmpty()) {
+            if (!$user->activeOrganizers()->exists()) {
                 abort(403, 'You do not have permission to access the QR scanner.');
             }
         }
@@ -194,9 +190,7 @@ class QrScannerController extends Controller
         }
 
         // Users with organizer entity memberships can see events from organizer entities they belong to
-        $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
-            $subQuery->where('user_id', $user->id);
-        })->pluck('organizers.id');
+        $userOrganizerIds = $user->activeOrganizers()->pluck('id');
 
         if ($userOrganizerIds->isNotEmpty()) {
             return $query->whereIn('organizer_id', $userOrganizerIds)->get();
@@ -216,9 +210,7 @@ class QrScannerController extends Controller
         }
 
         // Users with organizer entity memberships can access bookings for events from organizer entities they belong to
-        $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
-            $subQuery->where('user_id', $user->id);
-        })->pluck('organizers.id');
+        $userOrganizerIds = $user->activeOrganizers()->pluck('id');
 
         return $userOrganizerIds->contains($booking->event->organizer_id);
     }

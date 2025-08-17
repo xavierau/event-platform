@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Actions\Venues\UpsertVenueAction;
 use App\DataTransferObjects\VenueData;
 use App\Models\Venue;
+use App\Enums\RoleNameEnum;
+use Illuminate\Support\Facades\Auth;
 
 class VenueService
 {
@@ -40,8 +42,36 @@ class VenueService
 
     public function getAllVenues(array $filters = [], array $with = [], string $orderBy = 'created_at', string $direction = 'desc')
     {
-        // Basic pagination, can be customized further
-        // Example: Venue::with($with)->filter($filters)->orderBy($orderBy, $direction)->paginate();
-        return Venue::with($with)->orderBy($orderBy, $direction)->paginate();
+        $query = Venue::with($with);
+
+        // Apply user-based filtering
+        $user = Auth::user();
+        if (!$user->hasRole(RoleNameEnum::ADMIN)) {
+            // Non-admin users can only see public venues and venues from their organizers
+            $userOrganizerIds = $user->activeOrganizers()->pluck('id');
+            
+            $query->where(function ($q) use ($userOrganizerIds) {
+                // Public venues (no organizer assigned)
+                $q->where('is_public', true)
+                  // OR venues belonging to user's organizers
+                  ->orWhereIn('organizer_id', $userOrganizerIds);
+            });
+        }
+
+        // Apply additional filters if provided
+        if (!empty($filters['search'])) {
+            $searchTerm = $filters['search'];
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name->' . app()->getLocale(), 'like', "%{$searchTerm}%")
+                    ->orWhere('name->' . config('app.fallback_locale', 'en'), 'like', "%{$searchTerm}%")
+                    ->orWhere('address', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        if (isset($filters['is_public']) && $filters['is_public'] !== '') {
+            $query->where('is_public', filter_var($filters['is_public'], FILTER_VALIDATE_BOOLEAN));
+        }
+
+        return $query->orderBy($orderBy, $direction)->paginate();
     }
 }
