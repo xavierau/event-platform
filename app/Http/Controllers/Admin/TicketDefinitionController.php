@@ -66,7 +66,8 @@ class TicketDefinitionController extends Controller
         
         // Get available event occurrences for selection, filtered by organizer access
         $eventOccurrencesQuery = EventOccurrence::with('event:id,name')
-            ->select('id', 'name', 'event_id', 'start_at', 'end_at');
+            ->select('id', 'name', 'event_id', 'start_at', 'end_at')
+            ->whereHas('event'); // Only include occurrences with valid events (fixes null event reference)
             
         // For organizer members, only show occurrences from their organizers' events
         if (!$user->hasRole(RoleNameEnum::ADMIN)) {
@@ -80,6 +81,10 @@ class TicketDefinitionController extends Controller
         $eventOccurrences = $eventOccurrencesQuery
             ->orderBy('start_at', 'asc')
             ->get()
+            ->filter(function ($occurrence) {
+                // Additional safety check to filter out any occurrences with null events
+                return $occurrence->event !== null;
+            })
             ->map(function ($occurrence) {
                 return [
                     'id' => $occurrence->id,
@@ -88,7 +93,8 @@ class TicketDefinitionController extends Controller
                     'start_at' => $occurrence->start_at?->format('Y-m-d H:i'),
                     'end_at' => $occurrence->end_at?->format('Y-m-d H:i'),
                 ];
-            });
+            })
+            ->values(); // Reset array keys after filtering
 
         return Inertia::render('Admin/TicketDefinitions/Create', [
             'statuses' => collect(TicketDefinitionStatus::cases())->map(fn($status) => ['value' => $status->value, 'label' => $status->getLabel()]),
@@ -122,11 +128,29 @@ class TicketDefinitionController extends Controller
 
     public function edit(TicketDefinition $ticketDefinition): InertiaResponse
     {
-        // Get available event occurrences for selection
-        $eventOccurrences = EventOccurrence::with('event:id,name')
+        $user = Auth::user();
+        
+        // Get available event occurrences for selection, filtered by organizer access
+        $eventOccurrencesQuery = EventOccurrence::with('event:id,name')
             ->select('id', 'name', 'event_id', 'start_at', 'end_at')
+            ->whereHas('event'); // Only include occurrences with valid events (fixes null event reference)
+            
+        // For organizer members, only show occurrences from their organizers' events
+        if (!$user->hasRole(RoleNameEnum::ADMIN)) {
+            $userOrganizerIds = $user->getOrganizerIds();
+            
+            $eventOccurrencesQuery->whereHas('event', function ($query) use ($userOrganizerIds) {
+                $query->whereIn('organizer_id', $userOrganizerIds);
+            });
+        }
+            
+        $eventOccurrences = $eventOccurrencesQuery
             ->orderBy('start_at', 'asc')
             ->get()
+            ->filter(function ($occurrence) {
+                // Additional safety check to filter out any occurrences with null events
+                return $occurrence->event !== null;
+            })
             ->map(function ($occurrence) {
                 return [
                     'id' => $occurrence->id,
@@ -135,7 +159,8 @@ class TicketDefinitionController extends Controller
                     'start_at' => $occurrence->start_at?->format('Y-m-d H:i'),
                     'end_at' => $occurrence->end_at?->format('Y-m-d H:i'),
                 ];
-            });
+            })
+            ->values(); // Reset array keys after filtering
 
         return Inertia::render('Admin/TicketDefinitions/Edit', [
             'ticketDefinition' => TicketDefinitionData::fromModel($ticketDefinition),

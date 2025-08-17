@@ -27,7 +27,14 @@
       "mcp__playwright__browser_navigate",
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_type",
-      "mcp__playwright__browser_close"
+      "mcp__playwright__browser_close",
+      "Bash(git push:*)",
+      "Bash(git merge:*)",
+      "Bash(pkill:*)",
+      "Bash(true)",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_console_messages",
+      "Bash(curl:*)"
     ],
     "deny": []
   }
