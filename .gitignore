@@ -18,6 +18,9 @@ npm-debug.log
 package-lock.json
 yarn-error.log
 /auth.json
+
+# Security: Exclude debugging and production logs
+bugs.md
 /.fleet
 /.idea
 /.nova
