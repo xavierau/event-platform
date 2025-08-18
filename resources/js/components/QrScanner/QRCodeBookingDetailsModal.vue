@@ -31,7 +31,6 @@
               <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Customer Information</h4>
               <div class="space-y-1 text-sm">
                 <div><span class="font-medium">Name:</span> {{ bookingDetails.user.name }}</div>
-                <div><span class="font-medium">Email:</span> {{ bookingDetails.user.email }}</div>
               </div>
             </div>
           </div>

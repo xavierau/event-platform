@@ -2,10 +2,11 @@
 
 namespace App\Actions\Venues;
 
-use App\Models\Venue;
+use App\Enums\RoleNameEnum;
+use App\Exceptions\UnauthorizedOperationException;
 use App\Models\Organizer;
 use App\Models\User;
-use App\Exceptions\UnauthorizedOperationException;
+use App\Models\Venue;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -31,10 +32,10 @@ class BulkAssignVenuesToOrganizerAction
     /**
      * Execute bulk venue assignment to an organizer.
      *
-     * @param array $venueIds Array of venue IDs to assign
-     * @param Organizer $organizer The target organizer
-     * @param User $admin The admin performing the action
-     * @param array $options Configuration options (batch_size, etc.)
+     * @param  array  $venueIds  Array of venue IDs to assign
+     * @param  Organizer  $organizer  The target organizer
+     * @param  User  $admin  The admin performing the action
+     * @param  array  $options  Configuration options (batch_size, etc.)
      * @return array Comprehensive results with progress tracking and performance metrics
      *
      * @throws UnauthorizedOperationException If user is not authorized
@@ -64,8 +65,8 @@ class BulkAssignVenuesToOrganizerAction
             'failure_details' => [],
             'organizer' => [
                 'id' => $organizer->id,
-                'name' => $organizer->name
-            ]
+                'name' => $organizer->name,
+            ],
         ];
 
         // Process venues in batches
@@ -94,7 +95,7 @@ class BulkAssignVenuesToOrganizerAction
                 'batch_size' => count($batchVenueIds),
                 'successful_in_batch' => $batchResults['successful_assignments'],
                 'failed_in_batch' => $batchResults['failed_assignments'],
-                'batch_processing_time' => round($batchProcessingTime, 4)
+                'batch_processing_time' => round($batchProcessingTime, 4),
             ];
         }
 
@@ -116,8 +117,8 @@ class BulkAssignVenuesToOrganizerAction
     /**
      * Validate bulk assignment before execution.
      *
-     * @param array $venueIds Array of venue IDs to validate
-     * @param Organizer $organizer The target organizer
+     * @param  array  $venueIds  Array of venue IDs to validate
+     * @param  Organizer  $organizer  The target organizer
      * @return array Validation results with detailed breakdown
      */
     public function validateBulkAssignment(array $venueIds, Organizer $organizer): array
@@ -126,21 +127,22 @@ class BulkAssignVenuesToOrganizerAction
             'total_venues' => count($venueIds),
             'assignable_venues' => 0,
             'non_assignable_venues' => 0,
-            'validation_details' => []
+            'validation_details' => [],
         ];
 
         foreach ($venueIds as $venueId) {
             try {
                 $venue = Venue::find($venueId);
 
-                if (!$venue) {
+                if (! $venue) {
                     $results['non_assignable_venues']++;
                     $results['validation_details'][] = [
                         'venue_id' => $venueId,
                         'venue_name' => 'Unknown',
                         'can_assign' => false,
-                        'reason' => 'Venue not found'
+                        'reason' => 'Venue not found',
                     ];
+
                     continue;
                 }
 
@@ -154,7 +156,7 @@ class BulkAssignVenuesToOrganizerAction
 
                 $results['validation_details'][] = array_merge([
                     'venue_id' => $venueId,
-                    'venue_name' => $venue->name
+                    'venue_name' => $venue->name,
                 ], $validation);
             } catch (\Exception $e) {
                 $results['non_assignable_venues']++;
@@ -162,7 +164,7 @@ class BulkAssignVenuesToOrganizerAction
                     'venue_id' => $venueId,
                     'venue_name' => 'Unknown',
                     'can_assign' => false,
-                    'reason' => $e->getMessage()
+                    'reason' => $e->getMessage(),
                 ];
             }
         }
@@ -173,16 +175,17 @@ class BulkAssignVenuesToOrganizerAction
     /**
      * Validate inputs for bulk assignment.
      *
-     * @param array $venueIds Array of venue IDs
-     * @param Organizer $organizer Target organizer
-     * @param User $admin Admin performing action
+     * @param  array  $venueIds  Array of venue IDs
+     * @param  Organizer  $organizer  Target organizer
+     * @param  User  $admin  Admin performing action
+     *
      * @throws UnauthorizedOperationException
      * @throws InvalidArgumentException
      */
     private function validateInputs(array $venueIds, Organizer $organizer, User $admin): void
     {
         // Validate authorization
-        if (!$admin->hasRole('platform_admin')) {
+        if (! $admin->hasRole(RoleNameEnum::ADMIN)) {
             throw new UnauthorizedOperationException(
                 'Only platform administrators can perform bulk venue assignments.'
             );
@@ -196,16 +199,16 @@ class BulkAssignVenuesToOrganizerAction
         // Validate maximum limit
         if (count($venueIds) > self::MAX_VENUES_PER_OPERATION) {
             throw new InvalidArgumentException(
-                'Cannot process more than ' . self::MAX_VENUES_PER_OPERATION . ' venues in a single bulk operation.'
+                'Cannot process more than '.self::MAX_VENUES_PER_OPERATION.' venues in a single bulk operation.'
             );
         }
 
         // Validate organizer
-        if (!$organizer->exists) {
+        if (! $organizer->exists) {
             throw new InvalidArgumentException('Target organizer does not exist.');
         }
 
-        if (!$organizer->is_active) {
+        if (! $organizer->is_active) {
             throw new InvalidArgumentException(
                 "Cannot assign venues to inactive organizer '{$organizer->name}'."
             );
@@ -215,10 +218,10 @@ class BulkAssignVenuesToOrganizerAction
     /**
      * Process a single batch of venues.
      *
-     * @param array $batchVenueIds Venue IDs in this batch
-     * @param Organizer $organizer Target organizer
-     * @param User $admin Admin performing action
-     * @param int $batchNumber Current batch number
+     * @param  array  $batchVenueIds  Venue IDs in this batch
+     * @param  Organizer  $organizer  Target organizer
+     * @param  User  $admin  Admin performing action
+     * @param  int  $batchNumber  Current batch number
      * @return array Batch processing results
      */
     private function processBatch(array $batchVenueIds, Organizer $organizer, User $admin, int $batchNumber): array
@@ -227,7 +230,7 @@ class BulkAssignVenuesToOrganizerAction
             'successful_assignments' => 0,
             'failed_assignments' => 0,
             'success_details' => [],
-            'failure_details' => []
+            'failure_details' => [],
         ];
 
         // Process each venue in the batch
@@ -235,26 +238,28 @@ class BulkAssignVenuesToOrganizerAction
             try {
                 $venue = Venue::find($venueId);
 
-                if (!$venue) {
+                if (! $venue) {
                     $batchResults['failed_assignments']++;
                     $batchResults['failure_details'][] = [
                         'venue_id' => $venueId,
                         'venue_name' => 'Unknown',
                         'reason' => 'Venue not found',
-                        'batch_number' => $batchNumber
+                        'batch_number' => $batchNumber,
                     ];
+
                     continue;
                 }
 
                 // Check if venue can be assigned
-                if (!$venue->isPublic()) {
+                if (! $venue->isPublic()) {
                     $batchResults['failed_assignments']++;
                     $batchResults['failure_details'][] = [
                         'venue_id' => $venueId,
                         'venue_name' => $venue->name,
                         'reason' => 'Venue already assigned to an organizer',
-                        'batch_number' => $batchNumber
+                        'batch_number' => $batchNumber,
                     ];
+
                     continue;
                 }
 
@@ -268,7 +273,7 @@ class BulkAssignVenuesToOrganizerAction
                         'venue_id' => $venue->id,
                         'venue_name' => $venue->name,
                         'assigned_to' => $organizer->name,
-                        'batch_number' => $batchNumber
+                        'batch_number' => $batchNumber,
                     ];
                 });
             } catch (\Exception $e) {
@@ -277,7 +282,7 @@ class BulkAssignVenuesToOrganizerAction
                     'venue_id' => $venueId,
                     'venue_name' => $venue->name ?? 'Unknown',
                     'reason' => $e->getMessage(),
-                    'batch_number' => $batchNumber
+                    'batch_number' => $batchNumber,
                 ];
             }
         }
@@ -288,32 +293,32 @@ class BulkAssignVenuesToOrganizerAction
     /**
      * Validate if a single venue can be assigned to an organizer.
      *
-     * @param Venue $venue The venue to check
-     * @param Organizer $organizer The target organizer
+     * @param  Venue  $venue  The venue to check
+     * @param  Organizer  $organizer  The target organizer
      * @return array Validation result
      */
     private function validateSingleVenueAssignment(Venue $venue, Organizer $organizer): array
     {
         // Check if venue is public
-        if (!$venue->isPublic()) {
+        if (! $venue->isPublic()) {
             return [
                 'can_assign' => false,
                 'reason' => 'Venue is already assigned to an organizer',
-                'current_organizer' => $venue->organizer->name ?? 'Unknown'
+                'current_organizer' => $venue->organizer->name ?? 'Unknown',
             ];
         }
 
         // Check if organizer is active
-        if (!$organizer->is_active) {
+        if (! $organizer->is_active) {
             return [
                 'can_assign' => false,
-                'reason' => 'Target organizer is inactive'
+                'reason' => 'Target organizer is inactive',
             ];
         }
 
         return [
             'can_assign' => true,
-            'message' => 'Venue can be assigned to organizer'
+            'message' => 'Venue can be assigned to organizer',
         ];
     }
 }

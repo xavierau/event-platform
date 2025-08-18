@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Services\QrCodeValidationService;
-use App\Services\CheckInService;
 use App\DataTransferObjects\CheckInData;
-use App\Models\EventOccurrence;
-use App\Models\Event;
 use App\Enums\RoleNameEnum;
+use App\Http\Controllers\Controller;
+use App\Models\Event;
+use App\Models\EventOccurrence;
+use App\Services\CheckInService;
+use App\Services\QrCodeValidationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -40,8 +40,8 @@ class QrScannerController extends Controller
         ]);
 
         // Check authorization: only admins or users with organizer entity membership can access
-        if (!$user->hasRole(RoleNameEnum::ADMIN)) {
-            if (!$user->activeOrganizers()->exists()) {
+        if (! $user->hasRole(RoleNameEnum::ADMIN)) {
+            if (! $user->activeOrganizers()->exists()) {
                 Log::channel('qr_scanner')->warning('[QR_SCANNER] Access denied - no organizer membership', [
                     'user_id' => $user->id,
                     'user_email' => $user->email,
@@ -69,6 +69,11 @@ class QrScannerController extends Controller
                 'USER' => RoleNameEnum::USER->value,
             ],
             'user_role' => $user->roles->first()?->name,
+            'pageTitle' => 'QR Code Scanner',
+            'breadcrumbs' => [
+                ['text' => 'Dashboard', 'href' => route('admin.dashboard')],
+                ['text' => 'QR Code Scanner'],
+            ],
         ]);
     }
 
@@ -88,7 +93,7 @@ class QrScannerController extends Controller
         // Validate QR code format and find booking
         $validation = $this->qrCodeValidationService->validateQrCode($qrCode);
 
-        if (!$validation['is_valid']) {
+        if (! $validation['is_valid']) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid QR code',
@@ -99,7 +104,7 @@ class QrScannerController extends Controller
         $booking = $validation['booking'];
 
         // Check if user has permission to access this booking's event
-        if (!$this->canAccessBooking($booking, Auth::user(), $eventId)) {
+        if (! $this->canAccessBooking($booking, Auth::user(), $eventId)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to access this booking',
@@ -120,8 +125,8 @@ class QrScannerController extends Controller
                 ];
             });
 
-        // Get check-in history for this booking
-        $checkInHistory = $this->checkInService->getCheckInHistory($booking);
+        // Get check-in history for this booking (filtered by user's organizer access)
+        $checkInHistory = $this->checkInService->getCheckInHistory($booking, Auth::user());
 
         return response()->json([
             'success' => true,
@@ -164,11 +169,11 @@ class QrScannerController extends Controller
             $booking = \App\Models\Booking::byQrCode($checkInData->qr_code_identifier)->first();
 
             // If not found by qr_code_identifier, try booking_number (for legacy QR codes)
-            if (!$booking) {
+            if (! $booking) {
                 $booking = \App\Models\Booking::where('booking_number', $checkInData->qr_code_identifier)->first();
             }
 
-            if (!$booking || !$this->canAccessBooking($booking, Auth::user())) {
+            if (! $booking || ! $this->canAccessBooking($booking, Auth::user())) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You do not have permission to check in this booking',

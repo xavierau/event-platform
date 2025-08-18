@@ -2,49 +2,51 @@
 
 namespace App\Services;
 
+use App\Actions\Booking\UpdateBookingAction;
+use App\Actions\Booking\UpsertBookingAction;
 use App\DataTransferObjects\Booking\InitiateBookingData;
-use App\Enums\TransactionStatusEnum;
-use App\Enums\BookingStatusEnum;
-use App\Models\User;
+use App\DataTransferObjects\BookingData;
 // use App\Models\Order; // Assuming you have an Order model (ORD-001)
-use App\Models\Transaction; // Using Transaction model instead of Order
-use App\Models\Booking; // Assuming you have a Booking model (ORD-002)
-use App\Models\TicketDefinition; // Assuming TicketDefinition model (TCKD-001)
-use App\Models\EventOccurrence; // Assuming EventOccurrence model (EVT-002)
-use App\Exceptions\InventoryUnavailableException; // Import the custom exception
-use Illuminate\Validation\ValidationException; // Import for quantity validation issues
+use App\Enums\BookingStatusEnum; // Using Transaction model instead of Order
+use App\Enums\TransactionStatusEnum; // Assuming you have a Booking model (ORD-002)
+use App\Exceptions\InventoryUnavailableException; // Assuming TicketDefinition model (TCKD-001)
+use App\Helpers\QrCodeHelper; // Assuming EventOccurrence model (EVT-002)
+use App\Models\Booking; // Import the custom exception
+use App\Models\Event; // Import for quantity validation issues
 // use App\Actions\Bookings\CreateBookingAction; // As per TRX-004
 // use App\Actions\Orders\CreateOrderAction; // If you have a separate action for orders
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Stripe\Exception\ApiErrorException;
-use App\DataTransferObjects\BookingData; // Assuming BookingData DTO will be created
-use App\Actions\Booking\UpsertBookingAction; // Assuming UpsertBookingAction will be created
+use App\Models\EventOccurrence;
+use App\Models\Organizer;
+use App\Models\TicketDefinition;
+use App\Models\Transaction; // Assuming BookingData DTO will be created
+use App\Models\User; // Assuming UpsertBookingAction will be created
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Auth; // To get the authenticated user if needed directly
-use App\Helpers\QrCodeHelper; // Import the QrCodeHelper
-use App\Models\Event; // Assuming Event model exists
-use App\Models\Organizer; // Added Organizer model
-use App\Actions\Booking\UpdateBookingAction; // Import the UpdateBookingAction
-use Illuminate\Pagination\LengthAwarePaginator;
+// To get the authenticated user if needed directly
+use Illuminate\Pagination\LengthAwarePaginator; // Import the QrCodeHelper
+use Illuminate\Support\Facades\DB; // Assuming Event model exists
+use Illuminate\Support\Facades\Log; // Added Organizer model
+use Illuminate\Validation\ValidationException; // Import the UpdateBookingAction
+use Stripe\Exception\ApiErrorException;
 
 class BookingService
 {
     public function getPaginatedBookings(array $filters = []): LengthAwarePaginator
     {
         $paginated = $this->getAllBookingsWithFilters($filters);
+
         return $this->transformPaginatedBookings($paginated);
     }
 
     public function getPaginatedBookingsForOrganizer(User $organizer, array $filters = []): LengthAwarePaginator
     {
         $paginated = $this->getBookingsForOrganizerEventsWithFilters($organizer, $filters);
+
         return $this->transformPaginatedBookings($paginated);
     }
 
     protected function transformPaginatedBookings(LengthAwarePaginator $paginated): LengthAwarePaginator
     {
-        return $paginated->through(fn(Booking $booking) => [
+        return $paginated->through(fn (Booking $booking) => [
             'id' => $booking->id,
             'booking_number' => $booking->booking_number,
             'event_name' => $booking->event?->getTranslation('name', app()->getLocale()),
@@ -71,9 +73,8 @@ class BookingService
      * - If payment is required, initiates Stripe Checkout and returns the URL.
      * - If free, confirms the booking and returns a success message.
      *
-     * @param \App\Models\User $user
-     * @param \App\DataTransferObjects\Booking\InitiateBookingData $data
      * @return array an array containing keys like 'requires_payment', 'checkout_url', 'booking_id', 'message'
+     *
      * @throws \Illuminate\Validation\ValidationException | \App\Exceptions\InventoryUnavailableException | \Exception
      */
     public function processBookingInitiation(User $user, InitiateBookingData $data): array
@@ -124,12 +125,12 @@ class BookingService
                     // 1. Min/Max per order validation
                     if ($ticketDefinition->min_per_order && $requestedQuantity < $ticketDefinition->min_per_order) {
                         throw ValidationException::withMessages([
-                            'items.' . $itemData->ticket_id => "Minimum quantity for {$ticketDefinition->name} is {$ticketDefinition->min_per_order}."
+                            'items.'.$itemData->ticket_id => "Minimum quantity for {$ticketDefinition->name} is {$ticketDefinition->min_per_order}.",
                         ]);
                     }
                     if ($ticketDefinition->max_per_order && $requestedQuantity > $ticketDefinition->max_per_order) {
                         throw ValidationException::withMessages([
-                            'items.' . $itemData->ticket_id => "Maximum quantity for {$ticketDefinition->name} is {$ticketDefinition->max_per_order}."
+                            'items.'.$itemData->ticket_id => "Maximum quantity for {$ticketDefinition->name} is {$ticketDefinition->max_per_order}.",
                         ]);
                     }
 
@@ -150,7 +151,7 @@ class BookingService
 
                     $productDescription = $ticketDefinition->description;
                     if (empty(trim((string) $productDescription))) { // Check if null, empty, or just whitespace
-                        $fallbackDescription = trim($occurrence->event->name . ' - ' . $occurrence->name);
+                        $fallbackDescription = trim($occurrence->event->name.' - '.$occurrence->name);
                         if (empty($fallbackDescription)) {
                             $productDescription = 'Event Ticket'; // Generic fallback
                         } else {
@@ -230,7 +231,7 @@ class BookingService
                         $createdBookings[] = $booking;
                     }
                 }
-            } else if ($totalAmount == 0) { // Handle general free admission booking if items list is empty
+            } elseif ($totalAmount == 0) { // Handle general free admission booking if items list is empty
                 // Potentially update Order and Booking statuses to CONFIRMED if they were PENDING_CONFIRMATION
                 // For now, we set them to CONFIRMED directly above.
                 // TODO: Decrement inventory for free tickets here if not handled by an event listener on Booking creation.
@@ -242,7 +243,7 @@ class BookingService
                 //            $ticketDef->decrement('total_quantity', $itemData->quantity);
                 //        }
                 //    }
-                //}
+                // }
                 $qrCodeIdentifier = QrCodeHelper::generate();
 
                 Booking::create([
@@ -286,8 +287,8 @@ class BookingService
 
                 $params = [
                     'allow_promotion_codes' => true,
-                    'success_url' => route('payment.success') . '?transaction_id=' . $orderId . '&session_id={CHECKOUT_SESSION_ID}',
-                    'cancel_url' => route('payment.cancel') . '?transaction_id=' . $orderId . '&session_id={CHECKOUT_SESSION_ID}',
+                    'success_url' => route('payment.success').'?transaction_id='.$orderId.'&session_id={CHECKOUT_SESSION_ID}',
+                    'cancel_url' => route('payment.cancel').'?transaction_id='.$orderId.'&session_id={CHECKOUT_SESSION_ID}',
                     'metadata' => $metadata,
                     'phone_number_collection' => ['enabled' => true],
                     // 'payment_method_types' => ['card'], // From your PaymentController - usually not needed as Stripe handles this
@@ -295,7 +296,7 @@ class BookingService
 
                 $checkoutSession = $user->checkout($lineItemsForStripe, $params);
 
-                if (!$checkoutSession || !$checkoutSession->id) {
+                if (! $checkoutSession || ! $checkoutSession->id) {
                     throw new \RuntimeException('Failed to create Stripe checkout session: Invalid session response');
                 }
 
@@ -307,15 +308,15 @@ class BookingService
                     'requires_payment' => true,
                     'checkout_url' => $checkoutSession->url,
                     'booking_id' => $orderId, // Or primary booking ID
-                    'allow_promotion_codes' => true
+                    'allow_promotion_codes' => true,
                 ];
             } catch (ApiErrorException $e) {
-                Log::error('Stripe API Error during checkout session creation in BookingService: ' . $e->getMessage(), ['order_id' => $orderId]);
+                Log::error('Stripe API Error during checkout session creation in BookingService: '.$e->getMessage(), ['order_id' => $orderId]);
                 // Rollback or mark order/bookings as failed if appropriate here, though transaction should handle DB rollback.
                 // For the client, rethrow or throw a custom exception that BookingController can catch.
                 throw $e; // Rethrow for BookingController to handle the response
             } catch (\Exception $e) {
-                Log::error('General error during payment initiation in BookingService: ' . $e->getMessage(), ['order_id' => $orderId]);
+                Log::error('General error during payment initiation in BookingService: '.$e->getMessage(), ['order_id' => $orderId]);
                 throw $e; // Rethrow
             }
         });
@@ -341,7 +342,7 @@ class BookingService
         })->with([
             'ticketDefinition.eventOccurrences.event',
             'ticketDefinition.eventOccurrences.venue',
-            'transaction'
+            'transaction',
         ])->orderBy('created_at', 'desc')->get();
     }
 
@@ -371,24 +372,21 @@ class BookingService
         return Booking::with(['user', 'event'])->find($bookingId);
     }
 
-
     /**
      * Delete a booking.
      */
     public function deleteBooking(int $bookingId): bool
     {
         $booking = $this->findBooking($bookingId);
-        if (!$booking) {
+        if (! $booking) {
             return false; // Or throw an exception
         }
+
         return $booking->delete();
     }
 
     /**
      * Get all bookings with enhanced filtering, searching, and pagination for admin interface.
-     *
-     * @param array $filters
-     * @return \Illuminate\Pagination\LengthAwarePaginator
      */
     public function getAllBookingsWithFilters(array $filters = []): \Illuminate\Pagination\LengthAwarePaginator
     {
@@ -396,11 +394,11 @@ class BookingService
             'user', // Remove column selection to avoid hasOneThrough ambiguity
             'event:id,name',
             'ticketDefinition:id,name,price,currency',
-            'transaction:id,total_amount,currency,status,payment_gateway,payment_gateway_transaction_id,payment_intent_id,created_at'
+            'transaction:id,total_amount,currency,status,payment_gateway,payment_gateway_transaction_id,payment_intent_id,created_at',
         ]);
 
         // Apply search filter
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('booking_number', 'like', "%{$search}%")
@@ -416,26 +414,26 @@ class BookingService
         }
 
         // Apply status filter
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
         // Apply date range filter
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 
         // Apply event filter
-        if (!empty($filters['event_id'])) {
+        if (! empty($filters['event_id'])) {
             $query->where('event_id', $filters['event_id']);
         }
 
         // Apply user filter
-        if (!empty($filters['user_id'])) {
+        if (! empty($filters['user_id'])) {
             $query->whereHas('transaction', function ($transactionQuery) use ($filters) {
                 $transactionQuery->where('user_id', $filters['user_id']);
             });
@@ -446,15 +444,11 @@ class BookingService
         $sortOrder = $filters['sort_order'] ?? 'desc';
         $query->orderBy($sortBy, $sortOrder);
 
-        return $query->paginate($filters['per_page'] ?? 15);
+        return $query->paginate($filters['per_page'] ?? 15)->withQueryString();
     }
 
     /**
      * Get bookings for organizer's events with enhanced filtering and pagination.
-     *
-     * @param User $organizer
-     * @param array $filters
-     * @return \Illuminate\Pagination\LengthAwarePaginator
      */
     public function getBookingsForOrganizerEventsWithFilters(User $organizer, array $filters = []): \Illuminate\Pagination\LengthAwarePaginator
     {
@@ -470,12 +464,12 @@ class BookingService
             'user', // Remove column selection to avoid hasOneThrough ambiguity
             'event:id,name',
             'ticketDefinition:id,name,price,currency',
-            'transaction:id,total_amount,currency,status,payment_gateway,payment_gateway_transaction_id,payment_intent_id,created_at,updated_at'
+            'transaction:id,total_amount,currency,status,payment_gateway,payment_gateway_transaction_id,payment_intent_id,created_at,updated_at',
         ])
             ->whereIn('event_id', $organizerEventIds);
 
         // Apply the same filters as getAllBookingsWithFilters but scoped to organizer's events
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('booking_number', 'like', "%{$search}%")
@@ -490,19 +484,19 @@ class BookingService
             });
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 
-        if (!empty($filters['event_id'])) {
+        if (! empty($filters['event_id'])) {
             if (in_array($filters['event_id'], $organizerEventIds->toArray())) {
                 $query->where('event_id', $filters['event_id']);
             } else {
@@ -515,14 +509,11 @@ class BookingService
         $sortOrder = $filters['sort_order'] ?? 'desc';
         $query->orderBy($sortBy, $sortOrder);
 
-        return $query->paginate($filters['per_page'] ?? 15);
+        return $query->paginate($filters['per_page'] ?? 15)->withQueryString();
     }
 
     /**
      * Get detailed booking information including related models.
-     *
-     * @param int $bookingId
-     * @return Booking|null
      */
     public function getDetailedBooking(int $bookingId): ?Booking
     {
@@ -534,14 +525,12 @@ class BookingService
             'ticketDefinition.eventOccurrences.venue:id,name,address_line_1,city,postal_code',
             'transaction:id,total_amount,currency,status,payment_gateway,payment_gateway_transaction_id,payment_intent_id,created_at,updated_at',
             'checkInLogs:id,booking_id,method,check_in_timestamp,operator_user_id,device_identifier,location_description,status',
-            'checkInLogs.operator:id,name'
+            'checkInLogs.operator:id,name',
         ])->find($bookingId);
     }
 
     /**
      * Get events list for filter dropdown (admin scope).
-     *
-     * @return Collection
      */
     public function getEventsForFilter(): Collection
     {
@@ -553,9 +542,6 @@ class BookingService
 
     /**
      * Get events list for filter dropdown (organizer scope).
-     *
-     * @param User $organizer
-     * @return Collection
      */
     public function getOrganizerEventsForFilter(User $organizer): Collection
     {
@@ -573,9 +559,6 @@ class BookingService
 
     /**
      * Get booking statistics for dashboard.
-     *
-     * @param User|null $organizer
-     * @return array
      */
     public function getBookingStatistics(?User $organizer = null): array
     {
@@ -599,7 +582,7 @@ class BookingService
             ->select(DB::raw('currency_at_booking, SUM(price_at_booking) as total'))
             ->groupBy('currency_at_booking')
             ->pluck('total', 'currency_at_booking')
-            ->map(fn($total) => (int) $total) // Cast to integer
+            ->map(fn ($total) => (int) $total) // Cast to integer
             ->all();
 
         return [
@@ -614,7 +597,7 @@ class BookingService
                 ->with(['user', 'event:id,name']) // Remove column selection from user relationship
                 ->latest()
                 ->limit(5)
-                ->get()
+                ->get(),
         ];
     }
 

@@ -101,7 +101,10 @@ const checkInForm = useForm({
     qr_code_identifier: '' as string,
     event_occurrence_id: null as number | null,
     method: 'QR_SCAN',
+    device_identifier: null as string | null,
+    location_description: null as string | null,
     operator_user_id: props.auth.user?.id,
+    notes: null as string | null,
 });
 
 watch(selectedEventId, () => {
@@ -272,6 +275,10 @@ const resetScannerState = async () => {
     // Reset form
     checkInForm.reset();
     checkInForm.qr_code_identifier = '';
+    checkInForm.event_occurrence_id = null;
+    checkInForm.device_identifier = null;
+    checkInForm.location_description = null;
+    checkInForm.notes = null;
 
     // For platform admins, don't require event selection
     if (isPlatformAdmin.value) {

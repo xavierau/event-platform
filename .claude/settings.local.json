@@ -36,8 +36,23 @@
       "mcp__playwright__browser_console_messages",
       "Bash(curl:*)",
       "Bash(git branch:*)",
-      "Bash(git flow hotfix start:*)"
+      "Bash(git flow hotfix start:*)",
+      "Bash(git checkout:*)",
+      "mcp__laravel-boost__search-docs",
+      "mcp__laravel-boost__list-routes",
+      "mcp__laravel-boost__tinker",
+      "mcp__laravel-boost__last-error",
+      "mcp__laravel-boost__browser-logs",
+      "mcp__laravel-boost__get-absolute-url",
+      "Bash(composer run:*)",
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(./vendor/bin/pint:*)",
+      "Bash(git flow feature finish:*)"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
 }

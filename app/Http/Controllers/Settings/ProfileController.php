@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\RoleNameEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Modules\Membership\Services\MembershipService;
@@ -34,7 +35,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         // Check if user is platform admin
-        if ($user->hasRole('platform-admin')) {
+        if ($user->hasRole(RoleNameEnum::ADMIN)) {
             return Inertia::render('settings/Profile', [
                 'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
                 'status' => $request->session()->get('status'),
