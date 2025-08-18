@@ -190,7 +190,7 @@ class QrScannerController extends Controller
         }
 
         // Users with organizer entity memberships can see events from organizer entities they belong to
-        $userOrganizerIds = $user->activeOrganizers()->pluck('id');
+        $userOrganizerIds = $user->activeOrganizers()->pluck('organizers.id');
 
         if ($userOrganizerIds->isNotEmpty()) {
             return $query->whereIn('organizer_id', $userOrganizerIds)->get();
@@ -210,7 +210,7 @@ class QrScannerController extends Controller
         }
 
         // Users with organizer entity memberships can access bookings for events from organizer entities they belong to
-        $userOrganizerIds = $user->activeOrganizers()->pluck('id');
+        $userOrganizerIds = $user->activeOrganizers()->pluck('organizers.id');
 
         return $userOrganizerIds->contains($booking->event->organizer_id);
     }
