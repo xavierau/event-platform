@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Enums\RoleNameEnum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,15 +31,36 @@ class QrScannerController extends Controller
     {
         $user = Auth::user();
 
+        Log::channel('qr_scanner')->info('[QR_SCANNER] Page access attempted', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'user_roles' => $user->roles->pluck('name')->toArray(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
         // Check authorization: only admins or users with organizer entity membership can access
         if (!$user->hasRole(RoleNameEnum::ADMIN)) {
             if (!$user->activeOrganizers()->exists()) {
+                Log::channel('qr_scanner')->warning('[QR_SCANNER] Access denied - no organizer membership', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                ]);
                 abort(403, 'You do not have permission to access the QR scanner.');
             }
         }
 
         // Get events based on user role
         $events = $this->getAccessibleEvents($user);
+
+        Log::channel('qr_scanner')->info('[QR_SCANNER] Page loaded successfully', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'user_role' => $user->roles->first()?->name,
+            'events_count' => count($events),
+            'is_platform_admin' => $user->hasRole(RoleNameEnum::ADMIN),
+            'active_organizers_count' => $user->activeOrganizers()->count(),
+        ]);
 
         return Inertia::render('Admin/QrScanner/Index', [
             'events' => $events,

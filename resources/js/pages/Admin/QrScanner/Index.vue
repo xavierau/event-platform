@@ -4,6 +4,7 @@ import QRCodeLoadingModal from '@/components/QrScanner/QRCodeLoadingModal.vue';
 import { default as PrimaryButton, default as SecondaryButton } from '@/components/ui/button/Button.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { decodeQRCodeData, isQRCodeDataValid } from '@/Utils/qrcode';
+import { logger } from '@/Utils/logger';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { DetectedBarcode } from 'vue-qrcode-reader';
@@ -71,15 +72,28 @@ const isPlatformAdmin = computed(() => props.user_role === 'admin');
 
 // Update the scanner activation logic
 const shouldShowScanner = computed(() => {
-    // Platform admins can scan without selecting an event
-    if (isPlatformAdmin.value) {
-        return true;
-    }
-    // Organizers need to have events available and select one (if multiple)
-    if (!isAdmin.value && props.events.length > 0) {
-        return props.events.length === 1 || selectedEventId.value !== null;
-    }
-    return false;
+    const result = (() => {
+        // Platform admins can scan without selecting an event
+        if (isPlatformAdmin.value) {
+            return true;
+        }
+        // Organizers need to have events available and select one (if multiple)
+        if (!isAdmin.value && props.events.length > 0) {
+            return props.events.length === 1 || selectedEventId.value !== null;
+        }
+        return false;
+    })();
+    
+    logger.qrScanner.stateChange('shouldShowScanner', {
+        result,
+        isPlatformAdmin: isPlatformAdmin.value,
+        isAdmin: isAdmin.value,
+        eventsCount: props.events.length,
+        selectedEventId: selectedEventId.value,
+        userRole: props.user_role
+    });
+    
+    return result;
 });
 
 // Form for check-in
@@ -95,11 +109,25 @@ watch(selectedEventId, () => {
 });
 
 const onDetect = async (detectedCodes: DetectedBarcode[]) => {
+    logger.qrScanner.scanAttempt(true, {
+        codesDetected: detectedCodes.length,
+        isProcessing: isProcessing.value
+    });
+
     if (isProcessing.value || detectedCodes.length === 0) {
+        logger.qrScanner.stateChange('onDetect_early_return', {
+            isProcessing: isProcessing.value,
+            codesLength: detectedCodes.length
+        });
         return;
     }
 
     const rawValue = detectedCodes[0].rawValue;
+    
+    logger.qrScanner.stateChange('qr_code_detected', {
+        rawValue: rawValue.substring(0, 50) + (rawValue.length > 50 ? '...' : ''), // Truncate for logging
+        selectedEventId: selectedEventId.value
+    });
 
     // Show loading modal immediately
     showLoadingModal.value = true;
@@ -201,10 +229,18 @@ const onCameraError = (error: any) => {
     }
 
     cameraError.value = errorMessage;
+    
+    logger.qrScanner.error({
+        name: error.name,
+        message: errorMessage,
+        originalError: error.message,
+        shouldShowScanner: shouldShowScanner.value
+    });
 };
 
 const onScannerReady = () => {
     scannerReady.value = true;
+    logger.qrScanner.scannerReady(true);
     cameraError.value = null;
 };
 
@@ -382,10 +418,24 @@ onMounted(() => {
     if (!isAdmin.value && props.events.length === 1) {
         selectedEventId.value = props.events[0].id;
     }
+    
+    // Log initialization state
+    logger.qrScanner.init({
+        userRole: props.user_role,
+        isPlatformAdmin: isPlatformAdmin.value,
+        isAdmin: isAdmin.value,
+        eventsCount: props.events.length,
+        hasGetUserMedia: hasGetUserMedia.value,
+        isHttps: isHttps.value,
+        isSecureContext: isSecureContext.value,
+        autoSelectedEvent: !isAdmin.value && props.events.length === 1 ? props.events[0].id : null,
+        shouldShowScanner: shouldShowScanner.value
+    });
 });
 
 onUnmounted(() => {
-    // Cleanup if necessary
+    // Cleanup logger
+    logger.destroy();
 });
 </script>
 

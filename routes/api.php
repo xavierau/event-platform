@@ -7,6 +7,7 @@ use App\Http\Controllers\PaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\CommentApiController;
+use App\Http\Controllers\Api\FrontendLogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,6 +19,9 @@ use App\Http\Controllers\Api\CommentApiController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+// Frontend logging (public for production tracking)
+Route::post('/frontend-logs', [FrontendLogController::class, 'store'])->name('api.frontend-logs');
 
 // Sanctum-protected routes
 Route::middleware(['auth:sanctum'])->group(function () {
