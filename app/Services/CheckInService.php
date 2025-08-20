@@ -3,9 +3,8 @@
 namespace App\Services;
 
 use App\DataTransferObjects\CheckInData;
-use App\Enums\CheckInMethod;
-use App\Enums\CheckInStatus;
 use App\Enums\BookingStatusEnum;
+use App\Enums\CheckInStatus;
 use App\Models\Booking;
 use App\Models\CheckInLog;
 use App\Models\EventOccurrence;
@@ -22,9 +21,6 @@ class CheckInService
 
     /**
      * Process a check-in for a booking at a specific event occurrence.
-     *
-     * @param CheckInData $checkInData
-     * @return array
      */
     public function processCheckIn(CheckInData $checkInData): array
     {
@@ -35,19 +31,19 @@ class CheckInService
                 ->first();
 
             // If not found by qr_code_identifier, try booking_number (for legacy QR codes)
-            if (!$booking) {
+            if (! $booking) {
                 $booking = Booking::with(['event', 'user', 'ticketDefinition'])
                     ->where('booking_number', $checkInData->qr_code_identifier)
                     ->first();
             }
 
-            if (!$booking) {
+            if (! $booking) {
                 return $this->createFailureResponse('Booking not found', CheckInStatus::FAILED_INVALID_CODE);
             }
 
             // 2. Find the event occurrence
             $eventOccurrence = EventOccurrence::find($checkInData->event_occurrence_id);
-            if (!$eventOccurrence) {
+            if (! $eventOccurrence) {
                 return $this->createFailureResponse('Event occurrence not found', CheckInStatus::FAILED_INVALID_CODE);
             }
 
@@ -61,8 +57,9 @@ class CheckInService
                 $operator
             );
 
-            if (!$eligibilityResult['is_eligible']) {
+            if (! $eligibilityResult['is_eligible']) {
                 $status = $this->determineFailureStatus($eligibilityResult['errors']);
+
                 return $this->createFailureResponse(
                     implode('; ', $eligibilityResult['errors']),
                     $status,
@@ -110,15 +107,28 @@ class CheckInService
     /**
      * Get detailed check-in history for a booking.
      *
-     * @param Booking $booking
-     * @return array
+     * @param  User|null  $user  Optional user to filter check-ins by organizer access
      */
-    public function getCheckInHistory(Booking $booking): array
+    public function getCheckInHistory(Booking $booking, ?User $user = null): array
     {
-        $checkInLogs = $booking->checkInLogs()
-            ->with(['eventOccurrence', 'operator'])
-            ->orderBy('check_in_timestamp', 'desc')
-            ->get();
+        $query = $booking->checkInLogs()
+            ->with(['eventOccurrence.event', 'operator']);
+
+        // Filter by user's accessible organizers if provided and not platform admin
+        if ($user && ! $user->hasRole(RoleNameEnum::ADMIN)) {
+            $userOrganizerIds = $user->activeOrganizers()->pluck('organizers.id');
+
+            if ($userOrganizerIds->isNotEmpty()) {
+                $query->whereHas('eventOccurrence.event', function ($q) use ($userOrganizerIds) {
+                    $q->whereIn('organizer_id', $userOrganizerIds);
+                });
+            } else {
+                // User has no organizer access - return empty history
+                $query->whereRaw('1 = 0'); // Force empty result
+            }
+        }
+
+        $checkInLogs = $query->orderBy('check_in_timestamp', 'desc')->get();
 
         return [
             'total_check_ins' => $checkInLogs->count(),
@@ -151,12 +161,6 @@ class CheckInService
 
     /**
      * Create a check-in log entry.
-     *
-     * @param Booking $booking
-     * @param EventOccurrence $eventOccurrence
-     * @param CheckInData $checkInData
-     * @param CheckInStatus $status
-     * @return CheckInLog
      */
     private function createCheckInLog(
         Booking $booking,
@@ -179,13 +183,6 @@ class CheckInService
 
     /**
      * Create a failure response and log the failed attempt.
-     *
-     * @param string $message
-     * @param CheckInStatus $status
-     * @param Booking|null $booking
-     * @param EventOccurrence|null $eventOccurrence
-     * @param CheckInData|null $checkInData
-     * @return array
      */
     private function createFailureResponse(
         string $message,
@@ -217,9 +214,6 @@ class CheckInService
 
     /**
      * Determine the appropriate failure status based on validation errors.
-     *
-     * @param array $errors
-     * @return CheckInStatus
      */
     private function determineFailureStatus(array $errors): CheckInStatus
     {
@@ -247,11 +241,6 @@ class CheckInService
 
     /**
      * Check if a booking can be checked in at a specific occurrence.
-     *
-     * @param string $qrCode
-     * @param int $eventOccurrenceId
-     * @param User|null $operator
-     * @return array
      */
     public function validateCheckInEligibility(string $qrCode, int $eventOccurrenceId, ?User $operator = null): array
     {
@@ -259,7 +248,7 @@ class CheckInService
             ->byQrCode($qrCode)
             ->first();
 
-        if (!$booking) {
+        if (! $booking) {
             return [
                 'is_eligible' => false,
                 'errors' => ['Booking not found'],
@@ -269,7 +258,7 @@ class CheckInService
         }
 
         $eventOccurrence = EventOccurrence::find($eventOccurrenceId);
-        if (!$eventOccurrence) {
+        if (! $eventOccurrence) {
             return [
                 'is_eligible' => false,
                 'errors' => ['Event occurrence not found'],

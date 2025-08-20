@@ -2,10 +2,11 @@
 
 namespace App\Actions\Venues;
 
-use App\Models\Venue;
-use App\Models\User;
-use App\Models\Event;
+use App\Enums\RoleNameEnum;
 use App\Exceptions\UnauthorizedOperationException;
+use App\Models\Event;
+use App\Models\User;
+use App\Models\Venue;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -24,9 +25,9 @@ class UnassignVenueFromOrganizerAction
     /**
      * Unassign a venue from its organizer (convert private to public).
      *
-     * @param Venue $venue The venue to unassign (must be currently assigned)
-     * @param User $admin The admin performing the action
-     * @param bool $forceUnassign Whether to force unassignment even with existing events
+     * @param  Venue  $venue  The venue to unassign (must be currently assigned)
+     * @param  User  $admin  The admin performing the action
+     * @param  bool  $forceUnassign  Whether to force unassignment even with existing events
      * @return Venue The updated venue
      *
      * @throws UnauthorizedOperationException If user is not authorized
@@ -35,7 +36,7 @@ class UnassignVenueFromOrganizerAction
     public function execute(Venue $venue, User $admin, bool $forceUnassign = false): Venue
     {
         // Validate authorization - only platform admins can unassign venues
-        if (!$admin->hasRole('platform_admin')) {
+        if (! $admin->hasRole(RoleNameEnum::ADMIN)) {
             throw new UnauthorizedOperationException(
                 'Only platform administrators can unassign venues from organizers.'
             );
@@ -50,7 +51,7 @@ class UnassignVenueFromOrganizerAction
 
         // Check for existing event dependencies unless forced
         // Note: Event-venue relationship not yet implemented, so no dependencies to check
-        if (!$forceUnassign) {
+        if (! $forceUnassign) {
             $eventCount = $this->getEventDependencies($venue)->count();
             if ($eventCount > 0) {
                 throw new InvalidArgumentException(
@@ -59,7 +60,7 @@ class UnassignVenueFromOrganizerAction
             }
         }
 
-        return DB::transaction(function () use ($venue, $admin) {
+        return DB::transaction(function () use ($venue) {
             $originalOrganizerName = $venue->organizer->name ?? 'Unknown';
 
             // Unassign venue from organizer (convert from private to public)
@@ -73,9 +74,9 @@ class UnassignVenueFromOrganizerAction
     /**
      * Bulk unassign multiple venues from their organizers.
      *
-     * @param array $venueIds Array of venue IDs to unassign
-     * @param User $admin The admin performing the action
-     * @param bool $forceUnassign Whether to force unassignment even with existing events
+     * @param  array  $venueIds  Array of venue IDs to unassign
+     * @param  User  $admin  The admin performing the action
+     * @param  bool  $forceUnassign  Whether to force unassignment even with existing events
      * @return array Results with success/failure counts and details
      *
      * @throws UnauthorizedOperationException If user is not authorized
@@ -83,7 +84,7 @@ class UnassignVenueFromOrganizerAction
     public function executeBulk(array $venueIds, User $admin, bool $forceUnassign = false): array
     {
         // Validate authorization
-        if (!$admin->hasRole('platform_admin')) {
+        if (! $admin->hasRole(RoleNameEnum::ADMIN)) {
             throw new UnauthorizedOperationException(
                 'Only platform administrators can unassign venues from organizers.'
             );
@@ -95,7 +96,7 @@ class UnassignVenueFromOrganizerAction
             'failed_unassignments' => 0,
             'success_details' => [],
             'failure_details' => [],
-            'force_unassign_used' => $forceUnassign
+            'force_unassign_used' => $forceUnassign,
         ];
 
         // Process each venue individually to collect detailed results
@@ -109,8 +110,9 @@ class UnassignVenueFromOrganizerAction
                     $results['failure_details'][] = [
                         'venue_id' => $venueId,
                         'venue_name' => $venue->name,
-                        'reason' => 'Venue is already public'
+                        'reason' => 'Venue is already public',
                     ];
+
                     continue;
                 }
 
@@ -123,14 +125,14 @@ class UnassignVenueFromOrganizerAction
                 $results['success_details'][] = [
                     'venue_id' => $venueId,
                     'venue_name' => $venue->name,
-                    'previous_organizer' => $originalOrganizerName
+                    'previous_organizer' => $originalOrganizerName,
                 ];
             } catch (\Exception $e) {
                 $results['failed_unassignments']++;
                 $results['failure_details'][] = [
                     'venue_id' => $venueId,
                     'venue_name' => $venue->name ?? 'Unknown',
-                    'reason' => $e->getMessage()
+                    'reason' => $e->getMessage(),
                 ];
             }
         }
@@ -141,8 +143,8 @@ class UnassignVenueFromOrganizerAction
     /**
      * Validate if a venue can be unassigned from its organizer.
      *
-     * @param Venue $venue The venue to check
-     * @param bool $forceUnassign Whether force unassignment is intended
+     * @param  Venue  $venue  The venue to check
+     * @param  bool  $forceUnassign  Whether force unassignment is intended
      * @return array Validation result with success status and message
      */
     public function validateUnassignment(Venue $venue, bool $forceUnassign = false): array
@@ -151,12 +153,12 @@ class UnassignVenueFromOrganizerAction
         if ($venue->isPublic()) {
             return [
                 'can_unassign' => false,
-                'reason' => 'Venue is already public and not assigned to any organizer'
+                'reason' => 'Venue is already public and not assigned to any organizer',
             ];
         }
 
         // Check for event dependencies if not forcing
-        if (!$forceUnassign) {
+        if (! $forceUnassign) {
             $events = $this->getEventDependencies($venue);
             $eventCount = $events->count();
 
@@ -166,7 +168,7 @@ class UnassignVenueFromOrganizerAction
                     'reason' => "Venue has {$eventCount} associated events",
                     'event_count' => $eventCount,
                     'can_force' => true,
-                    'events_sample' => $events->take(3)->pluck('name')->toArray()
+                    'events_sample' => $events->take(3)->pluck('name')->toArray(),
                 ];
             }
         }
@@ -175,14 +177,14 @@ class UnassignVenueFromOrganizerAction
             'can_unassign' => true,
             'message' => 'Venue can be unassigned from organizer',
             'current_organizer' => $venue->organizer->name ?? 'Unknown',
-            'force_used' => $forceUnassign
+            'force_used' => $forceUnassign,
         ];
     }
 
     /**
      * Get event dependencies for a venue.
      *
-     * @param Venue $venue The venue to check
+     * @param  Venue  $venue  The venue to check
      * @return \Illuminate\Database\Eloquent\Collection Collection of events using this venue
      */
     public function getEventDependencies(Venue $venue)
@@ -202,7 +204,7 @@ class UnassignVenueFromOrganizerAction
     /**
      * Get detailed event dependencies information for a venue.
      *
-     * @param Venue $venue The venue to check
+     * @param  Venue  $venue  The venue to check
      * @return array Detailed information about event dependencies
      */
     public function getEventDependenciesInfo(Venue $venue): array
@@ -228,17 +230,17 @@ class UnassignVenueFromOrganizerAction
                     'end_date' => $event->end_date,
                 ];
             })->toArray(),
-            'has_dependencies' => $events->count() > 0
+            'has_dependencies' => $events->count() > 0,
         ];
     }
 
     /**
      * Transfer venue from one organizer to another (reassignment).
      *
-     * @param Venue $venue The venue to transfer
-     * @param int $newOrganizerId The target organizer ID (null for public)
-     * @param User $admin The admin performing the action
-     * @param bool $forceTransfer Whether to force transfer even with event dependencies
+     * @param  Venue  $venue  The venue to transfer
+     * @param  int  $newOrganizerId  The target organizer ID (null for public)
+     * @param  User  $admin  The admin performing the action
+     * @param  bool  $forceTransfer  Whether to force transfer even with event dependencies
      * @return Venue The updated venue
      *
      * @throws UnauthorizedOperationException If user is not authorized
@@ -247,7 +249,7 @@ class UnassignVenueFromOrganizerAction
     public function transferVenue(Venue $venue, ?int $newOrganizerId, User $admin, bool $forceTransfer = false): Venue
     {
         // Validate authorization
-        if (!$admin->hasRole('platform_admin')) {
+        if (! $admin->hasRole(RoleNameEnum::ADMIN)) {
             throw new UnauthorizedOperationException(
                 'Only platform administrators can transfer venues between organizers.'
             );
@@ -255,7 +257,7 @@ class UnassignVenueFromOrganizerAction
 
         // Check for existing event dependencies unless forced
         // Note: Event-venue relationship not yet implemented, so no dependencies to check
-        if (!$forceTransfer) {
+        if (! $forceTransfer) {
             $eventCount = $this->getEventDependencies($venue)->count();
             if ($eventCount > 0) {
                 throw new InvalidArgumentException(
@@ -264,7 +266,7 @@ class UnassignVenueFromOrganizerAction
             }
         }
 
-        return DB::transaction(function () use ($venue, $newOrganizerId, $admin) {
+        return DB::transaction(function () use ($venue, $newOrganizerId) {
             $originalOrganizerName = $venue->organizer->name ?? 'Public';
 
             // Update venue assignment

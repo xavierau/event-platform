@@ -13,10 +13,11 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
+use App\Traits\Commentable;
 
 class Organizer extends Model implements HasMedia
 {
-    use HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
+    use HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes, Commentable;
 
     protected $fillable = [
         'name',
@@ -35,6 +36,8 @@ class Organizer extends Model implements HasMedia
         'state_id',
         'is_active',
         'contract_details',
+        'comments_enabled',
+        'comments_require_approval',
         'created_by',
     ];
 

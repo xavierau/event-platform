@@ -2,11 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Enums\RoleNameEnum;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
@@ -21,9 +22,9 @@ class UserSeeder extends Seeder
         $adminEmail = 'admin@admin.com';
         $adminName = 'Administrator';
         $adminPassword = 'password';
-        $adminRoleName = 'platform-admin';
+        $adminRoleName = RoleNameEnum::ADMIN->value;
 
-        // 1. Create or find the 'platform-admin' role
+        // 1. Create or find the 'admin' role
         $role = Role::firstOrCreate(['name' => $adminRoleName, 'guard_name' => 'web']);
 
         // 2. Create or update the admin user
@@ -38,10 +39,10 @@ class UserSeeder extends Seeder
         );
 
         // 3. Assign the role to the user
-        if (!$user->hasRole($adminRoleName)) {
+        if (! $user->hasRole($adminRoleName)) {
             $user->assignRole($role);
         }
 
-        $this->command->info('Admin user created/updated and assigned role: ' . $adminRoleName);
+        $this->command->info('Admin user created/updated and assigned role: '.$adminRoleName);
     }
 }

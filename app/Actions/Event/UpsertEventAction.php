@@ -30,6 +30,8 @@ class UpsertEventAction
                 'meta_description' => $eventData->meta_description,
                 'meta_keywords' => $eventData->meta_keywords,
                 'comment_config' => $eventData->comment_config ?? CommentConfigEnum::DISABLED->value,
+                'comments_enabled' => $eventData->comments_enabled ?? false,
+                'comments_require_approval' => $eventData->comments_require_approval ?? false,
                 'seating_chart' => $eventData->seating_chart,
                 // Conditional fields
                 'event_status' => $eventData->event_status ?? 'draft', // Default if not provided

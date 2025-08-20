@@ -57,6 +57,8 @@ interface OrganizerFormData {
     country_id: number | null;
     is_active: boolean;
     logo_upload: File | null;
+    comments_enabled: boolean;
+    comment_config: string;
     // contract_details might be complex, handle as simple text for now
     [key: string]: any;
 }
@@ -95,6 +97,8 @@ const form = useForm<OrganizerFormData>({
     country_id: null,
     is_active: true,
     logo_upload: null,
+    comments_enabled: true,
+    comment_config: 'enabled',
 });
 
 const currentTab = ref('details');
@@ -105,6 +109,7 @@ const tabs = [
     { id: 'address', label: 'Address' },
     { id: 'contact', label: 'Contact & Social' },
     { id: 'media', label: 'Media' },
+    { id: 'comments', label: 'Comments' },
 ];
 
 const filteredStates = computed(() => {
@@ -285,6 +290,44 @@ function submit() {
                                     <Label for="logo_upload">Logo</Label>
                                     <Input id="logo_upload" type="file" @change="handleFileSelect" />
                                     <div v-if="errors.logo_upload" class="text-red-500 text-sm mt-1">{{ errors.logo_upload }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Comments Tab -->
+                            <div v-show="currentTab === 'comments'" class="space-y-6">
+                                <div>
+                                    <h3 class="text-lg leading-6 font-medium text-gray-900">Comment Settings</h3>
+                                    <p class="mt-1 text-sm text-gray-500">Configure how comments work for this organizer.</p>
+                                </div>
+
+                                <!-- Enable Comments -->
+                                <div class="flex items-center space-x-2">
+                                    <Switch id="comments_enabled" v-model:checked="form.comments_enabled" />
+                                    <Label for="comments_enabled">Enable comments for this organizer</Label>
+                                </div>
+                                <p class="text-sm text-gray-500">Allow users to leave comments on this organizer's profile.</p>
+                                <div v-if="errors.comments_enabled" class="text-red-500 text-sm mt-1">{{ errors.comments_enabled }}</div>
+
+                                <!-- Comment Configuration -->
+                                <div v-if="form.comments_enabled">
+                                    <Label for="comment_config">Comment Moderation</Label>
+                                    <Select v-model="form.comment_config">
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select moderation type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="enabled">Enabled - Comments appear immediately</SelectItem>
+                                            <SelectItem value="moderated">Moderated - Comments require approval</SelectItem>
+                                            <SelectItem value="disabled">Disabled - No comments allowed</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p class="mt-1 text-sm text-gray-500">
+                                        Choose how comments should be handled:
+                                        <br>• <strong>Enabled:</strong> Comments appear immediately after posting
+                                        <br>• <strong>Moderated:</strong> Comments must be approved by organizer admins before appearing
+                                        <br>• <strong>Disabled:</strong> Comments are completely disabled
+                                    </p>
+                                    <div v-if="errors.comment_config" class="text-red-500 text-sm mt-1">{{ errors.comment_config }}</div>
                                 </div>
                             </div>
                         </CardContent>

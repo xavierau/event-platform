@@ -28,7 +28,7 @@ class MemberScannerController extends Controller
         $user = Auth::user();
 
         // Check authorization: only admins or users with organizer entity membership can access
-        if (!$user->hasRole(RoleNameEnum::ADMIN)) {
+        if (! $user->hasRole(RoleNameEnum::ADMIN)) {
             $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
                 $subQuery->where('user_id', $user->id);
             })->pluck('organizers.id');
@@ -44,6 +44,11 @@ class MemberScannerController extends Controller
                 'USER' => RoleNameEnum::USER->value,
             ],
             'user_role' => $user->roles->first()?->name,
+            'pageTitle' => 'Member Scanner',
+            'breadcrumbs' => [
+                ['text' => 'Dashboard', 'href' => route('admin.dashboard')],
+                ['text' => 'Member Scanner'],
+            ],
         ]);
     }
 
@@ -61,7 +66,7 @@ class MemberScannerController extends Controller
         // Validate QR code and get member information
         $result = $this->checkInService->validateMemberQr($qrCode);
 
-        if (!$result->isSuccess()) {
+        if (! $result->isSuccess()) {
             return response()->json([
                 'success' => false,
                 'message' => $result->getMessage(),
@@ -102,7 +107,7 @@ class MemberScannerController extends Controller
         // Process the check-in
         $result = $this->checkInService->processCheckIn($qrCode, $context);
 
-        if (!$result->isSuccess()) {
+        if (! $result->isSuccess()) {
             return response()->json([
                 'success' => false,
                 'message' => $result->getMessage(),
@@ -118,8 +123,24 @@ class MemberScannerController extends Controller
      */
     public function getCheckInHistory(Request $request, User $member): JsonResponse
     {
+        $user = Auth::user();
+
+        // Check authorization: only admins or users with organizer entity membership can access
+        if (! $user->hasRole(RoleNameEnum::ADMIN)) {
+            $userOrganizerIds = \App\Models\Organizer::whereHas('users', function ($subQuery) use ($user) {
+                $subQuery->where('user_id', $user->id);
+            })->pluck('organizers.id');
+
+            if ($userOrganizerIds->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to access member check-in history.',
+                ], 403);
+            }
+        }
+
         $limit = $request->input('limit', 50);
-        
+
         $history = $this->checkInService->getCheckInHistory($member, $limit);
 
         return response()->json([

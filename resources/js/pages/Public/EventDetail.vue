@@ -169,7 +169,7 @@ onMounted(() => {
 const localComments = ref<Comment[]>(props.event.comments || []);
 const showCommentForm = ref(false);
 
-const handleCommentPosted = (newComment: Comment) => {
+const handleCommentAdded = (newComment: Comment) => {
     localComments.value.unshift(newComment);
     showCommentForm.value = false;
 };
@@ -279,8 +279,18 @@ const handleCommentPosted = (newComment: Comment) => {
                             {{ showCommentForm ? 'Cancel' : 'Leave a Comment' }}
                         </button>
                     </div>
-                    <CommentForm v-if="showCommentForm" :event-id="event.id" @comment-posted="handleCommentPosted" />
-                    <CommentList :comments="localComments" />
+                    <CommentForm 
+                        v-if="showCommentForm" 
+                        :commentable-type="'App\\Models\\Event'"
+                        :commentable-id="Number(event.id)"
+                        @comment-added="handleCommentAdded" 
+                    />
+                    <CommentList 
+                        :comments="localComments" 
+                        :commentable-type="'App\\Models\\Event'"
+                        :commentable-id="Number(event.id)"
+                        :can-comment="true"
+                    />
                 </div>
             </section>
 

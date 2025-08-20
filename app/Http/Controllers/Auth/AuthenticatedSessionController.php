@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\RoleNameEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -10,7 +11,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use App\Enums\RoleNameEnum;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -55,8 +55,13 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
+        $user = Auth::user();
 
         $request->session()->regenerate();
+
+        if ($user && $user->hasOrganizerMembership()) {
+            return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
 
         return redirect()->intended(route('home', absolute: false));
     }
@@ -69,14 +74,16 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
         $user = Auth::user();
 
-        if (!$user || !$user->hasRole(RoleNameEnum::ADMIN->value)) {
+        if (! $user || ! $user->hasRole(RoleNameEnum::ADMIN->value)) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+
             return redirect()->route('admin.login')->withErrors(['email' => 'These credentials do not match an administrator account.']);
         }
 
         $request->session()->regenerate();
+
         return redirect()->intended(route('admin.dashboard', absolute: false));
     }
 
@@ -88,14 +95,16 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
         $user = Auth::user();
 
-        if (!$user || !$user->hasRole(RoleNameEnum::ORGANIZER->value)) {
+        if (! $user || ! $user->hasOrganizerMembership()) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+
             return redirect()->route('organizer.login')->withErrors(['email' => 'These credentials do not match an organizer account.']);
         }
 
         $request->session()->regenerate();
+
         return redirect()->intended(route('organizer.dashboard', absolute: false));
     }
 

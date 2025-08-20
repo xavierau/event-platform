@@ -92,5 +92,11 @@ class EventData extends Data
         #[Validation\Rule(['nullable', 'string', new Enum(CommentConfigEnum::class)])]
         #[WithCast(EnumCast::class, type: CommentConfigEnum::class)]
         public readonly ?CommentConfigEnum $comment_config,
+        
+        #[Validation\Rule(['nullable', 'boolean'])]
+        public readonly ?bool $comments_enabled,
+        
+        #[Validation\Rule(['nullable', 'boolean'])]
+        public readonly ?bool $comments_require_approval,
     ) {}
 }

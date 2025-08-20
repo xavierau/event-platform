@@ -17,13 +17,14 @@ use App\Models\EventOccurrence;
 use App\Models\Tag;
 use App\Models\Venue;
 use App\Enums\CommentConfigEnum;
+use App\Traits\Commentable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Event extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, HasTranslations, InteractsWithMedia;
+    use HasFactory, SoftDeletes, HasTranslations, InteractsWithMedia, Commentable;
 
     public const EVENT_STATUSES = [
         'draft',
@@ -63,6 +64,8 @@ class Event extends Model implements HasMedia
         'created_by',
         'updated_by',
         'comment_config',
+        'comments_enabled',
+        'comments_require_approval',
         'seating_chart',
     ];
 
@@ -89,6 +92,8 @@ class Event extends Model implements HasMedia
         'social_media_links' => 'json',
         'published_at' => 'datetime',
         'is_featured' => 'boolean',
+        'comments_enabled' => 'boolean',
+        'comments_require_approval' => 'boolean',
         'comment_config' => CommentConfigEnum::class,
     ];
 
@@ -117,10 +122,6 @@ class Event extends Model implements HasMedia
         return $this->hasMany(EventOccurrence::class);
     }
 
-    public function comments(): HasMany
-    {
-        return $this->hasMany(Comment::class);
-    }
 
     // public function ticketDefinitions() // This relationship is no longer directly valid as TicketDefinition does not have event_id.
     // { // Access TicketDefinitions through EventOccurrences: $event->eventOccurrences()->with('ticketDefinitions')->get();
@@ -308,6 +309,14 @@ class Event extends Model implements HasMedia
     public function getWishlistCount(): int
     {
         return $this->wishlistedByUsers()->count();
+    }
+
+    /**
+     * Get polymorphic comments for this event.
+     */
+    public function comments(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(\App\Models\Comment::class, 'commentable');
     }
 
     /**

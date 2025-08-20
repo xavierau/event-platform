@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import Footer from '@/components/Public/Footer.vue';
+import Toast from '@/components/Shared/Toast.vue';
+import { toastMessage, toastType, toastVisible } from '@/composables/useToast';
 
 const props = defineProps<{
   title: string;
@@ -15,6 +17,8 @@ const subtitleToShow = typeof props.subtitle !== 'undefined' ? props.subtitle : 
 <template>
 
     <Head :title="props.title" />
+
+    <Toast v-if="toastVisible" :message="toastMessage" :type="toastType" />
 
     <div class="min-h-screen bg-gray-100 dark:bg-gray-900 pb-20"> <!-- padding-bottom for fixed footer -->
         <div class="container mx-auto pt-6 pb-2 px-3">

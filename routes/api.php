@@ -6,7 +6,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\CommentApiController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\Api\FrontendLogController;
 
 /*
@@ -23,27 +23,43 @@ use App\Http\Controllers\Api\FrontendLogController;
 // Frontend logging (public for production tracking)
 Route::post('/frontend-logs', [FrontendLogController::class, 'store'])->name('api.frontend-logs');
 
+// Public Comments API (for viewing)
+Route::get('/comments', [CommentController::class, 'index'])->name('api.comments.index');
+
 // Sanctum-protected routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
-    // Event Comments
-    Route::get('/events/{event}/comments', [CommentApiController::class, 'index']);
-    Route::post('/events/{event}/comments', [CommentApiController::class, 'store']);
-    Route::put('/comments/{comment}', [CommentApiController::class, 'update']);
-    Route::delete('/comments/{comment}', [CommentApiController::class, 'destroy']);
+    // Protected Comments API (for posting)
+    Route::post('/comments', [CommentController::class, 'store'])->name('api.comments.store');
 
+    // Comments for Events
+    Route::get('/events/{event}/comments', [CommentController::class, 'indexForEvent'])->name('api.events.comments.index');
+    Route::post('/events/{event}/comments', [CommentController::class, 'storeForEvent'])->name('api.events.comments.store');
+    
+    // Comments for Organizers
+    Route::get('/organizers/{organizer}/comments', [CommentController::class, 'indexForOrganizer'])->name('api.organizers.comments.index');
+    Route::post('/organizers/{organizer}/comments', [CommentController::class, 'storeForOrganizer'])->name('api.organizers.comments.store');
+    
+    // Comment management (applies to any comment regardless of parent)
+    Route::put('/comments/{comment}', [CommentController::class, 'update'])->name('api.comments.update');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('api.comments.destroy');
+    
+    // Comment Voting
+    Route::post('/comments/{comment}/vote', [CommentController::class, 'vote'])->name('api.comments.vote');
+    
     // Comment Moderation
-    Route::post('/comments/{comment}/approve', [CommentApiController::class, 'approve'])->name('api.comments.approve');
-    Route::post('/comments/{comment}/reject', [CommentApiController::class, 'reject'])->name('api.comments.reject');
+    Route::post('/comments/{comment}/approve', [CommentController::class, 'approve'])->name('api.comments.approve');
+    Route::post('/comments/{comment}/reject', [CommentController::class, 'reject'])->name('api.comments.reject');
+    Route::post('/comments/{comment}/flag', [CommentController::class, 'flag'])->name('api.comments.flag');
 });
 
 
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('admin.api.')->group(function () {
     // Comment Moderation
-    Route::get('/events/{event}/comments', [CommentApiController::class, 'indexForModeration'])->name('events.comments.indexForModeration');
+    Route::get('/comments/pending', [CommentController::class, 'pending'])->name('comments.pending'); // ?commentable_type=App\Models\Event&commentable_id=1
 });
 
 

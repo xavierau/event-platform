@@ -2,7 +2,7 @@
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue'; // Corrected casing
 import RichTextEditor from '@/components/Form/RichTextEditor.vue'; // Corrected casing
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 interface SelectOption {
     value: string | number;
@@ -43,6 +43,9 @@ interface CreateEventFormData {
     uploaded_portrait_poster: File | null;
     uploaded_landscape_poster: File | null;
     uploaded_gallery: File[];
+    comments_enabled: boolean;
+    comments_require_approval: boolean;
+    comment_config: string;
     [key: string]: any; // Index signature for FormDataType compatibility
 }
 
@@ -94,6 +97,9 @@ const form = useForm<CreateEventFormData>({
     uploaded_portrait_poster: null,
     uploaded_landscape_poster: null,
     uploaded_gallery: [],
+    comments_enabled: true,
+    comments_require_approval: false,
+    comment_config: 'enabled',
 });
 
 const currentTab = ref('coreDetails'); // Default active tab
@@ -104,7 +110,19 @@ const tabs = [
     { id: 'contactLinks', label: 'Contact & Links' },
     { id: 'tags', label: 'Tags' },
     { id: 'media', label: 'Media' },
+    { id: 'comments', label: 'Comments' },
 ];
+
+// Sync comment_config based on the checkbox values
+watch([() => form.comments_enabled, () => form.comments_require_approval], () => {
+    if (!form.comments_enabled) {
+        form.comment_config = 'disabled';
+    } else if (form.comments_require_approval) {
+        form.comment_config = 'moderated';
+    } else {
+        form.comment_config = 'enabled';
+    }
+});
 
 const submit = () => {
     form.post(route('admin.events.store'), {
@@ -433,6 +451,47 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                     </ul>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Section: Comment Settings -->
+                        <div v-if="currentTab === 'comments'" class="space-y-6">
+                            <div>
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Comment Settings</h3>
+                                <p class="mt-1 text-sm text-gray-500">Configure how comments work for this event.</p>
+                            </div>
+
+                            <!-- Comments Enabled -->
+                            <div class="relative flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="comments_enabled" v-model="form.comments_enabled" type="checkbox"
+                                        class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="comments_enabled" class="font-medium text-gray-700">Enable Comments</label>
+                                    <p class="text-gray-500">Allow users to comment on this event.</p>
+                                </div>
+                                <div v-if="form.errors.comments_enabled"
+                                    class="absolute bottom-[-20px] text-sm text-red-600">{{ form.errors.comments_enabled }}
+                                </div>
+                            </div>
+
+                            <!-- Comments Require Approval (only show if comments are enabled) -->
+                            <div v-if="form.comments_enabled" class="relative flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="comments_require_approval" v-model="form.comments_require_approval" type="checkbox"
+                                        class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="comments_require_approval" class="font-medium text-gray-700">Require Moderation</label>
+                                    <p class="text-gray-500">Comments must be approved before they are visible to other users.</p>
+                                </div>
+                                <div v-if="form.errors.comments_require_approval"
+                                    class="absolute bottom-[-20px] text-sm text-red-600">{{ form.errors.comments_require_approval }}
+                                </div>
+                            </div>
+
+                            <!-- Comment Config (Legacy - kept for backward compatibility but hidden) -->
+                            <input type="hidden" v-model="form.comment_config" />
                         </div>
 
                         <div class="pt-5">
