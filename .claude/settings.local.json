@@ -59,7 +59,8 @@
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_handle_dialog",
       "Bash(git flow release start:*)",
-      "Bash(git flow release finish:*)"
+      "Bash(git flow release finish:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   },
