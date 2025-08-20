@@ -138,6 +138,7 @@ class QrScannerController extends Controller
                 'total_price' => $booking->total_price,
                 'currency' => $booking->currency,
                 'created_at' => $booking->created_at,
+                'seat_number' => $booking->metadata['seat_number'] ?? null,
                 'user' => [
                     'id' => $booking->user->id,
                     'name' => $booking->user->name,
