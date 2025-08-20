@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\Api\FrontendLogController;
+use App\Http\Controllers\Api\BookingSeatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +55,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/comments/{comment}/approve', [CommentController::class, 'approve'])->name('api.comments.approve');
     Route::post('/comments/{comment}/reject', [CommentController::class, 'reject'])->name('api.comments.reject');
     Route::post('/comments/{comment}/flag', [CommentController::class, 'flag'])->name('api.comments.flag');
+    
+    // Booking Seat Assignment
+    Route::post('/bookings/{booking}/seat', [BookingSeatController::class, 'assign'])->name('api.bookings.seat.assign');
+    Route::delete('/bookings/{booking}/seat', [BookingSeatController::class, 'remove'])->name('api.bookings.seat.remove');
 });
 
 

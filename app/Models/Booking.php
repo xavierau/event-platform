@@ -151,4 +151,36 @@ class Booking extends Model
             ->where('event_occurrence_id', $eventOccurrenceId)
             ->exists();
     }
+
+    /**
+     * Get the assigned seat number for this booking.
+     */
+    public function getSeatNumberAttribute(): ?string
+    {
+        return $this->metadata['seat_number'] ?? null;
+    }
+
+    /**
+     * Check if this booking has an assigned seat.
+     */
+    public function hasAssignedSeat(): bool
+    {
+        return !empty($this->metadata['seat_number']);
+    }
+
+    /**
+     * Get seat assignment information.
+     */
+    public function getSeatAssignmentInfo(): ?array
+    {
+        if (!$this->hasAssignedSeat()) {
+            return null;
+        }
+
+        return [
+            'seat_number' => $this->metadata['seat_number'],
+            'assigned_by' => $this->metadata['seat_assigned_by'] ?? null,
+            'assigned_at' => $this->metadata['seat_assigned_at'] ?? null,
+        ];
+    }
 }
