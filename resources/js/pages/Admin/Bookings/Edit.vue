@@ -225,7 +225,7 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import BookingSeatAssignment from '@/Components/BookingSeatAssignment.vue'
+import BookingSeatAssignment from '@/components/BookingSeatAssignment.vue'
 import { getTranslation, currentLocale } from '@/Utils/i18n'
 
 // Define interfaces
