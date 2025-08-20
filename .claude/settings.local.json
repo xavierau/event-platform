@@ -57,7 +57,8 @@
       "Bash(cat:*)",
       "mcp__laravel-boost__read-log-entries",
       "mcp__playwright__browser_snapshot",
-      "mcp__playwright__browser_handle_dialog"
+      "mcp__playwright__browser_handle_dialog",
+      "Bash(git flow release start:*)"
     ],
     "deny": []
   },
