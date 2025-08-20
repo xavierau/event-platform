@@ -51,6 +51,7 @@ Route::post('/locale/switch', [LocaleController::class, 'switch'])->name('locale
 Route::get('/', HomeController::class)->name('home');
 Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('events.show');
 Route::get('/events', [PublicEventController::class, 'index'])->name('events.index');
+Route::get('/organizers/{organizer}', [\App\Http\Controllers\Public\OrganizerController::class, 'show'])->name('organizers.show');
 
 // CMS Pages
 Route::get('/pages/{slug}', [PublicCmsPageController::class, 'show'])->name('cms.pages.show');

@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Comment;
 use App\Models\Event;
+use App\Models\Organizer;
 use App\Models\User;
 use App\Enums\CommentConfigEnum;
 use App\Enums\OrganizerPermissionEnum;
@@ -25,20 +26,42 @@ class CommentPolicy
      */
     public function view(User $user, Comment $comment): bool
     {
-        return true;
+        // Can view approved comments, or own comments, or if has moderate permissions
+        if ($comment->isApproved()) {
+            return true;
+        }
+
+        if ($user->id === $comment->user_id) {
+            return true;
+        }
+
+        return $this->canModerateComment($user, $comment);
     }
 
     /**
-     * Determine whether the user can create models.
+     * Determine whether the user can create models on a commentable entity.
      */
-    public function create(User $user, Event $event): Response
+    public function create(User $user, string $commentableType, int $commentableId): Response
     {
-        if ($user->is_commenting_blocked) {
+        if (isset($user->is_commenting_blocked) && $user->is_commenting_blocked) {
             return Response::deny('You are blocked from commenting.');
         }
 
-        if ($event->comment_config === CommentConfigEnum::DISABLED) {
-            return Response::deny('Comments are disabled for this event.');
+        $commentable = $commentableType::find($commentableId);
+        if (!$commentable) {
+            return Response::deny('The item you are trying to comment on does not exist.');
+        }
+
+        // Check if comments are enabled for this entity
+        if (isset($commentable->comments_enabled) && !$commentable->comments_enabled) {
+            return Response::deny('Comments are disabled for this item.');
+        }
+
+        // Additional checks for specific entity types
+        if ($commentable instanceof Event) {
+            if (isset($commentable->comment_config) && $commentable->comment_config === CommentConfigEnum::DISABLED) {
+                return Response::deny('Comments are disabled for this event.');
+            }
         }
 
         return Response::allow();
@@ -49,6 +72,7 @@ class CommentPolicy
      */
     public function update(User $user, Comment $comment): bool
     {
+        // Only comment owner can update their comment
         return $user->id === $comment->user_id;
     }
 
@@ -57,7 +81,43 @@ class CommentPolicy
      */
     public function delete(User $user, Comment $comment): bool
     {
-        return $user->id === $comment->user_id || $user->can('delete comments');
+        // Own comments or admin/moderator permissions
+        if ($user->id === $comment->user_id) {
+            return true;
+        }
+
+        if ($user->can('delete comments')) {
+            return true;
+        }
+
+        return $this->canModerateComment($user, $comment);
+    }
+
+    /**
+     * Determine whether the user can vote on a comment.
+     */
+    public function vote(User $user, Comment $comment): bool
+    {
+        // Cannot vote on own comments
+        if ($user->id === $comment->user_id) {
+            return false;
+        }
+
+        // Can only vote on approved comments
+        if (!$comment->isApproved()) {
+            return false;
+        }
+
+        // Can only vote if voting is enabled for this comment
+        return $comment->votes_enabled;
+    }
+
+    /**
+     * Determine whether the user can moderate the comment.
+     */
+    public function moderate(User $user, Comment $comment): bool
+    {
+        return $this->canModerateComment($user, $comment);
     }
 
     /**
@@ -65,7 +125,7 @@ class CommentPolicy
      */
     public function restore(User $user, Comment $comment): bool
     {
-        return $user->can('restore comments');
+        return $user->can('restore comments') || $this->canModerateComment($user, $comment);
     }
 
     /**
@@ -77,18 +137,31 @@ class CommentPolicy
     }
 
     /**
-     * Determine whether the user can moderate comments for an event.
+     * Helper method to determine if user can moderate comments on the commentable entity.
      */
-    public function moderate(User $user, Event $event): bool
+    private function canModerateComment(User $user, Comment $comment): bool
     {
+        // Platform admin can moderate everything
         if ($user->hasRole(RoleNameEnum::ADMIN->value)) {
             return true;
         }
 
-        if (!$event->organizer) {
+        $commentable = $comment->commentable;
+        if (!$commentable) {
             return false;
         }
 
-        return $user->hasOrganizerPermission($event->organizer, OrganizerPermissionEnum::MODERATE_COMMENTS);
+        if ($commentable instanceof Event) {
+            if (!$commentable->organizer) {
+                return false;
+            }
+            return $user->hasOrganizerPermission($commentable->organizer, OrganizerPermissionEnum::MODERATE_COMMENTS);
+        }
+
+        if ($commentable instanceof Organizer) {
+            return $user->hasOrganizerPermission($commentable, OrganizerPermissionEnum::MODERATE_COMMENTS);
+        }
+
+        return false;
     }
 }

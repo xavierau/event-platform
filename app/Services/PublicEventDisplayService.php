@@ -118,9 +118,11 @@ class PublicEventDisplayService
             throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Event not found with identifier: {$eventIdentifier}");
         }
 
-        // Load approved comments with user relationship, ordered by latest
-        $comments = $event->comments()
-            ->where('status', 'APPROVED')
+        // Load approved comments using polymorphic relationship manually
+        // Working around potential caching issues with the relationship
+        $comments = \App\Models\Comment::where('commentable_type', \App\Models\Event::class)
+            ->where('commentable_id', $event->id)
+            ->where('status', 'approved')
             ->with(['user' => fn($query) => $query->select('id', 'name')])
             ->latest()
             ->get();
@@ -135,6 +137,7 @@ class PublicEventDisplayService
             'id' => $event->id,
             'name' => $event->name,
             'category_tag' => $event->category?->name,
+            'duration_info' => $event->duration_info ?? '',
             'price_range' => $priceRange,
             'main_poster_url' => $event->getFirstMediaUrl('portrait_poster'),
             'thumbnail_url' => $event->getFirstMediaUrl('portrait_poster', 'thumb'),

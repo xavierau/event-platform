@@ -47,6 +47,9 @@ class DatabaseSeeder extends Seeder
             CmsPageSeeder::class,
             ContactSubmissionSeeder::class,
             
+            // Comment System
+            CommentSeeder::class, // Depends on Events, Users
+            
             // Coupon System
             CouponSeeder::class, // Depends on Users, Organizers
         ]);

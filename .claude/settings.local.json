@@ -47,7 +47,17 @@
       "Bash(composer run:*)",
       "mcp__playwright__browser_take_screenshot",
       "Bash(./vendor/bin/pint:*)",
-      "Bash(git flow feature finish:*)"
+      "Bash(git flow feature finish:*)",
+      "Bash(git flow feature start:*)",
+      "mcp__laravel-boost__application-info",
+      "mcp__laravel-boost__database-schema",
+      "Bash(composer:*)",
+      "mcp__laravel-boost__database-query",
+      "Bash(awk:*)",
+      "Bash(cat:*)",
+      "mcp__laravel-boost__read-log-entries",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_handle_dialog"
     ],
     "deny": []
   },
