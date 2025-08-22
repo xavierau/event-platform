@@ -13,7 +13,7 @@ class OrganizerData extends Data
 {
     public function __construct(
         public readonly array $name,
-        public readonly ?string $slug,
+        public readonly string $slug,
         public readonly ?array $description,
         public readonly ?string $contact_email,
         public readonly ?string $contact_phone,

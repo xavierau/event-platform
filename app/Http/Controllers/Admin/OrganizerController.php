@@ -86,6 +86,11 @@ class OrganizerController extends Controller
             // Add created_by to request data
             $requestData = $request->all();
             $requestData['created_by'] = Auth::id();
+            
+            // Handle empty slug by generating one from the name if needed
+            if (empty($requestData['slug']) && !empty($requestData['name']['en'])) {
+                $requestData['slug'] = \Illuminate\Support\Str::slug($requestData['name']['en']);
+            }
 
             // Create DTO from request data
             $organizerData = OrganizerData::from($requestData);
