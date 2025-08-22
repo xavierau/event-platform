@@ -31,6 +31,8 @@ class OrganizerData extends Data
         public readonly ?array $contract_details,
         public readonly ?int $created_by,
         public readonly ?UploadedFile $logo_upload,
+        public readonly ?bool $comments_enabled,
+        public readonly ?bool $comments_require_approval,
         public readonly ?int $id,
     ) {}
 
@@ -42,7 +44,7 @@ class OrganizerData extends Data
             'name.zh-TW' => ['nullable', 'string', 'max:255'],
             'name.zh-CN' => ['nullable', 'string', 'max:255'],
 
-            'slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9-]+$/'],
+            'slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9-]+$/', 'unique:organizers,slug'],
 
             'description' => ['nullable', 'array'],
             'description.en' => ['nullable', 'string'],
@@ -90,6 +92,9 @@ class OrganizerData extends Data
                 'dimensions:min_width=100,min_height=100,max_width=2000,max_height=2000'
             ],
 
+            'comments_enabled' => ['nullable', 'boolean'],
+            'comments_require_approval' => ['nullable', 'boolean'],
+
             'id' => ['nullable', 'integer', 'exists:organizers,id'],
         ];
     }
@@ -118,6 +123,8 @@ class OrganizerData extends Data
             contract_details: $this->contract_details,
             created_by: $this->created_by,
             logo_upload: $this->logo_upload,
+            comments_enabled: $this->comments_enabled,
+            comments_require_approval: $this->comments_require_approval,
             id: $organizerId,
         );
     }
