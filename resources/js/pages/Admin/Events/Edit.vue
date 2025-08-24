@@ -42,6 +42,8 @@ interface EventData {
     gallery_items?: MediaItem[];
     comments_enabled?: boolean;
     comment_config?: string;
+    action_type?: string;
+    visible_to_membership_levels?: number[];
 }
 interface BreadcrumbItem { title: string; url?: string; disabled?: boolean; }
 interface EventFormData {
@@ -76,6 +78,8 @@ interface EventFormData {
     comments_enabled: boolean;
     comments_require_approval: boolean;
     comment_config: string;
+    action_type: string;
+    visible_to_membership_levels: number[];
     _method: 'PUT' | 'POST';
     [key: string]: any;
 }
@@ -91,6 +95,7 @@ const props = defineProps<{
     pageTitle?: string;
     breadcrumbs?: BreadcrumbItem[];
     commentConfigOptions: { value: string; label: string }[];
+    membershipLevels?: SelectOption[];
 }>();
 
 
@@ -128,6 +133,8 @@ const form = useForm<EventFormData>({
     comments_enabled: props?.event?.comments_enabled ?? true,
     comments_require_approval: props?.event?.comments_require_approval ?? false,
     comment_config: props?.event?.comment_config ?? 'enabled',
+    action_type: props?.event?.action_type ?? 'purchase_ticket',
+    visible_to_membership_levels: props?.event?.visible_to_membership_levels ?? [],
     _method: 'PUT',
 });
 
@@ -145,6 +152,7 @@ const mainTabs = [
     { id: 'tags', label: 'Tags' },
     { id: 'media', label: 'Media' },
     { id: 'comments', label: 'Comments' },
+    { id: 'membership', label: 'Membership & Access' },
 ];
 
 watchEffect(() => {
@@ -297,6 +305,67 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                 <div v-if="form.errors.is_featured"
                                     class="absolute bottom-[-20px] text-sm text-red-600">{{ form.errors.is_featured }}
                                 </div>
+                            </div>
+
+                            <!-- Action Type -->
+                            <div>
+                                <label for="action_type" class="block text-sm font-medium text-gray-700">Action Type</label>
+                                <select id="action_type" v-model="form.action_type"
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    <option value="purchase_ticket">Purchase Ticket</option>
+                                    <option value="show_member_qr">Show Member QR Code</option>
+                                </select>
+                                <p class="mt-1 text-sm text-gray-500">
+                                    Choose what action button appears on the event page for eligible users.
+                                </p>
+                                <div v-if="form.errors.action_type" class="text-sm text-red-600 mt-1">{{ form.errors.action_type }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Section: Membership & Access -->
+                        <div v-if="currentTab === 'membership'" class="space-y-6">
+                            <div>
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Membership & Access Control</h3>
+                                <p class="mt-1 text-sm text-gray-500">Control who can see and access this event.</p>
+                            </div>
+
+                            <!-- Membership Level Restriction -->
+                            <div>
+                                <label for="visible_to_membership_levels" class="block text-sm font-medium text-gray-700">Visible to Membership Levels</label>
+                                <select id="visible_to_membership_levels" v-model="form.visible_to_membership_levels" multiple
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-32">
+                                    <option v-for="level in props.membershipLevels" :key="level.value" :value="level.value">
+                                        {{ level.label }}
+                                    </option>
+                                </select>
+                                <p class="mt-1 text-sm text-gray-500">
+                                    Leave empty to make the event visible to all users (public). 
+                                    Select specific membership levels to restrict access to those members only.
+                                </p>
+                                <div v-if="form.errors.visible_to_membership_levels" class="text-sm text-red-600 mt-1">
+                                    {{ form.errors.visible_to_membership_levels }}
+                                </div>
+                            </div>
+
+                            <!-- Membership Access Preview -->
+                            <div v-if="form.visible_to_membership_levels && form.visible_to_membership_levels.length > 0" 
+                                 class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                                <h4 class="text-sm font-medium text-blue-900 mb-2">Access Summary</h4>
+                                <p class="text-sm text-blue-700">
+                                    This event will be visible only to users with the following membership levels:
+                                </p>
+                                <ul class="mt-2 text-sm text-blue-700 list-disc list-inside">
+                                    <li v-for="levelId in form.visible_to_membership_levels" :key="levelId">
+                                        {{ props.membershipLevels?.find(l => l.value === levelId)?.label || 'Unknown Level' }}
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div v-else class="bg-green-50 border border-green-200 rounded-md p-4">
+                                <h4 class="text-sm font-medium text-green-900 mb-2">Public Event</h4>
+                                <p class="text-sm text-green-700">
+                                    This event will be visible to all users, including non-members.
+                                </p>
                             </div>
                         </div>
 

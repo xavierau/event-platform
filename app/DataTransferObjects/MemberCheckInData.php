@@ -33,6 +33,12 @@ class MemberCheckInData extends Data
 
         #[Nullable]
         public readonly ?array $membership_data,
+
+        #[Nullable, Exists('events', 'id')]
+        public readonly ?int $event_id = null,
+
+        #[Nullable, Exists('event_occurrences', 'id')]
+        public readonly ?int $event_occurrence_id = null,
     ) {}
 
     public static function rules(): array
@@ -108,6 +114,8 @@ class MemberCheckInData extends Data
                     }
                 },
             ],
+            'event_id' => ['nullable', 'integer', 'exists:events,id'],
+            'event_occurrence_id' => ['nullable', 'integer', 'exists:event_occurrences,id'],
         ];
     }
 }

@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Models\Organizer;
 use App\Models\Tag;
 use App\Models\Venue;
+use App\Modules\Membership\Models\MembershipLevel;
 use App\Services\EventService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,12 +59,7 @@ class EventController extends Controller
                 ['text' => 'Events'] // Current page
             ],
             'events' => $events,
-            'filters' => $filters,
-            // Pass other necessary data for filtering UI if needed
-            // 'categories' => Category::orderBy('name')->get()->map(fn($cat) => ['id' => $cat->id, 'name' => $cat->getTranslation('name', app()->getLocale())]),
-            // 'organizers' => User::whereHas('roles', fn($q) => $q->where('name', 'Organizer'))->orderBy('name')->get(['id', 'name']),
-            // Add eventStatuses if they are to be dynamic from backend
-            // 'eventStatuses' => collect(Event::EVENT_STATUSES)->map(fn($status) => ['value' => $status, 'label' => ucfirst(str_replace('_', ' ', $status))])->values(),
+            'filters' => $filters
         ]);
     }
 
@@ -73,45 +69,56 @@ class EventController extends Controller
     public function create(): InertiaResponse
     {
 
-        $isAdmin = auth()->user()->hasRole(RoleNameEnum::ADMIN->value);
+        $authUser = auth()->user();
+        $authUser->load('roles', 'organizers'); // Eager load roles and organizers relationship
+        $isAdmin = $authUser->hasRole(RoleNameEnum::ADMIN->value);
 
+        $locale = app()->getLocale();
 
-        $venues_data_for_view = Venue::where('is_active', true)
+        $venues_data_for_view = Venue::active()
             ->with(['state', 'country']) // Eager load relations
             ->orderBy('name->' . app()->getLocale())
-            ->when(!$isAdmin, fn($query) => $query->whereIn('organizer_id', auth()->user()->organizers->pluck('id'))
+            ->when(!$isAdmin, fn($query) => $query->whereIn('organizer_id', $authUser->organizers->pluck('id'))
                 ->orWhere('organizer_id', null))
             ->get()
-            ->map(function ($venue) {
-                $locale = app()->getLocale();
-                return [
-                    'value' => $venue->id,
-                    'label' => $venue->getTranslation('name', $locale),
-                    'address_line_1' => $venue->getTranslation('address_line_1', $locale),
-                    'address_line_2' => $venue->getTranslation('address_line_2', $locale, false), // non-required
-                    'city' => $venue->getTranslation('city', $locale),
-                    'postal_code' => $venue->postal_code,
-                    'state_province' => $venue->state?->name, // Assuming 'name' is the field in State model
-                    'country' => $venue->country?->name,     // Assuming 'name' is the field in Country model
-                    'latitude' => $venue->latitude,
-                    'longitude' => $venue->longitude,
-                ];
-            });
+            ->map(fn($venue) => [
+                'value' => $venue->id,
+                'label' => $venue->getTranslation('name', $locale),
+                'address_line_1' => $venue->getTranslation('address_line_1', $locale),
+                'address_line_2' => $venue->getTranslation('address_line_2', $locale, false), // non-required
+                'city' => $venue->getTranslation('city', $locale),
+                'postal_code' => $venue->postal_code,
+                'state_province' => $venue->state?->name, // Assuming 'name' is the field in State model
+                'country' => $venue->country?->name,     // Assuming 'name' is the field in Country model
+                'latitude' => $venue->latitude,
+                'longitude' => $venue->longitude,
+            ]
+            );
+
+        $categories = Category::orderBy('name->' . app()->getLocale())->get()->map(fn($cat) => ['value' => $cat->id, 'label' => $cat->name]);
 
         // if user has role of Platform Admin then load all organizers, otherwise load only organizers that the user has access to
-        $organizers = Organizer::when(auth()->user()->hasRole(RoleNameEnum::ADMIN->value),
+        $organizers = Organizer::when($isAdmin,
             fn($query) => $query->orderBy('name'),
-            fn($query) => $query->whereIn('id', auth()->user()->organizers->pluck('id'))->orderBy('name'))
+            fn($query) => $query->whereIn('id', $authUser->organizers->pluck('id'))->orderBy('name'))
             ->get()->map(fn($organizer) => ['value' => $organizer->id, 'label' => $organizer->name]);
+
+        $tags = Tag::orderBy('name->' . app()->getLocale())->get()->map(fn($tag) => ['value' => $tag->id, 'label' => $tag->name]);
+
+        $membershipLevels = MembershipLevel::orderBy('id')->get()->map(fn($level) => [
+            'value' => $level->id,
+            'label' => $level->getTranslation('name', app()->getLocale()) ?: $level->getTranslation('name', 'en') ?: 'Level ' . $level->id
+        ]);
 
         return Inertia::render('Admin/Events/Create', [
             // Pass necessary data for form selects, e.g.:
-            'categories' => Category::orderBy('name->' . app()->getLocale())->get()->map(fn($cat) => ['value' => $cat->id, 'label' => $cat->name]),
-            'tags' => Tag::orderBy('name->' . app()->getLocale())->get()->map(fn($tag) => ['value' => $tag->id, 'label' => $tag->name]),
+            'categories' => $categories,
+            'tags' => $tags,
             'organizers' => $organizers,
             'eventStatuses' => collect(Event::EVENT_STATUSES ?? [])->map(fn($status) => ['value' => $status, 'label' => ucfirst(str_replace('_', ' ', $status))])->values(),
             'visibilities' => collect(Event::VISIBILITIES ?? [])->map(fn($status) => ['value' => $status, 'label' => ucfirst(str_replace('_', ' ', $status))])->values(),
             'venues' => $venues_data_for_view, // Use the prepared data
+            'membershipLevels' => $membershipLevels,
         ]);
     }
 
@@ -176,6 +183,34 @@ class EventController extends Controller
             ];
         })->values()->toArray(); // Ensure it's a numerically indexed array of objects for Vue
 
+        $categories = Category::orderBy('name->' . app()->getLocale())->get()->map(fn($cat) => ['value' => $cat->id, 'label' => $cat->name]);
+        $tags = Tag::orderBy('name->' . app()->getLocale())->get()->map(fn($tag) => ['value' => $tag->id, 'label' => $tag->name]);
+        $organizers = Organizer::orderBy('name')->get()->map(fn($organizer) => ['value' => $organizer->id, 'label' => $organizer->name]);
+        $venues = Venue::active()
+            ->with(['state', 'country']) // Eager load relations
+            ->orderBy('name->' . app()->getLocale())
+            ->get()
+            ->map(function ($venue) {
+                $locale = app()->getLocale();
+                return [
+                    'value' => $venue->id,
+                    'label' => $venue->getTranslation('name', $locale),
+                    'address_line_1' => $venue->getTranslation('address_line_1', $locale),
+                    'address_line_2' => $venue->getTranslation('address_line_2', $locale, false),
+                    'city' => $venue->getTranslation('city', $locale),
+                    'postal_code' => $venue->postal_code,
+                    'state_province' => $venue->state?->name,
+                    'country' => $venue->country?->name,
+                    'latitude' => $venue->latitude,
+                    'longitude' => $venue->longitude,
+                ];
+            });
+
+        $membershipLevels = MembershipLevel::orderBy('id')->get()->map(fn($level) => [
+            'value' => $level->id,
+            'label' => $level->getTranslation('name', app()->getLocale()) ?: $level->getTranslation('name', 'en') ?: 'Level ' . $level->id
+        ]);
+
         $viewData = [
             'event' => array_merge(
                 $eventDataArray,
@@ -188,30 +223,13 @@ class EventController extends Controller
             ),
             'commentConfigOptions' => collect(CommentConfigEnum::cases())->map(fn($case) => ['value' => $case->value, 'label' => ucfirst($case->value)])->values()->toArray(),
             'availableLocales' => $availableLocalesForView, // Pass the locales to the view
-            'categories' => Category::orderBy('name->' . app()->getLocale())->get()->map(fn($cat) => ['value' => $cat->id, 'label' => $cat->name]),
-            'tags' => Tag::orderBy('name->' . app()->getLocale())->get()->map(fn($tag) => ['value' => $tag->id, 'label' => $tag->name]),
-            'organizers' => Organizer::orderBy('name')->get()->map(fn($organizer) => ['value' => $organizer->id, 'label' => $organizer->name]),
+            'categories' => $categories,
+            'tags' => $tags,
+            'organizers' => $organizers,
             'eventStatuses' => collect(Event::EVENT_STATUSES ?? [])->map(fn($status) => ['value' => $status, 'label' => ucfirst(str_replace('_', ' ', $status))])->values(),
             'visibilities' => collect(Event::VISIBILITIES ?? [])->map(fn($status) => ['value' => $status, 'label' => ucfirst(str_replace('_', ' ', $status))])->values(),
-            'venues' => Venue::where('is_active', true)
-                ->with(['state', 'country']) // Eager load relations
-                ->orderBy('name->' . app()->getLocale())
-                ->get()
-                ->map(function ($venue) {
-                    $locale = app()->getLocale();
-                    return [
-                        'value' => $venue->id,
-                        'label' => $venue->getTranslation('name', $locale),
-                        'address_line_1' => $venue->getTranslation('address_line_1', $locale),
-                        'address_line_2' => $venue->getTranslation('address_line_2', $locale, false),
-                        'city' => $venue->getTranslation('city', $locale),
-                        'postal_code' => $venue->postal_code,
-                        'state_province' => $venue->state?->name,
-                        'country' => $venue->country?->name,
-                        'latitude' => $venue->latitude,
-                        'longitude' => $venue->longitude,
-                    ];
-                }),
+            'membershipLevels' => $membershipLevels,
+            'venues' => $venues,
         ];
         return Inertia::render('Admin/Events/Edit', $viewData);
     }

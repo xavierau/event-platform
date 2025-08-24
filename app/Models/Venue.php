@@ -139,4 +139,10 @@ class Venue extends Model implements HasMedia
     {
         return !$this->isPublic();
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
 }

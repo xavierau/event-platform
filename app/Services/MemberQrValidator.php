@@ -55,6 +55,13 @@ class MemberQrValidator implements MemberQrValidatorInterface
                 return ValidationResult::failure('Invalid membership status');
             }
 
+            // 6. Extract and store event context if present for check-in service
+            if (isset($membershipData['eventContext'])) {
+                $eventContext = $membershipData['eventContext'];
+                $membershipData['_event_id'] = $eventContext['eventId'] ?? null;
+                $membershipData['_event_occurrence_id'] = $eventContext['eventOccurrenceId'] ?? null;
+            }
+
             return ValidationResult::success($user, $membershipData);
 
         } catch (Exception $e) {
