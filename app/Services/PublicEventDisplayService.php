@@ -133,6 +133,20 @@ class PublicEventDisplayService
         // Get primary venue using model method
         $primaryVenue = $event->getPrimaryVenue();
 
+        // Get current user and membership
+        $user = auth()->user();
+        
+        // Refresh user relationships to ensure we have the latest membership data
+        if ($user) {
+            $user->refresh();
+        }
+        
+        $currentMembership = $user?->currentMembership()->with('level')->first();
+        
+        // Determine access and button configuration
+        $hasAccess = $event->isVisibleToUser($user);
+        $requiredMembershipNames = !$hasAccess ? $event->getRequiredMembershipNames() : [];
+
         return [
             'id' => $event->id,
             'name' => $event->name,
@@ -148,6 +162,19 @@ class PublicEventDisplayService
             'occurrences' => $this->mapEventOccurrences($event->eventOccurrences),
             'comments' => $comments->toArray(),
             'comment_config' => $event->comment_config,
+            
+            // New membership and action fields
+            'action_type' => $event->action_type ?? 'purchase_ticket',
+            'is_public' => $event->isPublic(),
+            'visible_to_membership_levels' => $event->visible_to_membership_levels,
+            'required_membership_names' => $requiredMembershipNames,
+            'user_has_access' => $hasAccess,
+            'user_membership' => $currentMembership ? [
+                'level_id' => $currentMembership->membership_level_id,
+                'level_name' => $currentMembership->level->name,
+                'status' => $currentMembership->status,
+                'expires_at' => $currentMembership->expires_at,
+            ] : null,
         ];
     }
 

@@ -20,6 +20,8 @@ class MemberCheckIn extends Model
         'notes',
         'device_identifier',
         'membership_data',
+        'event_id',
+        'event_occurrence_id',
     ];
 
     protected $casts = [
@@ -41,6 +43,22 @@ class MemberCheckIn extends Model
     public function scanner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'scanned_by_user_id');
+    }
+
+    /**
+     * Get the event associated with this check-in.
+     */
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    /**
+     * Get the event occurrence associated with this check-in.
+     */
+    public function eventOccurrence(): BelongsTo
+    {
+        return $this->belongsTo(EventOccurrence::class);
     }
 
     /**
@@ -73,5 +91,21 @@ class MemberCheckIn extends Model
     public function scopeRecent($query, $hours = 24)
     {
         return $query->where('scanned_at', '>=', now()->subHours($hours));
+    }
+
+    /**
+     * Scope for check-ins for a specific event.
+     */
+    public function scopeForEvent($query, $eventId)
+    {
+        return $query->where('event_id', $eventId);
+    }
+
+    /**
+     * Scope for check-ins for a specific event occurrence.
+     */
+    public function scopeForEventOccurrence($query, $occurrenceId)
+    {
+        return $query->where('event_occurrence_id', $occurrenceId);
     }
 }

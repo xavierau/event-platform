@@ -4,6 +4,7 @@ import { ref, computed, onMounted } from 'vue';
 import TicketPurchaseModal from '@/components/Modals/TicketPurchaseModal.vue';
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
 import WishlistButton from '@/components/Shared/WishlistButton.vue';
+import QRCode from 'qrcode';
 
 import type { PublicTicketType } from '@/types/ticket';
 
@@ -44,9 +45,21 @@ interface EventDetails {
   description_html?: string;
   occurrences?: EventOccurrence[];
   landscape_poster_url?: string;
-comments: Comment[];
-comment_config:string;
-
+  comments: Comment[];
+  comment_config: string;
+  
+  // New membership and action fields
+  action_type: string;
+  is_public: boolean;
+  visible_to_membership_levels?: number[];
+  required_membership_names: string[];
+  user_has_access: boolean;
+  user_membership?: {
+    level_id: number;
+    level_name: any;
+    status: string;
+    expires_at: string;
+  };
 }
 
 // Props will be passed from the controller, containing the event details
@@ -116,6 +129,10 @@ const currentVenueAddress = computed(() => {
 // Added for modal visibility
 const showPurchaseModal = ref(false);
 
+// Member QR modal variables
+const showMemberQrModal = ref(false);
+const memberQrCodeUrl = ref('');
+
 const openPurchaseModal = () => {
   // Check if user is logged in
   if (!isAuthenticated.value) {
@@ -153,6 +170,124 @@ const handleWishlistError = (message: string) => {
   // You can show a toast notification or handle the error as needed
   alert(`Wishlist error: ${message}`);
 };
+
+// Compute button configuration based on user status and event settings
+const actionButtonConfig = computed(() => {
+  // Not authenticated
+  if (!isAuthenticated.value) {
+    return { 
+      text: 'Purchase', 
+      disabled: false, 
+      action: 'login',
+      className: 'px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap'
+    };
+  }
+  
+  // Check membership requirements
+  const userHasAccess = props.event.user_has_access;
+  
+  // User doesn't meet membership requirements
+  if (!userHasAccess) {
+    const requiredLevels = props.event.required_membership_names;
+    const text = requiredLevels.length === 1 
+      ? `${requiredLevels[0]} Membership Required`
+      : 'Membership Required';
+      
+    return { 
+      text, 
+      disabled: true, 
+      action: 'none',
+      className: 'px-3 sm:px-6 py-2 text-sm bg-gray-400 cursor-not-allowed text-white rounded-full font-semibold whitespace-nowrap',
+      tooltip: `This event requires: ${requiredLevels.join(' or ')}`
+    };
+  }
+  
+  // User has access - check action type
+  if (props.event.action_type === 'show_member_qr') {
+    return { 
+      text: 'Show QR', 
+      disabled: false, 
+      action: 'showQr',
+      className: 'px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap'
+    };
+  }
+  
+  // Default: purchase ticket
+  return { 
+    text: 'Purchase', 
+    disabled: false, 
+    action: 'purchase',
+    className: 'px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap'
+  };
+});
+
+// Handle button click
+async function handleActionButtonClick() {
+  const config = actionButtonConfig.value;
+  
+  switch (config.action) {
+    case 'login':
+      router.visit(route('login'));
+      break;
+      
+    case 'showQr':
+      await generateAndShowMemberQr();
+      break;
+      
+    case 'purchase':
+      openPurchaseModal();
+      break;
+      
+    case 'none':
+      // Disabled button - do nothing
+      break;
+  }
+}
+
+// Generate member QR with event context
+async function generateAndShowMemberQr() {
+  const user = (page.props.auth as any)?.user;
+  const membership = props.event.user_membership;
+  
+  const membershipData = {
+    // Standard member data
+    userId: user.id,
+    userName: user.name,
+    email: user.email,
+    membershipLevel: membership?.level_name?.en || 'Member',
+    membershipStatus: membership?.status || 'active',
+    expiresAt: membership?.expires_at,
+    timestamp: new Date().toISOString(),
+    
+    // Event context for analytics
+    eventContext: {
+      eventId: props.event.id,
+      eventName: props.event.name,
+      eventOccurrenceId: selectedOccurrence.value?.id || null,
+      occurrenceName: selectedOccurrence.value?.name || null,
+      occurrenceDate: selectedOccurrence.value?.full_date_time || null,
+      venueName: currentVenueName.value,
+      source: 'event_detail_page'
+    }
+  };
+  
+  try {
+    memberQrCodeUrl.value = await QRCode.toDataURL(
+      JSON.stringify(membershipData), 
+      {
+        width: 300,
+        margin: 2,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      }
+    );
+    
+    showMemberQrModal.value = true;
+    
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    alert('Error generating QR code. Please try again.');
+  }
+}
 
 if (props.event.occurrences && props.event.occurrences.length > 0) {
   selectOccurrence(props.event.occurrences[0]);
@@ -320,10 +455,12 @@ const handleCommentAdded = (newComment: Comment) => {
             @error="handleWishlistError"
           />
           <button
-            class="px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap"
-            @click="openPurchaseModal"
+            :class="actionButtonConfig.className"
+            :disabled="actionButtonConfig.disabled"
+            :title="actionButtonConfig.tooltip"
+            @click="handleActionButtonClick"
           >
-            Purchase
+            {{ actionButtonConfig.text }}
           </button>
         </div>
       </div>
@@ -335,6 +472,50 @@ const handleCommentAdded = (newComment: Comment) => {
       :occurrence="selectedOccurrence"
       @close="closePurchaseModal"
     />
+
+    <!-- Member QR Modal -->
+    <Teleport to="body">
+      <div v-if="showMemberQrModal" 
+           class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+           @click.self="showMemberQrModal = false">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Member Check-In QR</h3>
+            <button @click="showMemberQrModal = false" 
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" 
+                      stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <div class="text-center">
+            <img :src="memberQrCodeUrl" alt="Member QR Code" 
+                 class="mx-auto mb-4 rounded-lg" />
+            
+            <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+              <p class="font-semibold text-base text-gray-900 dark:text-white">{{ event.name }}</p>
+              <p v-if="selectedOccurrence" class="text-gray-700 dark:text-gray-200">
+                {{ selectedOccurrence.full_date_time }}
+              </p>
+              <p class="text-gray-600 dark:text-gray-300">{{ currentVenueName }}</p>
+              <div class="pt-2 border-t mt-3">
+                <p class="font-medium text-gray-900 dark:text-white">{{ (page.props.auth as any)?.user?.name }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ event.user_membership?.level_name?.en || 'Member' }} Member
+                </p>
+              </div>
+            </div>
+            
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-4">
+              Show this QR code at the venue for check-in
+            </p>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     </div>
 
 </CustomContainer>

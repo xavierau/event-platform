@@ -45,6 +45,8 @@ class EventFactory extends Factory
             'meta_title' => ['en' => $nameEn],
             'meta_description' => ['en' => $this->faker->sentence],
             'meta_keywords' => ['en' => implode(', ', $this->faker->words(3))],
+            'visible_to_membership_levels' => null, // Public by default
+            'action_type' => 'purchase_ticket', // Default action type
             // 'created_by' => User::factory(), // Commented out to avoid conflicts
             // 'updated_by' => User::factory(),
         ];
@@ -174,6 +176,36 @@ class EventFactory extends Factory
                 'zh-TW' => $this->faker->sentence,
                 'zh-CN' => $this->faker->sentence,
             ],
+        ]);
+    }
+
+    /**
+     * Create an event restricted to specific membership levels.
+     */
+    public function restrictedToMembershipLevels(array $membershipLevelIds): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'visible_to_membership_levels' => $membershipLevelIds,
+        ]);
+    }
+
+    /**
+     * Create an event with member QR action type.
+     */
+    public function withMemberQrAction(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'action_type' => 'show_member_qr',
+        ]);
+    }
+
+    /**
+     * Create an event with purchase ticket action type (default).
+     */
+    public function withPurchaseTicketAction(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'action_type' => 'purchase_ticket',
         ]);
     }
 }

@@ -16,6 +16,7 @@ use App\Models\Category;
 use App\Models\EventOccurrence;
 use App\Models\Tag;
 use App\Models\Venue;
+use App\Models\MemberCheckIn;
 use App\Enums\CommentConfigEnum;
 use App\Traits\Commentable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +42,11 @@ class Event extends Model implements HasMedia
         'unlisted'
     ];
 
+    public const ACTION_TYPES = [
+        'purchase_ticket' => 'Purchase Ticket',
+        'show_member_qr' => 'Show Member QR',
+    ];
+
     protected $fillable = [
         'organizer_id',
         'category_id',
@@ -50,6 +56,8 @@ class Event extends Model implements HasMedia
         'short_summary',
         'event_status',
         'visibility',
+        'visible_to_membership_levels',
+        'action_type',
         'is_featured',
         'contact_email',
         'contact_phone',
@@ -90,6 +98,7 @@ class Event extends Model implements HasMedia
         'meta_description' => 'array',
         'meta_keywords' => 'array',
         'social_media_links' => 'json',
+        'visible_to_membership_levels' => 'json',
         'published_at' => 'datetime',
         'is_featured' => 'boolean',
         'comments_enabled' => 'boolean',
@@ -343,5 +352,77 @@ class Event extends Model implements HasMedia
                 }
             })
             ->first();
+    }
+
+    /**
+     * Check if the event is visible to a specific user based on membership levels
+     */
+    public function isVisibleToUser(?User $user): bool
+    {
+        // Public events are visible to everyone
+        if ($this->isPublic()) {
+            return true;
+        }
+
+        // Non-public events require authentication
+        if (!$user) {
+            return false;
+        }
+
+        // Check if user has required membership level
+        $userMembership = $user->currentMembership;
+        if (!$userMembership) {
+            return false;
+        }
+
+        return in_array(
+            $userMembership->membership_level_id,
+            $this->visible_to_membership_levels ?? []
+        );
+    }
+
+    /**
+     * Check if the event is public (no membership restrictions)
+     */
+    public function isPublic(): bool
+    {
+        return empty($this->visible_to_membership_levels);
+    }
+
+    /**
+     * Get the required membership levels for this event
+     */
+    public function getRequiredMembershipLevels()
+    {
+        if ($this->isPublic()) {
+            return collect();
+        }
+
+        return \App\Modules\Membership\Models\MembershipLevel::whereIn('id', $this->visible_to_membership_levels)
+            ->get();
+    }
+
+    /**
+     * Get the names of required membership levels
+     */
+    public function getRequiredMembershipNames(): array
+    {
+        return $this->getRequiredMembershipLevels()
+            ->map(function($level) {
+                // Handle translatable models - get the translation for current locale
+                return $level->getTranslation('name', app()->getLocale()) ?: 
+                       $level->getTranslation('name', 'en') ?: 
+                       'Unknown Level';
+            })
+            ->filter()
+            ->toArray();
+    }
+
+    /**
+     * Get member check-ins for this event
+     */
+    public function memberCheckIns(): HasMany
+    {
+        return $this->hasMany(MemberCheckIn::class);
     }
 }

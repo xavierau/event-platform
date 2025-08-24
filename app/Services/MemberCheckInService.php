@@ -34,7 +34,12 @@ class MemberCheckInService implements MemberCheckInServiceInterface
                 return CheckInResult::failure($validation->getError());
             }
 
-            // 3. Create check-in data
+            // 3. Extract event context from QR data
+            $membershipData = $validation->getData();
+            $eventId = $membershipData['_event_id'] ?? null;
+            $eventOccurrenceId = $membershipData['_event_occurrence_id'] ?? null;
+
+            // 4. Create check-in data
             $checkInData = MemberCheckInData::from([
                 'user_id' => $validation->getUser()->id,
                 'scanned_by_user_id' => $context['scanner_id'],
@@ -42,10 +47,12 @@ class MemberCheckInService implements MemberCheckInServiceInterface
                 'location' => $context['location'] ?? null,
                 'notes' => $context['notes'] ?? null,
                 'device_identifier' => $context['device_identifier'] ?? null,
-                'membership_data' => $validation->getData(),
+                'membership_data' => $membershipData,
+                'event_id' => $eventId,
+                'event_occurrence_id' => $eventOccurrenceId,
             ]);
 
-            // 4. Log the check-in
+            // 5. Log the check-in
             $checkIn = $this->logCheckIn($checkInData);
 
             Log::info('Member check-in successful', [
@@ -99,6 +106,8 @@ class MemberCheckInService implements MemberCheckInServiceInterface
             'notes' => $data->notes,
             'device_identifier' => $data->device_identifier,
             'membership_data' => $data->membership_data,
+            'event_id' => $data->event_id,
+            'event_occurrence_id' => $data->event_occurrence_id,
         ]);
     }
 
