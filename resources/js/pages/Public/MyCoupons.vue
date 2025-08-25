@@ -5,6 +5,9 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import QRCode from 'qrcode';
 import FrontendFooter from '@/components/FrontendFooter.vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 // Access the global route function
 declare const route: any;
@@ -81,10 +84,10 @@ const pinError = ref('');
 
 // Filter options
 const filterOptions = [
-  { key: 'all', label: 'All Coupons', count: props.statistics.total },
-  { key: 'active', label: 'Active', count: props.statistics.active },
-  { key: 'expired', label: 'Expired', count: props.statistics.expired },
-  { key: 'used', label: 'Fully Used', count: props.statistics.fully_used },
+  { key: 'all', label: t('coupons.filters.all_coupons'), count: props.statistics.total },
+  { key: 'active', label: t('status.active'), count: props.statistics.active },
+  { key: 'expired', label: t('status.expired'), count: props.statistics.expired },
+  { key: 'used', label: t('coupons.filters.fully_used'), count: props.statistics.fully_used },
 ];
 
 // Methods
@@ -145,15 +148,15 @@ function showPinRedemption(coupon: UserCoupon) {
 
 async function submitPinRedemption() {
   if (!selectedCoupon.value || !merchantPin.value) return;
-  
+
   if (merchantPin.value.length !== 6) {
-    pinError.value = 'PIN must be exactly 6 digits';
+    pinError.value = t('coupons.errors.pin_length');
     return;
   }
-  
+
   isProcessingPin.value = true;
   pinError.value = '';
-  
+
   try {
     const response = await fetch('/api/v1/coupons/redeem-by-pin', {
       method: 'POST',
@@ -167,20 +170,20 @@ async function submitPinRedemption() {
         location: 'User Device - My Coupons',
       }),
     });
-    
+
     const data = await response.json();
-    
+
     if (data.success) {
       // Success - close modal and refresh page or show success message
       showPinModal.value = false;
       // Refresh the page to show updated coupon status
       router.reload();
     } else {
-      pinError.value = data.message || 'Invalid PIN. Please try again.';
+      pinError.value = data.message || t('coupons.errors.invalid_pin');
     }
   } catch (error) {
     console.error('PIN redemption error:', error);
-    pinError.value = 'An error occurred. Please try again.';
+    pinError.value = t('coupons.errors.generic_error');
   } finally {
     isProcessingPin.value = false;
   }
@@ -194,10 +197,10 @@ function getStatusColor(coupon: UserCoupon): string {
 }
 
 function getStatusText(coupon: UserCoupon): string {
-  if (coupon.is_active) return 'Active';
-  if (coupon.is_expired) return 'Expired';
-  if (coupon.is_fully_used) return 'Fully Used';
-  return 'Inactive';
+  if (coupon.is_active) return t('status.active');
+  if (coupon.is_expired) return t('status.expired');
+  if (coupon.is_fully_used) return t('coupons.status.fully_used');
+  return t('status.inactive');
 }
 
 function formatDate(dateString: string): string {
@@ -205,7 +208,7 @@ function formatDate(dateString: string): string {
 }
 
 function getUsageText(coupon: UserCoupon): string {
-  return `${coupon.times_used} / ${coupon.times_can_be_used} uses`;
+  return `${coupon.times_used} / ${coupon.times_can_be_used} ${t('coupons.usage.uses')}`;
 }
 
 function canRedeem(coupon: UserCoupon): boolean {
@@ -223,41 +226,41 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
 
 <template>
 <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
-<Head title="My Coupons" />
+<Head :title="t('navigation.my_coupons')" />
 
     <!-- Header Section -->
     <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b dark:border-gray-700">
       <div class="container mx-auto flex items-center p-4 relative">
         <Link href="/" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 absolute left-4">
-          ← Back
+          {{ t('common.back_arrow') }}
         </Link>
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex-1 text-center">My Coupons</h1>
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex-1 text-center">{{ t('navigation.my_coupons') }}</h1>
       </div>
     </header>
 
     <main class="container mx-auto py-6 px-4 pb-24">
       <!-- Subtitle -->
       <div class="mb-6">
-        <p class="text-gray-600 dark:text-gray-300 text-center">Manage and redeem your coupons</p>
+        <p class="text-gray-600 dark:text-gray-300 text-center">{{ t('coupons.subtitle') }}</p>
       </div>
 
       <!-- Statistics Cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ statistics.total }}</div>
-          <div class="text-sm text-gray-600 dark:text-gray-400">Total Coupons</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('coupons.stats.total_coupons') }}</div>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ statistics.active }}</div>
-          <div class="text-sm text-gray-600 dark:text-gray-400">Active</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('status.active') }}</div>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ statistics.expired }}</div>
-          <div class="text-sm text-gray-600 dark:text-gray-400">Expired</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('status.expired') }}</div>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ statistics.fully_used }}</div>
-          <div class="text-sm text-gray-600 dark:text-gray-400">Fully Used</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('coupons.stats.fully_used') }}</div>
         </div>
       </div>
 
@@ -288,7 +291,7 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
                 v-model="searchQuery"
                 @keyup.enter="handleSearch"
                 type="text"
-                placeholder="Search by coupon name, description, or code..."
+                :placeholder="t('coupons.search_placeholder')"
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
             </div>
@@ -296,14 +299,14 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
               @click="handleSearch"
               class="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
             >
-              Search
+              {{ t('actions.search') }}
             </button>
             <button
               v-if="searchQuery"
               @click="clearSearch"
               class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
             >
-              Clear
+              {{ t('actions.clear') }}
             </button>
           </div>
         </div>
@@ -326,10 +329,10 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
             </div>
             <p class="text-gray-600 dark:text-gray-400 text-sm mb-3">{{ coupon.coupon.description }}</p>
             <div class="text-sm text-gray-500 dark:text-gray-400">
-              <div>Code: <span class="font-mono">{{ coupon.unique_code }}</span></div>
-              <div>Usage: {{ getUsageText(coupon) }}</div>
+              <div>{{ t('coupons.fields.code') }}: <span class="font-mono">{{ coupon.unique_code }}</span></div>
+              <div>{{ t('coupons.fields.usage') }}: {{ getUsageText(coupon) }}</div>
               <div v-if="coupon.expires_at">
-                Expires: {{ formatDate(coupon.expires_at) }}
+                {{ t('coupons.fields.expires') }}: {{ formatDate(coupon.expires_at) }}
               </div>
             </div>
           </div>
@@ -349,7 +352,7 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 ]"
               >
-                Show QR Code
+                {{ t('coupons.actions.show_qr_code') }}
               </button>
 
               <!-- PIN Redemption -->
@@ -364,13 +367,13 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 ]"
               >
-                Redeem by PIN
+                {{ t('coupons.actions.redeem_by_pin') }}
               </button>
             </div>
 
             <!-- Usage History -->
             <div v-if="coupon.usage_logs.length > 0" class="mt-4 pt-4 border-t border-gray-200">
-              <h4 class="text-sm font-medium text-gray-900 mb-2">Recent Usage</h4>
+              <h4 class="text-sm font-medium text-gray-900 mb-2">{{ t('coupons.usage.recent_usage') }}</h4>
               <div class="space-y-1">
                 <div
                   v-for="log in coupon.usage_logs.slice(0, 2)"
@@ -378,7 +381,7 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
                   class="text-xs text-gray-600"
                 >
                   {{ formatDate(log.created_at) }}
-                  <span v-if="log.location"> at {{ log.location }}</span>
+                  <span v-if="log.location"> {{ t('coupons.usage.at') }} {{ log.location }}</span>
                 </div>
               </div>
             </div>
@@ -389,9 +392,9 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
       <!-- Empty State -->
       <div v-else class="text-center py-12">
         <div class="text-gray-400 text-6xl mb-4">🎫</div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No coupons found</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ t('coupons.empty.no_coupons_found') }}</h3>
         <p class="text-gray-600">
-          {{ searchQuery ? 'Try adjusting your search or filters.' : 'You don\'t have any coupons yet.' }}
+          {{ searchQuery ? t('coupons.empty.try_adjusting') : t('coupons.empty.no_coupons_yet') }}
         </p>
       </div>
 
@@ -422,7 +425,7 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
     <div v-if="showQrModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
         <div class="flex justify-between items-start mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">QR Code for Redemption</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('coupons.modals.qr_title') }}</h3>
           <button @click="showQrModal = false" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -441,16 +444,16 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
             <img
               v-if="qrCodeDataUrl"
               :src="qrCodeDataUrl"
-              alt="QR Code for coupon redemption"
+              :alt="t('coupons.modals.qr_alt_text')"
               class="w-full h-full object-contain p-2"
             />
             <div v-else class="text-center">
               <div class="text-gray-400 text-2xl mb-2">📱</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Generating QR Code...</div>
+              <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('coupons.modals.generating_qr') }}</div>
             </div>
           </div>
 
-          <p class="text-sm text-gray-600 dark:text-gray-400">Show this QR code to the merchant for scanning</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('coupons.modals.qr_instruction') }}</p>
         </div>
       </div>
     </div>
@@ -459,7 +462,7 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
     <div v-if="showPinModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
         <div class="flex justify-between items-start mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">PIN Redemption</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('coupons.modals.pin_title') }}</h3>
           <button @click="showPinModal = false" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -475,11 +478,11 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
 
           <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
             <div class="text-blue-800 dark:text-blue-200 text-sm">
-              <div class="font-medium mb-2">🔐 PIN Redemption Process</div>
+              <div class="font-medium mb-2">🔐 {{ t('coupons.modals.pin_process_title') }}</div>
               <ol class="text-left space-y-1 text-xs">
-                <li>1. Hand your device to the merchant</li>
-                <li>2. Merchant enters their 6-digit PIN below</li>
-                <li>3. Coupon will be redeemed automatically</li>
+                <li>{{ t('coupons.modals.pin_step_1') }}</li>
+                <li>{{ t('coupons.modals.pin_step_2') }}</li>
+                <li>{{ t('coupons.modals.pin_step_3') }}</li>
               </ol>
             </div>
           </div>
@@ -488,7 +491,7 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
           <div class="space-y-4">
             <div>
               <label for="merchantPin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Merchant PIN (6 digits)
+                {{ t('coupons.modals.merchant_pin_label') }}
               </label>
               <input
                 id="merchantPin"
@@ -497,18 +500,18 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
                 inputmode="numeric"
                 pattern="[0-9]{6}"
                 maxlength="6"
-                placeholder="Enter 6-digit PIN"
+                :placeholder="t('coupons.modals.pin_placeholder')"
                 class="w-full px-4 py-3 text-center text-lg font-mono border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                 :disabled="isProcessingPin"
                 @keyup.enter="submitPinRedemption"
               >
             </div>
-            
+
             <!-- Error Message -->
             <div v-if="pinError" class="text-red-600 dark:text-red-400 text-sm text-center">
               {{ pinError }}
             </div>
-            
+
             <!-- Submit Button -->
             <button
               @click="submitPinRedemption"
@@ -520,8 +523,8 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
                   : 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800'
               ]"
             >
-              <span v-if="isProcessingPin">Processing...</span>
-              <span v-else>Redeem Coupon</span>
+              <span v-if="isProcessingPin">{{ t('actions.processing') }}...</span>
+              <span v-else>{{ t('coupons.actions.redeem_coupon') }}</span>
             </button>
           </div>
         </div>

@@ -8,11 +8,15 @@ import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
+// @ts-expect-error - vue-i18n has no type definitions
+import { useI18n } from 'vue-i18n';
 
 defineProps<{
     status?: string;
     canResetPassword: boolean;
 }>();
+
+const { t } = useI18n();
 
 const form = useForm({
     email: '',
@@ -28,8 +32,8 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthBase title="Log in to your account" description="Enter your email and password below to log in">
-        <Head title="Log in" />
+    <AuthBase :title="t('auth.login.title')" :description="t('auth.login.description')">
+        <Head :title="t('auth.login.page_title')" />
 
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
             {{ status }}
@@ -38,7 +42,7 @@ const submit = () => {
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">{{ t('forms.fields.email.label') }}</Label>
                     <Input
                         id="email"
                         type="email"
@@ -47,16 +51,16 @@ const submit = () => {
                         :tabindex="1"
                         autocomplete="email"
                         v-model="form.email"
-                        placeholder="email@example.com"
+                        :placeholder="t('forms.fields.email.placeholder')"
                     />
                     <InputError :message="form.errors.email" />
                 </div>
 
                 <div class="grid gap-2">
                     <div class="flex items-center justify-between">
-                        <Label for="password">Password</Label>
+                        <Label for="password">{{ t('forms.fields.password.label') }}</Label>
                         <TextLink v-if="canResetPassword" :href="route('password.request')" class="text-sm" :tabindex="5">
-                            Forgot password?
+                            {{ t('auth.forgot_password') }}
                         </TextLink>
                     </div>
                     <Input
@@ -66,7 +70,7 @@ const submit = () => {
                         :tabindex="2"
                         autocomplete="current-password"
                         v-model="form.password"
-                        placeholder="Password"
+                        :placeholder="t('forms.fields.password.placeholder')"
                     />
                     <InputError :message="form.errors.password" />
                 </div>
@@ -74,19 +78,19 @@ const submit = () => {
                 <div class="flex items-center justify-between">
                     <Label for="remember" class="flex items-center space-x-3">
                         <Checkbox id="remember" v-model="form.remember" :tabindex="3" />
-                        <span>Remember me</span>
+                        <span>{{ t('auth.remember_me') }}</span>
                     </Label>
                 </div>
 
                 <Button type="submit" class="mt-4 w-full" :tabindex="4" :disabled="form.processing">
                     <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                    Log in
+                    {{ t('auth.login.submit') }}
                 </Button>
             </div>
 
             <div class="text-center text-sm text-muted-foreground">
-                Don't have an account?
-                <TextLink :href="route('register')" :tabindex="5">Sign up</TextLink>
+                {{ t('auth.no_account') }}
+                <TextLink :href="route('register')" :tabindex="5">{{ t('auth.sign_up') }}</TextLink>
             </div>
         </form>
     </AuthBase>

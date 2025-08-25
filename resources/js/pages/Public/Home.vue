@@ -7,6 +7,8 @@ import EventListItem from '@/components/Shared/EventListItem.vue';
 import PublicHeader from '@/components/Shared/PublicHeader.vue';
 import PromotionCarousel from '@/components/Shared/PromotionCarousel.vue';
 import { computed, onMounted, ref } from 'vue';
+// @ts-expect-error - vue-i18n has no type definitions
+import { useI18n } from 'vue-i18n';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import Datepicker from '@vuepic/vue-datepicker';
@@ -15,6 +17,8 @@ import type { EventItem, Promotion } from '@/types';
 import Footer from '@/components/Public/Footer.vue';
 
 dayjs.extend(utc);
+
+const { t } = useI18n();
 
 interface Category {
     id: number | string;
@@ -112,7 +116,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
 </script>
 
 <template>
-    <Head title="Welcome to ShowEasy" />
+    <Head :title="t('common.welcome_title')" />
 
     <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
         <!-- Header Section (FE-LP-002) -->
@@ -154,7 +158,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
                                     : 'text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700',
                             ]"
                         >
-                            Upcoming
+                            {{ t('events.filters.upcoming') }}
                         </button>
                         <!-- <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" @click="goToTomorrow">Tomorrow</button> -->
                         <!-- <button class="px-3 py-1 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" @click="goToThisWeek">This Week</button> -->
@@ -162,7 +166,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
                             class="flex items-center rounded-full px-3 py-1 text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
                             @click="openCalendar"
                         >
-                            Calendar <span class="ml-1.5 text-base">📅</span>
+                            {{ t('events.calendar') }} <span class="ml-1.5 text-base">📅</span>
                         </button>
                     </div>
                 </div>
@@ -184,10 +188,10 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
             <!-- More Events Section (FE-LP-007) -->
             <section id="more-events">
                 <div class="mb-4 flex flex-col items-start justify-between sm:flex-row sm:items-center">
-                    <h2 class="mb-3 text-2xl font-semibold text-gray-800 sm:mb-0 dark:text-gray-200">More Events</h2>
+                    <h2 class="mb-3 text-2xl font-semibold text-gray-800 sm:mb-0 dark:text-gray-200">{{ t('events.more_events') }}</h2>
                     <div class="flex flex-wrap space-x-2 text-sm">
                         <button class="rounded-full bg-indigo-100 px-3 py-1 font-medium text-indigo-700 dark:bg-indigo-700 dark:text-indigo-200">
-                            Recommended
+                            {{ t('events.recommended') }}
                         </button>
                     </div>
                 </div>
@@ -197,7 +201,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
                         v-if="!moreEventsData || moreEventsData.length === 0"
                         class="flex min-h-[150px] items-center justify-center rounded-md border border-dashed border-gray-300 bg-white p-4 text-center text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
                     >
-                        No more events to display.
+                        {{ t('events.no_more_events') }}
                     </div>
                     <!-- Potentially add a "Load More" button or pagination here -->
                 </div>

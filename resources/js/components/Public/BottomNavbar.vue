@@ -5,7 +5,7 @@
             <Link href="/" class="text-center text-xs text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-300">
                 <span class="block text-xl">&#x1F3E0;</span>
                 <!-- Home Icon -->
-                <span>Home</span>
+                <span>{{ t('navigation.home') }}</span>
             </Link>
             <Link
                 :href="route('my-bookings')"
@@ -13,7 +13,7 @@
             >
                 <span class="block text-xl">&#x1F39F;&#xFE0F;</span>
                 <!-- Ticket Icon -->
-                <span>My Bookings</span>
+                <span>{{ t('navigation.my_bookings') }}</span>
             </Link>
             <Link
                 :href="route('my-wishlist')"
@@ -21,14 +21,14 @@
             >
                 <span class="block text-xl">&#x2764;&#xFE0F;</span>
                 <!-- Heart Icon -->
-                <span>My Wishlist</span>
+                <span>{{ t('navigation.my_wishlist') }}</span>
             </Link>
             <Link
                 :href="route('my-coupons')"
                 class="text-center text-xs text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-300"
             >
                 <span class="block text-xl">🎫</span>
-                <span>My Coupons</span>
+                <span>{{ t('navigation.my_coupons') }}</span>
             </Link>
             <!-- Add other relevant links if needed -->
         </div>
@@ -36,4 +36,7 @@
 </template>
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 </script>

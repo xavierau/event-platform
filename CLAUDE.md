@@ -145,6 +145,10 @@ Translatable fields use JSON columns with locale keys:
 - Bookings link Users to TicketDefinitions and EventOccurrences
 - Users can be members of multiple Organizers with different roles
 
+## Internationalization (i18n)
+
+Frontend translations are stored in `/lang/{locale}.json` files (e.g., `en.json`, `zh-CN.json`, `zh-HK.json`). The JSON structure uses hierarchical, context-aware keys organized by feature area: `common`, `actions`, `navigation`, `auth`, `forms`, `status`, `messages`, `events`, `bookings`, etc. Use context-specific keys to handle words with multiple meanings (e.g., `actions.save` for buttons, `messages.success.saved` for confirmations). In Vue components, use `$t('key.path')` or `t('key.path')` with vue-i18n for translations.
+
 ## Important Validation Patterns
 
 ### DTO Validation

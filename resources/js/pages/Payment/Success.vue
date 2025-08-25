@@ -102,7 +102,7 @@
           :href="route('my-bookings')"
           class="inline-flex justify-center items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
         >
-          View My Bookings
+          {{ t('navigation.my_bookings') }}
         </Link>
       </div>
     </div>
@@ -112,6 +112,9 @@
 <script setup lang="ts">
 import { CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { Link } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface Transaction {
   id: number

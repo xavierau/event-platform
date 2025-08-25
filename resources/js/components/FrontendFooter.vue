@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 
 const page = usePage();
+const { t } = useI18n();
 
 const isActive = (path: string) => {
   const currentUrl = page.url;
@@ -25,7 +27,7 @@ const isActive = (path: string) => {
             :class="{ 'text-indigo-800 dark:text-indigo-400': isActive('home') }">
                 <span class="block text-xl">🏠</span>
                 <!-- Home Icon -->
-                <span>Home</span>
+                <span>{{ t('navigation.home') }}</span>
             </Link>
             <Link
                 :href="route('my-bookings')"
@@ -34,7 +36,7 @@ const isActive = (path: string) => {
             >
                 <span class="block text-xl">🎟️</span>
                 <!-- Ticket Icon -->
-                <span>My Bookings</span>
+                <span>{{ t('navigation.my_bookings') }}</span>
             </Link>
             <Link
                 :href="route('my-coupons')"
@@ -43,7 +45,7 @@ const isActive = (path: string) => {
             >
                 <span class="block text-xl">🎫</span>
                 <!-- Coupon/Ticket Icon -->
-                <span>My Coupons</span>
+                <span>{{ t('navigation.my_coupons') }}</span>
             </Link>
             <!-- My Wallet link commented out and replaced with My Profile -->
             <!-- <Link
@@ -61,7 +63,7 @@ const isActive = (path: string) => {
             >
                 <span class="block text-xl">👤</span>
                 <!-- Profile Icon -->
-                <span>My Profile</span>
+                <span>{{ t('navigation.my_profile') }}</span>
             </Link>
             <Link
                 :href="route('my-wishlist')"
@@ -70,7 +72,7 @@ const isActive = (path: string) => {
             >
                 <span class="block text-xl">❤️</span>
                 <!-- Heart Icon -->
-                <span>My Wishlist</span>
+                <span>{{ t('navigation.my_wishlist') }}</span>
             </Link>
         </div>
     </footer>

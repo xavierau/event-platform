@@ -3,6 +3,9 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import BottomNavbar from '../../components/Public/BottomNavbar.vue';
 import { User } from '@/types/index';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
     membership: {
@@ -27,48 +30,48 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="My Membership" />
+    <Head :title="t('navigation.my_membership')" />
 
     <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
         <!-- Header Section -->
         <header class="sticky top-0 z-50 border-b bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div class="relative container mx-auto flex items-center p-4">
                 <Link href="/" class="absolute left-4 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
-                    &larr; Back
+                    {{ t('common.back_arrow') }}
                 </Link>
-                <h1 class="flex-1 text-center text-xl font-semibold text-gray-900 dark:text-gray-100">My Membership</h1>
+                <h1 class="flex-1 text-center text-xl font-semibold text-gray-900 dark:text-gray-100">{{ t('navigation.my_membership') }}</h1>
             </div>
         </header>
 
         <main class="container mx-auto px-4 py-6 pb-24">
             <!-- Current Membership Section -->
             <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-                <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Current Membership</h2>
+                <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">{{ t('membership.current_membership') }}</h2>
 
                 <div v-if="hasMembership" class="space-y-3">
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Plan:</span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('membership.fields.plan') }}:</span>
                         <span class="font-medium text-gray-900 dark:text-gray-100">{{ membership.level.name.en }}</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Status:</span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('status.label') }}:</span>
                         <span class="font-medium text-gray-900 dark:text-gray-100">{{ membership.status }}</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Expires on:</span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('membership.fields.expires_on') }}:</span>
                         <span class="font-medium text-gray-900 dark:text-gray-100">{{ new Date(membership.expires_at).toLocaleDateString() }}</span>
                     </div>
                 </div>
                 <div v-else class="text-center py-8">
                     <div class="mb-4 text-6xl">&#x1F4B3;</div>
-                    <h3 class="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">No Active Membership</h3>
-                    <p class="text-gray-600 dark:text-gray-300">You do not have an active membership.</p>
+                    <h3 class="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ t('membership.no_active_membership.title') }}</h3>
+                    <p class="text-gray-600 dark:text-gray-300">{{ t('membership.no_active_membership.description') }}</p>
                 </div>
             </section>
 
             <!-- Membership Plans Section -->
             <section class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-                <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Available Plans</h2>
+                <h2 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">{{ t('membership.available_plans') }}</h2>
                 <div ref="stripePricingTable"></div>
             </section>
         </main>

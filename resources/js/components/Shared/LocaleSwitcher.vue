@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { ChevronDownIcon, GlobeAltIcon } from '@heroicons/vue/24/outline';
+// @ts-expect-error - vue-i18n has no type definitions
+import { useI18n } from 'vue-i18n';
 
 interface Props {
   variant?: 'dropdown' | 'button' | 'minimal';
@@ -17,6 +19,7 @@ withDefaults(defineProps<Props>(), {
 
 const page = usePage();
 const isOpen = ref(false);
+const { locale: i18nLocale } = useI18n();
 
 // Get available locales from Laravel config
 const availableLocales = computed(() => {
@@ -43,9 +46,11 @@ const switchLocale = (locale: string) => {
     return;
   }
 
+  // Update vue-i18n locale immediately for reactive UI updates
+  i18nLocale.value = locale;
+
   // Use Inertia to make a POST request to switch locale
   router.post('/locale/switch', { locale }, {
-    preserveState: true,
     preserveScroll: true,
     onSuccess: () => {
       isOpen.value = false;

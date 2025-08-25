@@ -8,6 +8,8 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import LocaleSwitcher from '@/components/Shared/LocaleSwitcher.vue';
 import { getInitials } from '@/composables/useInitials';
 import type { User } from '@/types';
+// @ts-expect-error - vue-i18n has no type definitions
+import { useI18n } from 'vue-i18n';
 
 interface Props {
   showSearch?: boolean;
@@ -18,6 +20,8 @@ withDefaults(defineProps<Props>(), {
   showSearch: true,
   showLocationSelector: true,
 });
+
+const { t } = useI18n();
 
 const page = usePage();
 const auth = computed(() => page.props.auth as { user?: User });
@@ -57,7 +61,7 @@ const isAuthenticated = computed(() => !!auth.value?.user);
         <template v-if="!isAuthenticated">
           <Button variant="ghost" as-child>
             <Link :href="route('login')" class="text-sm font-medium">
-              Log in
+              {{ t('navigation.login') }}
             </Link>
           </Button>
         </template>

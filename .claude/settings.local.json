@@ -61,7 +61,10 @@
       "Bash(git flow release start:*)",
       "Bash(git flow release finish:*)",
       "Bash(mv:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(python3:*)",
+      "mcp__laravel-boost__get-config",
+      "mcp__playwright__browser_press_key"
     ],
     "deny": []
   },

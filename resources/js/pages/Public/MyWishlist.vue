@@ -7,6 +7,9 @@ import { useWishlist } from '@/composables/useWishlist';
 import type { EventItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const { isLoading, error, wishlistItems, wishlistCount, getUserWishlist, clearWishlist, clearError } = useWishlist();
 
@@ -18,7 +21,7 @@ const transformedEvents = computed((): EventItem[] => {
 const hasEvents = computed(() => transformedEvents.value.length > 0);
 
 const handleClearWishlist = async () => {
-    if (confirm('Are you sure you want to clear your entire wishlist?')) {
+    if (confirm(t('wishlist.confirm_clear'))) {
         await clearWishlist();
     }
 };
@@ -41,16 +44,16 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="My Wishlist" />
+    <Head :title="t('navigation.my_wishlist')" />
 
     <div>
         <PublicHeader />
-        <CustomContainer title="My Wishlist" :poster_url="undefined">
+        <CustomContainer :title="t('navigation.my_wishlist')" :poster_url="undefined">
             <div class="container mx-auto px-4 py-8">
                 <!-- Loading State -->
                 <div v-if="isLoading" class="flex items-center justify-center py-12">
                     <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                    <span class="ml-3 text-gray-600 dark:text-gray-400">Loading your wishlist...</span>
+                    <span class="ml-3 text-gray-600 dark:text-gray-400">{{ t('wishlist.loading') }}</span>
                 </div>
 
                 <!-- Error State -->
@@ -69,7 +72,7 @@ onMounted(() => {
                         @click="clearError"
                         class="mt-3 text-sm text-red-600 underline hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
                     >
-                        Dismiss
+                        {{ t('actions.dismiss') }}
                     </button>
                 </div>
 
@@ -77,13 +80,13 @@ onMounted(() => {
                 <div v-else-if="hasEvents" class="mb-6">
                     <div class="mb-4 flex items-center justify-between">
                         <p class="text-gray-600 dark:text-gray-400">
-                            {{ wishlistCount }} {{ wishlistCount === 1 ? 'event' : 'events' }} in your wishlist
+                            {{ t('wishlist.event_count', { count: wishlistCount }, wishlistCount) }}
                         </p>
                         <button
                             @click="handleClearWishlist"
                             class="rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 hover:text-red-800 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-200"
                         >
-                            Clear All
+                            {{ t('wishlist.clear_all') }}
                         </button>
                     </div>
 
@@ -114,10 +117,10 @@ onMounted(() => {
                             </svg>
                         </div>
 
-                        <h3 class="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">Your wishlist is empty</h3>
+                        <h3 class="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ t('wishlist.empty.title') }}</h3>
 
                         <p class="mb-6 text-gray-600 dark:text-gray-400">
-                            Start exploring events and save the ones you're interested in to your wishlist.
+                            {{ t('wishlist.empty.description') }}
                         </p>
 
                         <a
@@ -132,7 +135,7 @@ onMounted(() => {
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                                 ></path>
                             </svg>
-                            Browse Events
+                            {{ t('wishlist.empty.browse_events') }}
                         </a>
                     </div>
                 </div>

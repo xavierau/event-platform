@@ -5,6 +5,7 @@ import TicketPurchaseModal from '@/components/Modals/TicketPurchaseModal.vue';
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
 import WishlistButton from '@/components/Shared/WishlistButton.vue';
 import QRCode from 'qrcode';
+import { useI18n } from 'vue-i18n';
 
 import type { PublicTicketType } from '@/types/ticket';
 
@@ -12,7 +13,7 @@ import CommentList from '@/components/Comments/CommentList.vue';
 import CommentForm from '@/components/Comments/CommentForm.vue';
 import type { Comment } from '@/types/comment';
 
-
+const { t } = useI18n();
 
 interface EventOccurrence {
   id: string | number;
@@ -90,7 +91,7 @@ const selectOccurrence = (occurrence: EventOccurrence) => {
 
 const formatPrice = (priceRange: string | null) => {
   if (!priceRange) {
-    return { currency: '', amount: 'Free', suffix: '' };
+    return { currency: '', amount: t('events.price.free'), suffix: '' };
   }
 
   // Try to extract currency symbol and amount from the formatted price range
@@ -150,7 +151,7 @@ const openPurchaseModal = () => {
   } else {
     // Optionally, handle the case where there are no tickets or no occurrence selected
     // For now, we can just prevent the modal from opening or show an alert.
-    alert('No tickets available for this occurrence.');
+    alert(t('events.alerts.no_tickets_available'));
     console.warn('Attempted to open purchase modal without tickets or selected occurrence.', selectedOccurrence.value);
   }
 };
@@ -168,7 +169,7 @@ const handleWishlistChanged = (inWishlist: boolean) => {
 const handleWishlistError = (message: string) => {
   console.error('Wishlist error:', message);
   // You can show a toast notification or handle the error as needed
-  alert(`Wishlist error: ${message}`);
+  alert(`${t('wishlist.error')}: ${message}`);
 };
 
 // Compute button configuration based on user status and event settings
@@ -176,7 +177,7 @@ const actionButtonConfig = computed(() => {
   // Not authenticated
   if (!isAuthenticated.value) {
     return { 
-      text: 'Purchase', 
+      text: t('actions.purchase'), 
       disabled: false, 
       action: 'login',
       className: 'px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap'
@@ -190,22 +191,22 @@ const actionButtonConfig = computed(() => {
   if (!userHasAccess) {
     const requiredLevels = props.event.required_membership_names;
     const text = requiredLevels.length === 1 
-      ? `${requiredLevels[0]} Membership Required`
-      : 'Membership Required';
+      ? t('events.membership.single_required', { level: requiredLevels[0] })
+      : t('events.membership.required');
       
     return { 
       text, 
       disabled: true, 
       action: 'none',
       className: 'px-3 sm:px-6 py-2 text-sm bg-gray-400 cursor-not-allowed text-white rounded-full font-semibold whitespace-nowrap',
-      tooltip: `This event requires: ${requiredLevels.join(' or ')}`
+      tooltip: t('events.membership.tooltip', { levels: requiredLevels.join(' or ') })
     };
   }
   
   // User has access - check action type
   if (props.event.action_type === 'show_member_qr') {
     return { 
-      text: 'Show QR', 
+      text: t('events.actions.show_qr'), 
       disabled: false, 
       action: 'showQr',
       className: 'px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap'
@@ -214,7 +215,7 @@ const actionButtonConfig = computed(() => {
   
   // Default: purchase ticket
   return { 
-    text: 'Purchase', 
+    text: t('actions.purchase'), 
     disabled: false, 
     action: 'purchase',
     className: 'px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap'
@@ -285,7 +286,7 @@ async function generateAndShowMemberQr() {
     
   } catch (error) {
     console.error('Error generating QR code:', error);
-    alert('Error generating QR code. Please try again.');
+    alert(t('events.qr.error_generating'));
   }
 }
 
@@ -308,7 +309,6 @@ const handleCommentAdded = (newComment: Comment) => {
     localComments.value.unshift(newComment);
     showCommentForm.value = false;
 };
-
 
 </script>
 
@@ -390,7 +390,7 @@ const handleCommentAdded = (newComment: Comment) => {
             target="_blank"
             class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline w-1/5 text-right"
           >
-            View Map >
+            {{ t('events.venue.view_map') }} >
           </a>
         </div>
       </div>
@@ -399,7 +399,7 @@ const handleCommentAdded = (newComment: Comment) => {
     <!-- Event Description Section  -->
     <section class="bg-white dark:bg-gray-800 p-4 mt-1 shadow-sm">
       <div class="container mx-auto max-w-full">
-        <h2 class="text-md font-semibold mb-3 text-gray-900 dark:text-gray-100">Event Description</h2>
+        <h2 class="text-md font-semibold mb-3 text-gray-900 dark:text-gray-100">{{ t('events.description.title') }}</h2>
         <div class="prose dark:prose-invert max-w-full prose-img:max-w-full prose-img:h-auto break-words event-description" v-html="event.description_html"></div>
         <!-- Placeholder for more images/media -->
       </div>
@@ -409,9 +409,9 @@ const handleCommentAdded = (newComment: Comment) => {
             <section class="bg-white dark:bg-gray-800 p-4 mt-3 shadow-sm" v-if="event.comment_config !== 'disabled'">
                 <div class="container mx-auto">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Comments</h2>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('comments.title') }}</h2>
                         <button @click="showCommentForm = !showCommentForm" class="text-indigo-600 hover:text-indigo-800">
-                            {{ showCommentForm ? 'Cancel' : 'Leave a Comment' }}
+                            {{ showCommentForm ? t('actions.cancel') : t('comments.leave_comment') }}
                         </button>
                     </div>
                     <CommentForm 
@@ -437,12 +437,12 @@ const handleCommentAdded = (newComment: Comment) => {
           <Link href="/" class="text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
             <!-- Placeholder for Home Icon -->
             <span class="block text-xl">🏠</span>
-            <span class="hidden sm:inline">Home</span>
+            <span class="hidden sm:inline">{{ t('navigation.home') }}</span>
           </Link>
           <Link href="/my-bookings" class="text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
             <!-- Placeholder for My Orders Icon -->
             <span class="block text-xl">🎫</span>
-            <span class="hidden sm:inline">My Bookings</span>
+            <span class="hidden sm:inline">{{ t('navigation.my_bookings') }}</span>
           </Link>
         </div>
         <div class="flex space-x-1 sm:space-x-2 flex-shrink-0 min-w-0">
@@ -480,7 +480,7 @@ const handleCommentAdded = (newComment: Comment) => {
            @click.self="showMemberQrModal = false">
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Member Check-In QR</h3>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('events.qr.modal.title') }}</h3>
             <button @click="showMemberQrModal = false" 
                     class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
               <svg class="w-6 h-6" fill="none" stroke="currentColor">
@@ -491,7 +491,7 @@ const handleCommentAdded = (newComment: Comment) => {
           </div>
           
           <div class="text-center">
-            <img :src="memberQrCodeUrl" alt="Member QR Code" 
+            <img :src="memberQrCodeUrl" :alt="t('events.qr.modal.alt_text')" 
                  class="mx-auto mb-4 rounded-lg" />
             
             <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1">
@@ -503,13 +503,13 @@ const handleCommentAdded = (newComment: Comment) => {
               <div class="pt-2 border-t mt-3">
                 <p class="font-medium text-gray-900 dark:text-white">{{ (page.props.auth as any)?.user?.name }}</p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ event.user_membership?.level_name?.en || 'Member' }} Member
+                  {{ event.user_membership?.level_name?.en || t('membership.member_default') }} {{ t('membership.member') }}
                 </p>
               </div>
             </div>
             
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-4">
-              Show this QR code at the venue for check-in
+              {{ t('events.qr.modal.instruction') }}
             </p>
           </div>
         </div>
@@ -609,4 +609,3 @@ const handleCommentAdded = (newComment: Comment) => {
   background-color: #6b7280; /* dark:gray-500 */
 }
 </style>
-

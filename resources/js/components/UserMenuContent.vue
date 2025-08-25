@@ -4,6 +4,7 @@ import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSep
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
 import { LogOut, Heart, Ticket, Wallet, Settings } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
     user: User;
@@ -14,6 +15,8 @@ const handleLogout = () => {
 };
 
 defineProps<Props>();
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -27,13 +30,13 @@ defineProps<Props>();
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="route('my-bookings')" prefetch as="button">
                 <Ticket class="mr-2 h-4 w-4" />
-                My Bookings
+                {{ t('navigation.my_bookings') }}
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="route('my-wishlist')" prefetch as="button">
                 <Heart class="mr-2 h-4 w-4" />
-                My Wishlist
+                {{ t('navigation.my_wishlist') }}
             </Link>
         </DropdownMenuItem>
 <!--        <DropdownMenuItem :as-child="true">-->
@@ -45,13 +48,13 @@ defineProps<Props>();
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="route('my-membership')" prefetch as="button">
                 <Ticket class="mr-2 h-4 w-4" />
-                My Membership
+                {{ t('navigation.my_membership') }}
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full" :href="route('profile.edit')" prefetch as="button">
                 <Settings class="mr-2 h-4 w-4" />
-                My Profile
+                {{ t('navigation.my_profile') }}
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
@@ -59,7 +62,7 @@ defineProps<Props>();
     <DropdownMenuItem :as-child="true">
         <Link class="block w-full" method="post" :href="route('logout')" @click="handleLogout" as="button">
             <LogOut class="mr-2 h-4 w-4" />
-            Log out
+            {{ t('navigation.logout') }}
         </Link>
     </DropdownMenuItem>
 </template>

@@ -8,8 +8,12 @@ import BookingItemComponent from '@/components/Shared/BookingItem.vue';
 import BookingDetailsModal from '@/components/Modals/BookingDetailsModal.vue';
 import type { BookingItem } from '@/types/booking';
 import FrontendFooter from '@/components/FrontendFooter.vue';
+// @ts-expect-error - vue-i18n has no type definitions
+import { useI18n } from 'vue-i18n';
 
 dayjs.extend(utc);
+
+const { t } = useI18n();
 
 const props = defineProps({
   bookings: {
@@ -74,7 +78,7 @@ function setFilter(filter: string) {
 }
 
 function formatEventDate(startAt?: string, endAt?: string): string {
-  if (!startAt) return 'Date TBD';
+  if (!startAt) return t('common.date_tbd');
 
   const start = dayjs(startAt);
   const end = endAt ? dayjs(endAt) : null;
@@ -103,16 +107,16 @@ function refreshBookings() {
 </script>
 
 <template>
-  <Head title="My Bookings" />
+  <Head :title="t('bookings.my_bookings')" />
 
   <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
     <!-- Header Section -->
     <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b dark:border-gray-700">
       <div class="container mx-auto flex items-center p-4 relative">
         <Link href="/" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 absolute left-4">
-          ← Back
+          {{ t('common.back_arrow') }}
         </Link>
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex-1 text-center">My Bookings</h1>
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100 flex-1 text-center">{{ t('navigation.my_bookings') }}</h1>
       </div>
     </header>
 
@@ -120,7 +124,7 @@ function refreshBookings() {
       <!-- Filter Section -->
       <section class="mb-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4 sm:mb-0">Your Tickets</h2>
+          <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4 sm:mb-0">{{ t('bookings.your_tickets') }}</h2>
           <div class="flex space-x-2 text-sm flex-wrap">
             <button
               @click="setFilter('upcoming')"
@@ -131,7 +135,7 @@ function refreshBookings() {
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               ]"
             >
-              Upcoming
+              {{ t('bookings.filters.upcoming') }}
             </button>
             <button
               @click="setFilter('past')"
@@ -142,7 +146,7 @@ function refreshBookings() {
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               ]"
             >
-              Past Events
+              {{ t('bookings.filters.past') }}
             </button>
             <button
               @click="setFilter('all')"
@@ -153,7 +157,7 @@ function refreshBookings() {
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               ]"
             >
-              All Bookings
+              {{ t('bookings.filters.all') }}
             </button>
           </div>
         </div>
@@ -169,14 +173,14 @@ function refreshBookings() {
 
               <!-- Show all event occurrences for this booking -->
               <div v-if="bookings[0]?.event_occurrences?.length" class="mt-4">
-                <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Valid for the following dates:</div>
+                <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ t('bookings.valid_dates') }}</div>
                 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <div
                     v-for="occurrence in bookings[0].event_occurrences"
                     :key="occurrence.id"
                     class="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 shadow-sm"
                   >
-                    <div class="font-medium text-gray-900 dark:text-gray-100 text-sm">{{ occurrence.name || 'Event Date' }}</div>
+                    <div class="font-medium text-gray-900 dark:text-gray-100 text-sm">{{ occurrence.name || t('common.event_date') }}</div>
                     <div class="text-sm text-gray-600 dark:text-gray-300 mt-1">
                       {{ formatEventDate(occurrence.start_at, occurrence.end_at) }}
                     </div>
@@ -207,20 +211,20 @@ function refreshBookings() {
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
           <div class="text-6xl mb-4">🎫</div>
           <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            <span v-if="activeFilter === 'upcoming'">No upcoming bookings</span>
-            <span v-else-if="activeFilter === 'past'">No past bookings</span>
-            <span v-else>No bookings found</span>
+            <span v-if="activeFilter === 'upcoming'">{{ t('bookings.empty.no_upcoming') }}</span>
+            <span v-else-if="activeFilter === 'past'">{{ t('bookings.empty.no_past') }}</span>
+            <span v-else>{{ t('bookings.empty.no_bookings') }}</span>
           </h3>
           <p class="text-gray-600 dark:text-gray-300 mb-6">
-            <span v-if="activeFilter === 'upcoming'">You don't have any upcoming events. Discover amazing events to attend!</span>
-            <span v-else-if="activeFilter === 'past'">You haven't attended any events yet.</span>
-            <span v-else>You haven't made any bookings yet. Start exploring events!</span>
+            <span v-if="activeFilter === 'upcoming'">{{ t('bookings.empty.upcoming_description') }}</span>
+            <span v-else-if="activeFilter === 'past'">{{ t('bookings.empty.past_description') }}</span>
+            <span v-else>{{ t('bookings.empty.all_description') }}</span>
           </p>
           <Link
             href="/"
             class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
           >
-            Browse Events
+            {{ t('events.browse_events') }}
           </Link>
         </div>
       </section>
