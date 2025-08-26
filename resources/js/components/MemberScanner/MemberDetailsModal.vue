@@ -21,21 +21,21 @@
                   <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                   </svg>
-                  <span class="font-medium">Name:</span> 
+                  <span class="font-medium">Name:</span>
                   <span>{{ memberDetails.name }}</span>
                 </div>
                 <div class="flex items-center space-x-2">
                   <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                   </svg>
-                  <span class="font-medium">Email:</span> 
+                  <span class="font-medium">Email:</span>
                   <span>{{ memberDetails.email }}</span>
                 </div>
                 <div class="flex items-center space-x-2">
                   <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                   </svg>
-                  <span class="font-medium">Member ID:</span> 
+                  <span class="font-medium">Member ID:</span>
                   <span class="font-mono text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">#{{ memberDetails.id }}</span>
                 </div>
               </div>
@@ -163,7 +163,7 @@
         <Button
           variant="default"
           @click="$emit('check-in')"
-          :disabled="!checkInForm.location || isProcessing || checkInStatus?.success === true"
+          :disabled="isProcessing || checkInStatus?.success === true"
         >
           <span v-if="isProcessing">
             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
