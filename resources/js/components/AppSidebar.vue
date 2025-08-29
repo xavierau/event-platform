@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import type { NavItem, SharedData } from '@/types/index.d';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid,Calendar, MapPin, Tag, Settings, Ticket, Megaphone, FileText, MessageSquare, Users, Percent, UserCog, ScanLine, QrCode } from 'lucide-vue-next';
+import { LayoutGrid,Calendar, MapPin, Tag, Settings, Ticket, Megaphone, FileText, MessageSquare, Users, Percent, UserCog, ScanLine, QrCode, Crown } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { computed } from 'vue';
 
@@ -77,6 +77,11 @@ const adminOnlyNavItems: NavItem[] = [
         title: 'Promotions',
         href: '/admin/promotions',
         icon: Megaphone,
+    },
+    {
+        title: 'Membership Levels',
+        href: '/admin/membership-levels',
+        icon: Crown,
     },
     {
         title: 'Settings',

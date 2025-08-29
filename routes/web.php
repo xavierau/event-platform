@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TicketDefinitionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VenueController;
+use App\Http\Controllers\Admin\MembershipLevelController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\LocaleController;
@@ -195,6 +196,14 @@ Route::prefix('admin')
 
         // User Management
         Route::resource('users', UserController::class)->middleware('permission:manage-users');
+        
+        // Membership Levels Management
+        Route::resource('membership-levels', MembershipLevelController::class);
+        Route::get('membership-levels/{membershipLevel}/users', [MembershipLevelController::class, 'users'])->name('membership-levels.users');
+        Route::post('membership-levels/{membershipLevel}/sync-stripe', [MembershipLevelController::class, 'syncWithStripe'])->name('membership-levels.sync-stripe');
+        Route::post('membership-levels/sync-all-stripe', [MembershipLevelController::class, 'syncWithStripe'])->name('membership-levels.sync-all-stripe');
+        Route::post('users/{user}/change-plan', [MembershipLevelController::class, 'changeUserPlan'])->name('admin.users.change-plan');
+        Route::post('membership-levels/bulk-change-plan', [MembershipLevelController::class, 'bulkChangePlan'])->name('membership-levels.bulk-change-plan');
     });
 
 

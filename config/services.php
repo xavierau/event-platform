@@ -39,6 +39,11 @@ return [
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'prices' => [
+            'free' => env('STRIPE_PRICE_FREE', 'price_free'),
+            'premium' => env('STRIPE_PRICE_PREMIUM', 'price_premium_monthly'),
+            'vip' => env('STRIPE_PRICE_VIP', 'price_vip_monthly'),
+        ],
     ],
     'google' => [
         'analytics_id' => env('GOOGLE_ANALYTICS_ID'),
