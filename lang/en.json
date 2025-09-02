@@ -802,6 +802,8 @@
             "view_map": "View Map"
         },
         "membership": {
+            "tooltip": "This event is exclusive to {levels} members.",
+            "single_required": "This event is exclusive to {level} members.",
             "required": "Membership Required",
             "info": "This event is exclusive to members. Please log in or sign up to access."
         }
