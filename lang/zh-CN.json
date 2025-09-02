@@ -795,6 +795,8 @@
             "going": "参加"
         },
         "membership": {
+            "tooltip": "需要以下會員資格之一：{levels}",
+            "single_required": "需要{level}會員資格",
             "required": "需要会员资格",
             "info": "此活动仅对会员开放。"
         }
