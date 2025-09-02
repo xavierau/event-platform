@@ -801,6 +801,10 @@
         },
         "venue": {
             "view_map": "檢視地圖"
+        },
+        "membership": {
+            "required": "需要會員資格",
+            "info": "此活動僅限會員參加。"
         }
     },
     "bookings": {

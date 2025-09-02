@@ -800,6 +800,10 @@
         },
         "venue": {
             "view_map": "View Map"
+        },
+        "membership": {
+            "required": "Membership Required",
+            "info": "This event is exclusive to members. Please log in or sign up to access."
         }
     },
     "bookings": {
