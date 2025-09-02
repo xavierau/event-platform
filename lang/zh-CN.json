@@ -793,6 +793,10 @@
             "views": "浏览量",
             "interested": "感兴趣",
             "going": "参加"
+        },
+        "membership": {
+            "required": "需要会员资格",
+            "info": "此活动仅对会员开放。"
         }
     },
     "bookings": {
