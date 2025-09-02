@@ -8,10 +8,10 @@ use Illuminate\Http\UploadedFile;
 use Spatie\LaravelData\Attributes\FromRouteParameter;
 use Spatie\LaravelData\Attributes\Validation;
 use Spatie\LaravelData\Attributes\Validation\Enum;
+use Spatie\LaravelData\Attributes\WithCast;
+use Spatie\LaravelData\Casts\EnumCast;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
-use Spatie\LaravelData\Casts\EnumCast;
-use Spatie\LaravelData\Attributes\WithCast;
 
 class EventData extends Data
 {
@@ -72,7 +72,7 @@ class EventData extends Data
         public readonly ?string $event_status,
         #[Validation\Rule(['nullable', 'string'])]
         public readonly ?string $visibility,
-        #[Validation\Rule(['nullable', 'array'])]
+        #[Validation\Rule(['nullable', 'array', 'visible_to_membership_levels.*' => ['integer', 'exists:membership_levels,id']])]
         public readonly ?array $visible_to_membership_levels,
         #[Validation\Rule(['nullable', 'string', 'in:purchase_ticket,show_member_qr'])]
         public readonly ?string $action_type,
@@ -91,15 +91,15 @@ class EventData extends Data
 
         // For handling removal of existing gallery items during update
         #[Validation\Rule(['nullable', 'array'])]
-        public readonly ?array $removed_gallery_ids = null, // Array of media IDs to remove
+        public readonly ?array $removed_gallery_ids, // Array of media IDs to remove
 
         #[Validation\Rule(['nullable', 'string', new Enum(CommentConfigEnum::class)])]
         #[WithCast(EnumCast::class, type: CommentConfigEnum::class)]
         public readonly ?CommentConfigEnum $comment_config,
-        
+
         #[Validation\Rule(['nullable', 'boolean'])]
         public readonly ?bool $comments_enabled,
-        
+
         #[Validation\Rule(['nullable', 'boolean'])]
         public readonly ?bool $comments_require_approval,
     ) {}
