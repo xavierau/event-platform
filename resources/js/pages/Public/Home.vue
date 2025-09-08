@@ -6,6 +6,7 @@ import EventPreviewCard from '@/components/Shared/EventPreviewCard.vue';
 import EventListItem from '@/components/Shared/EventListItem.vue';
 import PublicHeader from '@/components/Shared/PublicHeader.vue';
 import PromotionCarousel from '@/components/Shared/PromotionCarousel.vue';
+import PromotionalDisplay from '@/components/PromotionalModal/PromotionalDisplay.vue';
 import { computed, onMounted, ref } from 'vue';
 // @ts-expect-error - vue-i18n has no type definitions
 import { useI18n } from 'vue-i18n';
@@ -121,6 +122,9 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
     <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
         <!-- Header Section (FE-LP-002) -->
         <PublicHeader />
+        
+        <!-- Promotional Modals -->
+        <PromotionalDisplay page="home" />
 
         <main class="container mb-5 mx-auto px-4 py-4">
             <!-- Promotion Carousel Section -->

@@ -65,7 +65,11 @@
       "Bash(python3:*)",
       "mcp__laravel-boost__get-config",
       "mcp__playwright__browser_press_key",
-      "mcp__laravel-boost__list-artisan-commands"
+      "mcp__laravel-boost__list-artisan-commands",
+      "Bash(node:*)",
+      "Bash(timeout 10s npm run dev)",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_network_requests"
     ],
     "deny": []
   },

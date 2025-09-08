@@ -79,6 +79,11 @@ const adminOnlyNavItems: NavItem[] = [
         icon: Megaphone,
     },
     {
+        title: 'Promotional Modals',
+        href: '/admin/promotional-modals',
+        icon: Megaphone,
+    },
+    {
         title: 'Membership Levels',
         href: '/admin/membership-levels',
         icon: Crown,
@@ -99,11 +104,11 @@ const userManagementNavItem: NavItem = {
 const filteredMainNavItems = computed(() => {
     // Start with shared items that both admin and organizer members can access
     let items = [...sharedNavItems];
-    
+
     // Add admin-only items if user is platform admin
     if (isAdmin.value) {
         items = [...items, ...adminOnlyNavItems];
-        
+
         // Add user management item if user has the specific permission
         if (canManageUsers.value) {
             const settingsIndex = items.findIndex(item => item.title === 'Settings');
@@ -114,12 +119,12 @@ const filteredMainNavItems = computed(() => {
             }
         }
     }
-    
+
     // Only show navigation if user is either admin or organizer member
     if (!isAdmin.value && !isOrganizerMember.value) {
         return [];
     }
-    
+
     return items;
 });
 

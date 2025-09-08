@@ -459,7 +459,7 @@ onUnmounted(() => {
                         <select
                             id="event-select"
                             v-model="selectedEventId"
-                            class="mt-1 block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 text-base focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                            class="mt-1 block w-full rounded-md border-gray-300 py-2 pr-10 pl-3 text-base focus:border-indigo-500 focus:ring-2 focus:ring-3 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                         >
                             <option :value="null">
                                 {{ isPlatformAdmin ? '-- All Events (Platform Admin) --' : '-- Select an Event --' }}

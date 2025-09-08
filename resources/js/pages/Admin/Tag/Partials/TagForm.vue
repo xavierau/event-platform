@@ -2,25 +2,25 @@
     <form @submit.prevent="submit">
         <div class="mb-4">
             <label for="name_en" class="block text-sm font-medium text-gray-700">Name (English)</label>
-            <input type="text" v-model="form.name.en" id="name_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <input type="text" v-model="form.name.en" id="name_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm">
             <div v-if="form.errors?.has && form.errors.has('name.en')" class="text-red-600 text-sm mt-1">{{ form.errors.get('name.en') }}</div>
         </div>
 
         <div class="mb-4">
             <label for="name_zh-TW" class="block text-sm font-medium text-gray-700">Name (Traditional Chinese)</label>
-            <input type="text" v-model="form.name['zh-TW']" id="name_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <input type="text" v-model="form.name['zh-TW']" id="name_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm">
             <div v-if="form.errors?.has && form.errors.has('name.zh-TW')" class="text-red-600 text-sm mt-1">{{ form.errors.get('name.zh-TW') }}</div>
         </div>
 
         <div class="mb-4">
             <label for="name_zh-CN" class="block text-sm font-medium text-gray-700">Name (Simplified Chinese)</label>
-            <input type="text" v-model="form.name['zh-CN']" id="name_zh-CN" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <input type="text" v-model="form.name['zh-CN']" id="name_zh-CN" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm">
              <div v-if="form.errors?.has && form.errors.has('name.zh-CN')" class="text-red-600 text-sm mt-1">{{ form.errors.get('name.zh-CN') }}</div>
         </div>
 
         <div class="mb-4">
             <label for="slug" class="block text-sm font-medium text-gray-700">Slug</label>
-            <input type="text" v-model="form.slug" id="slug" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <input type="text" v-model="form.slug" id="slug" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm">
             <p class="mt-1 text-xs text-gray-500">If left empty, the slug will be auto-generated from the English name.</p>
             <div v-if="form.errors?.has && form.errors.has('slug')" class="text-red-600 text-sm mt-1">{{ form.errors.get('slug') }}</div>
         </div>

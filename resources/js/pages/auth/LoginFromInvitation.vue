@@ -50,13 +50,13 @@
                     <Link
                         v-if="canResetPassword"
                         :href="route('password.request')"
-                        class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                        class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:ring-2 focus:ring-2 focus:ring-3 focus:ring-offset-2 focus:outline-none"
                     >
                         Forgot your password?
                     </Link>
                     <Link
                         :href="route('home')"
-                        class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+                        class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:ring-2 focus:ring-2 focus:ring-3 focus:ring-offset-2 focus:outline-none"
                     >
                         Cancel
                     </Link>
