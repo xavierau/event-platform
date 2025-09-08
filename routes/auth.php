@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\SubscriptionRegistrationController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,13 @@ Route::middleware('guest')->group(function () {
         ->name('register');
 
     Route::post('register', [RegisteredUserController::class, 'store']);
+
+    // Subscription Registration Routes
+    Route::get('register/pricing', [SubscriptionRegistrationController::class, 'create'])
+        ->name('register.subscription.create');
+
+    Route::post('register/subscription', [SubscriptionRegistrationController::class, 'store'])
+        ->name('register.subscription.store');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
@@ -42,6 +50,16 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+
+    // Registration callback routes (accessible without full auth)
+    Route::get('register/success', [SubscriptionRegistrationController::class, 'success'])
+        ->name('register.subscription.success');
+
+    Route::get('register/cancel', [SubscriptionRegistrationController::class, 'cancel'])
+        ->name('register.subscription.cancel');
+
+    Route::get('register/pending', [SubscriptionRegistrationController::class, 'pending'])
+        ->name('register.subscription.pending');
 });
 
 Route::middleware('auth')->group(function () {
