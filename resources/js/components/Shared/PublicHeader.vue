@@ -48,7 +48,7 @@ const isAuthenticated = computed(() => !!auth.value?.user);
           v-if="showSearch"
           type="search"
           placeholder="Search events, artists, venues..."
-          class="p-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:ring-indigo-500 focus:border-indigo-500 w-full max-w-xs md:max-w-md lg:max-w-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
+          class="p-3 border border-gray-300 dark:border-gray-600 rounded-full text-sm focus:ring-2 focus:ring-3 focus:border-indigo-500 w-full max-w-xs md:max-w-md lg:max-w-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
         /> -->
       </div>
 

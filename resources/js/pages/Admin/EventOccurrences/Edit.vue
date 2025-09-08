@@ -367,7 +367,7 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
 
                         <div v-if="!form.is_online" class="mb-4">
                             <Label for="venue_id">Venue</Label>
-                            <select id="venue_id" v-model="form.venue_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">
+                            <select id="venue_id" v-model="form.venue_id" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm">
                                 <option v-for="option in venueOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
                             </select>
                             <InputError :message="form.errors.venue_id" class="mt-1" />
@@ -397,7 +397,7 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
                     <div class="px-6 py-5">
                         <div class="mb-4">
                             <Label for="status">Status</Label>
-                            <select id="status" v-model="form.status" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">
+                            <select id="status" v-model="form.status" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm">
                                 <option v-for="option in statusOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
                             </select>
                             <InputError :message="form.errors.status" class="mt-1" />
@@ -453,7 +453,7 @@ const assignedTicketFieldError = (index: number, fieldName: keyof OccurrenceTick
                     </div>
 
                     <div class="p-6 flex justify-end space-x-3">
-                        <Link :href="route('admin.events.occurrences.index', {event: props.event.id})" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                        <Link :href="route('admin.events.occurrences.index', {event: props.event.id})" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-3 ">
                             Cancel
                         </Link>
                         <Button :disabled="form.processing">

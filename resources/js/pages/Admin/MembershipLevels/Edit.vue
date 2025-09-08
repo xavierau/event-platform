@@ -65,7 +65,7 @@ const submit = () => {
                                                 type="text" 
                                                 v-model="form.name.en" 
                                                 id="name_en" 
-                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                                 placeholder="Premium"
                                             />
                                         </div>
@@ -75,7 +75,7 @@ const submit = () => {
                                                 type="text" 
                                                 v-model="form.name['zh-TW']" 
                                                 id="name_zh_TW" 
-                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                                 placeholder="高級"
                                             />
                                         </div>
@@ -85,7 +85,7 @@ const submit = () => {
                                                 type="text" 
                                                 v-model="form.name['zh-CN']" 
                                                 id="name_zh_CN" 
-                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                                 placeholder="高级"
                                             />
                                         </div>
@@ -100,7 +100,7 @@ const submit = () => {
                                         type="text" 
                                         v-model="form.slug" 
                                         id="slug" 
-                                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                         placeholder="premium"
                                     />
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Used in URLs and internal references</p>
@@ -117,7 +117,7 @@ const submit = () => {
                                                 v-model="form.description.en" 
                                                 id="desc_en" 
                                                 rows="3"
-                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                                 placeholder="Enhanced features and priority support"
                                             ></textarea>
                                         </div>
@@ -127,7 +127,7 @@ const submit = () => {
                                                 v-model="form.description['zh-TW']" 
                                                 id="desc_zh_TW" 
                                                 rows="3"
-                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                                 placeholder="增強功能和優先支援"
                                             ></textarea>
                                         </div>
@@ -137,7 +137,7 @@ const submit = () => {
                                                 v-model="form.description['zh-CN']" 
                                                 id="desc_zh_CN" 
                                                 rows="3"
-                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                                 placeholder="增强功能和优先支持"
                                             ></textarea>
                                         </div>
@@ -154,7 +154,7 @@ const submit = () => {
                                                 v-model="form.benefits.en" 
                                                 id="benefits_en" 
                                                 rows="4"
-                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                                 placeholder="• Premium event access&#10;• Priority booking&#10;• Exclusive content"
                                             ></textarea>
                                         </div>
@@ -164,7 +164,7 @@ const submit = () => {
                                                 v-model="form.benefits['zh-TW']" 
                                                 id="benefits_zh_TW" 
                                                 rows="4"
-                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                                 placeholder="• 高級活動權限&#10;• 優先預訂&#10;• 獨家內容"
                                             ></textarea>
                                         </div>
@@ -174,7 +174,7 @@ const submit = () => {
                                                 v-model="form.benefits['zh-CN']" 
                                                 id="benefits_zh_CN" 
                                                 rows="4"
-                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                                 placeholder="• 高级活动权限&#10;• 优先预订&#10;• 独家内容"
                                             ></textarea>
                                         </div>
@@ -190,7 +190,7 @@ const submit = () => {
                                             v-model.number="form.price" 
                                             id="price" 
                                             min="0"
-                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                             placeholder="2900"
                                         />
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -205,7 +205,7 @@ const submit = () => {
                                             v-model.number="form.points_cost" 
                                             id="points_cost" 
                                             min="0"
-                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                             placeholder="2900"
                                         />
                                         <div v-if="form.errors.points_cost" class="text-sm text-red-600 dark:text-red-400">{{ form.errors.points_cost }}</div>
@@ -217,7 +217,7 @@ const submit = () => {
                                             v-model.number="form.duration_months" 
                                             id="duration_months" 
                                             min="1"
-                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                             placeholder="1"
                                         />
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty for lifetime access</p>
@@ -233,7 +233,7 @@ const submit = () => {
                                             type="text" 
                                             v-model="form.stripe_product_id" 
                                             id="stripe_product_id" 
-                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                             placeholder="prod_premium"
                                         />
                                         <div v-if="form.errors.stripe_product_id" class="text-sm text-red-600 dark:text-red-400">{{ form.errors.stripe_product_id }}</div>
@@ -244,7 +244,7 @@ const submit = () => {
                                             type="text" 
                                             v-model="form.stripe_price_id" 
                                             id="stripe_price_id" 
-                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                             placeholder="price_premium_monthly"
                                         />
                                         <div v-if="form.errors.stripe_price_id" class="text-sm text-red-600 dark:text-red-400">{{ form.errors.stripe_price_id }}</div>
@@ -260,7 +260,7 @@ const submit = () => {
                                             v-model.number="form.max_users" 
                                             id="max_users" 
                                             min="1"
-                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                             placeholder="1000"
                                         />
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty for unlimited</p>
@@ -273,7 +273,7 @@ const submit = () => {
                                             v-model.number="form.sort_order" 
                                             id="sort_order" 
                                             min="0"
-                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
+                                            class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded-md shadow-sm" 
                                             placeholder="0"
                                         />
                                         <div v-if="form.errors.sort_order" class="text-sm text-red-600 dark:text-red-400">{{ form.errors.sort_order }}</div>
@@ -283,7 +283,7 @@ const submit = () => {
                                             type="checkbox" 
                                             v-model="form.is_active" 
                                             id="is_active" 
-                                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded"
+                                            class="h-4 w-4 text-indigo-600 focus:ring-2 focus:ring-3 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded"
                                         />
                                         <label for="is_active" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Active</label>
                                         <div v-if="form.errors.is_active" class="text-sm text-red-600 dark:text-red-400">{{ form.errors.is_active }}</div>

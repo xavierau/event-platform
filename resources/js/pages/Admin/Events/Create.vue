@@ -180,7 +180,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                 <label for="organizer_id"
                                     class="block text-sm font-medium text-gray-700">Organizer</label>
                                 <select id="organizer_id" v-model="form.organizer_id"
-                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm rounded-md">
                                     <option :value="null" disabled>Select an organizer</option>
                                     <option v-for="organizer in props.organizers" :key="organizer.value"
                                         :value="organizer.value">
@@ -196,7 +196,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                 <label for="category_id"
                                     class="block text-sm font-medium text-gray-700">Category</label>
                                 <select id="category_id" v-model="form.category_id"
-                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm rounded-md">
                                     <option :value="null" disabled>Select a category</option>
                                     <option v-for="category in props.categories" :key="category.value"
                                         :value="category.value">
@@ -212,7 +212,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                 <label for="status" class="block text-sm font-medium text-gray-700">Event
                                     Status</label>
                                 <select id="status" v-model="form.status"
-                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm rounded-md">
                                     <option v-for="s_option in props.eventStatuses" :key="s_option.value"
                                         :value="s_option.value">
                                         {{ s_option.label }}
@@ -227,7 +227,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                 <label for="visibility"
                                     class="block text-sm font-medium text-gray-700">Visibility</label>
                                 <select id="visibility" v-model="form.visibility"
-                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm rounded-md">
                                     <option v-for="option in props.visibilities" :key="option.value"
                                         :value="option.value">
                                         {{ option.label }}
@@ -241,7 +241,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                             <div class="relative flex items-start">
                                 <div class="flex items-center h-5">
                                     <input id="is_featured" v-model="form.is_featured" type="checkbox"
-                                        class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                        class="focus:ring-2 focus:ring-3 h-4 w-4 text-indigo-600 border-gray-300 rounded">
                                 </div>
                                 <div class="ml-3 text-sm">
                                     <label for="is_featured" class="font-medium text-gray-700">Featured Event</label>
@@ -256,7 +256,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                             <div>
                                 <label for="action_type" class="block text-sm font-medium text-gray-700">Action Type</label>
                                 <select id="action_type" v-model="form.action_type"
-                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm rounded-md">
                                     <option value="purchase_ticket">Purchase Ticket</option>
                                     <option value="show_member_qr">Show Member QR Code</option>
                                 </select>
@@ -278,7 +278,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                             <div>
                                 <label for="visible_to_membership_levels" class="block text-sm font-medium text-gray-700">Visible to Membership Levels</label>
                                 <select id="visible_to_membership_levels" v-model="form.visible_to_membership_levels" multiple
-                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-32">
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm rounded-md h-32">
                                     <option v-for="level in props.membershipLevels" :key="level.value" :value="level.value">
                                         {{ level.label }}
                                     </option>
@@ -331,7 +331,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                         </label>
                                         <input type="text" :id="tFieldName('name', locale.code)"
                                             v-model="form.name[locale.code]"
-                                            class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                                            class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500" />
                                         <div v-if="form.errors[tFieldName('name', locale.code)]"
                                             class="text-sm text-red-600 mt-1">{{ form.errors[tFieldName('name',
                                             locale.code)] }}</div>
@@ -350,7 +350,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                         </label>
                                         <input type="text" :id="tFieldName('slug', locale.code)"
                                             v-model="form.slug[locale.code]"
-                                            class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                                            class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500" />
                                         <div v-if="form.errors[tFieldName('slug', locale.code)]"
                                             class="text-sm text-red-600 mt-1">{{ form.errors[tFieldName('slug',
                                             locale.code)] }}</div>
@@ -368,7 +368,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                     <RichTextEditor
                                         :id="tFieldName('description', locale.code)"
                                         v-model="form.description[locale.code]"
-                                        class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                        class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500"
                                     />
                                     <div v-if="form.errors[tFieldName('description', locale.code)]"
                                         class="text-sm text-red-600 mt-1">{{ form.errors[tFieldName('description',
@@ -385,7 +385,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                     </label>
                                     <textarea :id="tFieldName('short_summary', locale.code)"
                                         v-model="form.short_summary[locale.code]" rows="3"
-                                        class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                                        class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500"></textarea>
                                     <div v-if="form.errors[tFieldName('short_summary', locale.code)]"
                                         class="text-sm text-red-600 mt-1">{{ form.errors[tFieldName('short_summary',
                                         locale.code)] }}</div>
@@ -401,7 +401,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                     <RichTextEditor
                                         :id="tFieldName('cancellation_policy', locale.code)"
                                         v-model="form.cancellation_policy[locale.code]"
-                                        class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                        class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500"
                                     />
                                     <div v-if="form.errors[tFieldName('cancellation_policy', locale.code)]"
                                         class="text-sm text-red-600 mt-1">{{ form.errors[tFieldName('cancellation_policy',
@@ -419,25 +419,25 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
 
                             <div>
                                 <label for="contact_email" class="block text-sm font-medium text-gray-700">Contact Email</label>
-                                <input type="email" v-model="form.contact_email" id="contact_email" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                                <input type="email" v-model="form.contact_email" id="contact_email" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500" />
                                 <div v-if="form.errors.contact_email" class="text-sm text-red-600 mt-1">{{ form.errors.contact_email }}</div>
                             </div>
 
                             <div>
                                 <label for="contact_phone" class="block text-sm font-medium text-gray-700">Contact Phone</label>
-                                <input type="text" v-model="form.contact_phone" id="contact_phone" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                                <input type="text" v-model="form.contact_phone" id="contact_phone" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500" />
                                 <div v-if="form.errors.contact_phone" class="text-sm text-red-600 mt-1">{{ form.errors.contact_phone }}</div>
                             </div>
 
                             <div>
                                 <label for="website_url" class="block text-sm font-medium text-gray-700">Website URL</label>
-                                <input type="url" v-model="form.website_url" id="website_url" placeholder="https://example.com" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                                <input type="url" v-model="form.website_url" id="website_url" placeholder="https://example.com" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500" />
                                 <div v-if="form.errors.website_url" class="text-sm text-red-600 mt-1">{{ form.errors.website_url }}</div>
                             </div>
 
                             <div>
                                 <label for="youtube_video_id" class="block text-sm font-medium text-gray-700">YouTube Video ID</label>
-                                <input type="text" v-model="form.youtube_video_id" id="youtube_video_id" placeholder="dQw4w9WgXcQ" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                                <input type="text" v-model="form.youtube_video_id" id="youtube_video_id" placeholder="dQw4w9WgXcQ" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500" />
                                 <div v-if="form.errors.youtube_video_id" class="text-sm text-red-600 mt-1">{{ form.errors.youtube_video_id }}</div>
                             </div>
 
@@ -474,7 +474,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                             <div>
                                 <label for="tag_ids" class="block text-sm font-medium text-gray-700">Assign Tags</label>
                                 <!-- Consider a more user-friendly multi-select component (e.g., Vue Multiselect, Tom Select) -->
-                                <select id="tag_ids" v-model="form.tag_ids" multiple class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-40">
+                                <select id="tag_ids" v-model="form.tag_ids" multiple class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-3 focus:border-indigo-500 sm:text-sm rounded-md h-40">
                                     <option v-for="tag in props.tags" :key="tag.value" :value="tag.value">
                                         {{ tag.label }}
                                     </option>
@@ -531,7 +531,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                             <div class="relative flex items-start">
                                 <div class="flex items-center h-5">
                                     <input id="comments_enabled" v-model="form.comments_enabled" type="checkbox"
-                                        class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                        class="focus:ring-2 focus:ring-3 h-4 w-4 text-indigo-600 border-gray-300 rounded">
                                 </div>
                                 <div class="ml-3 text-sm">
                                     <label for="comments_enabled" class="font-medium text-gray-700">Enable Comments</label>
@@ -546,7 +546,7 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                             <div v-if="form.comments_enabled" class="relative flex items-start">
                                 <div class="flex items-center h-5">
                                     <input id="comments_require_approval" v-model="form.comments_require_approval" type="checkbox"
-                                        class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                        class="focus:ring-2 focus:ring-3 h-4 w-4 text-indigo-600 border-gray-300 rounded">
                                 </div>
                                 <div class="ml-3 text-sm">
                                     <label for="comments_require_approval" class="font-medium text-gray-700">Require Moderation</label>
@@ -566,12 +566,12 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                                 <Link
                                     :href="route('admin.events.index')"
                                     as="button"
-                                    class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                    class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-3"
                                 >
                                     Cancel
                                 </Link>
                                 <button type="submit" :disabled="form.processing"
-                                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-3">
                                     Create Event
                                 </button>
                             </div>

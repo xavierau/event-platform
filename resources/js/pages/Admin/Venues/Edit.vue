@@ -347,7 +347,7 @@ const dummyStates = [
                                 </div>
 
                                 <div class="flex items-center">
-                                    <input type="checkbox" v-model="form.is_active" id="is_active" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded" />
+                                    <input type="checkbox" v-model="form.is_active" id="is_active" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 rounded" />
                                     <label for="is_active" class="ml-2 block text-sm text-gray-900 dark:text-gray-100">Active</label>
                                 </div>
                                 <div v-if="form.errors.is_active" class="input-error">{{ form.errors.is_active }}</div>
