@@ -48,7 +48,7 @@ interface EventDetails {
   landscape_poster_url?: string;
   comments: Comment[];
   comment_config: string;
-  
+
   // New membership and action fields
   action_type: string;
   is_public: boolean;
@@ -176,47 +176,47 @@ const handleWishlistError = (message: string) => {
 const actionButtonConfig = computed(() => {
   // Not authenticated
   if (!isAuthenticated.value) {
-    return { 
-      text: t('actions.purchase'), 
-      disabled: false, 
+    return {
+      text: t('actions.purchase'),
+      disabled: false,
       action: 'login',
       className: 'px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap'
     };
   }
-  
+
   // Check membership requirements
   const userHasAccess = props.event.user_has_access;
-  
+
   // User doesn't meet membership requirements
   if (!userHasAccess) {
     const requiredLevels = props.event.required_membership_names;
-    const text = requiredLevels.length === 1 
+    const text = requiredLevels.length === 1
       ? t('events.membership.single_required', { level: requiredLevels[0] })
       : t('events.membership.required');
-      
-    return { 
-      text, 
-      disabled: true, 
+
+    return {
+      text,
+      disabled: true,
       action: 'none',
       className: 'px-3 sm:px-6 py-2 text-sm bg-gray-400 cursor-not-allowed text-white rounded-full font-semibold whitespace-nowrap',
       tooltip: t('events.membership.tooltip', { levels: requiredLevels.join(' or ') })
     };
   }
-  
+
   // User has access - check action type
   if (props.event.action_type === 'show_member_qr') {
-    return { 
-      text: t('events.actions.show_qr'), 
-      disabled: false, 
+    return {
+      text: t('events.actions.show_qr'),
+      disabled: false,
       action: 'showQr',
       className: 'px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap'
     };
   }
-  
+
   // Default: purchase ticket
-  return { 
-    text: t('actions.purchase'), 
-    disabled: false, 
+  return {
+    text: t('actions.purchase'),
+    disabled: false,
     action: 'purchase',
     className: 'px-3 sm:px-6 py-2 text-sm bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white rounded-full font-semibold whitespace-nowrap'
   };
@@ -225,20 +225,20 @@ const actionButtonConfig = computed(() => {
 // Handle button click
 async function handleActionButtonClick() {
   const config = actionButtonConfig.value;
-  
+
   switch (config.action) {
     case 'login':
       router.visit(route('login'));
       break;
-      
+
     case 'showQr':
       await generateAndShowMemberQr();
       break;
-      
+
     case 'purchase':
       openPurchaseModal();
       break;
-      
+
     case 'none':
       // Disabled button - do nothing
       break;
@@ -249,7 +249,7 @@ async function handleActionButtonClick() {
 async function generateAndShowMemberQr() {
   const user = (page.props.auth as any)?.user;
   const membership = props.event.user_membership;
-  
+
   const membershipData = {
     // Standard member data
     userId: user.id,
@@ -259,7 +259,7 @@ async function generateAndShowMemberQr() {
     membershipStatus: membership?.status || 'active',
     expiresAt: membership?.expires_at,
     timestamp: new Date().toISOString(),
-    
+
     // Event context for analytics
     eventContext: {
       eventId: props.event.id,
@@ -271,19 +271,19 @@ async function generateAndShowMemberQr() {
       source: 'event_detail_page'
     }
   };
-  
+
   try {
     memberQrCodeUrl.value = await QRCode.toDataURL(
-      JSON.stringify(membershipData), 
+      JSON.stringify(membershipData),
       {
         width: 300,
         margin: 2,
         color: { dark: '#000000', light: '#FFFFFF' }
       }
     );
-    
+
     showMemberQrModal.value = true;
-    
+
   } catch (error) {
     console.error('Error generating QR code:', error);
     alert(t('events.qr.error_generating'));
@@ -414,14 +414,14 @@ const handleCommentAdded = (newComment: Comment) => {
                             {{ showCommentForm ? t('actions.cancel') : t('comments.leave_comment') }}
                         </button>
                     </div>
-                    <CommentForm 
-                        v-if="showCommentForm" 
+                    <CommentForm
+                        v-if="showCommentForm"
                         :commentable-type="'App\\Models\\Event'"
                         :commentable-id="Number(event.id)"
-                        @comment-added="handleCommentAdded" 
+                        @comment-added="handleCommentAdded"
                     />
-                    <CommentList 
-                        :comments="localComments" 
+                    <CommentList
+                        :comments="localComments"
                         :commentable-type="'App\\Models\\Event'"
                         :commentable-id="Number(event.id)"
                         :can-comment="true"
@@ -465,7 +465,7 @@ const handleCommentAdded = (newComment: Comment) => {
         </div>
       </div>
     </footer>
-
+尸
     <!-- Ticket Purchase Modal -->
     <TicketPurchaseModal
       :show-modal="showPurchaseModal"
@@ -475,25 +475,25 @@ const handleCommentAdded = (newComment: Comment) => {
 
     <!-- Member QR Modal -->
     <Teleport to="body">
-      <div v-if="showMemberQrModal" 
+      <div v-if="showMemberQrModal"
            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
            @click.self="showMemberQrModal = false">
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('events.qr.modal.title') }}</h3>
-            <button @click="showMemberQrModal = false" 
+            <button @click="showMemberQrModal = false"
                     class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
               <svg class="w-6 h-6" fill="none" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" 
+                <path stroke-linecap="round" stroke-linejoin="round"
                       stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          
+
           <div class="text-center">
-            <img :src="memberQrCodeUrl" :alt="t('events.qr.modal.alt_text')" 
+            <img :src="memberQrCodeUrl" :alt="t('events.qr.modal.alt_text')"
                  class="mx-auto mb-4 rounded-lg" />
-            
+
             <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1">
               <p class="font-semibold text-base text-gray-900 dark:text-white">{{ event.name }}</p>
               <p v-if="selectedOccurrence" class="text-gray-700 dark:text-gray-200">
@@ -507,7 +507,7 @@ const handleCommentAdded = (newComment: Comment) => {
                 </p>
               </div>
             </div>
-            
+
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-4">
               {{ t('events.qr.modal.instruction') }}
             </p>

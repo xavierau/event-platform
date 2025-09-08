@@ -1,0 +1,346 @@
+<script setup lang="ts">
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, DollarSign, Edit, ExternalLink, TrendingUp, Users, Zap } from 'lucide-vue-next';
+// @ts-expect-error - vue-i18n has no type definitions
+import { useI18n } from 'vue-i18n';
+
+interface User {
+    id: number;
+    name: string;
+    email: string;
+}
+
+interface Subscription {
+    id: number;
+    user: User;
+    status: string;
+    started_at: string;
+    expires_at: string | null;
+    payment_method: string;
+    auto_renew: boolean;
+}
+
+interface MembershipLevel {
+    id: number;
+    name: Record<string, string>;
+    slug: string;
+    description: Record<string, string>;
+    price: number;
+    price_formatted: string;
+    duration_months: number | null;
+    stripe_product_id: string | null;
+    stripe_price_id: string | null;
+    is_active: boolean;
+    sort_order: number;
+    benefits: Record<string, string>;
+    max_users: number | null;
+    available_slots: number | null;
+    metadata: Record<string, any>;
+    created_at: string;
+    updated_at: string;
+}
+
+interface Stats {
+    total_users: number;
+    active_users: number;
+    monthly_revenue: number;
+}
+
+const props = defineProps<{
+    membershipLevel: MembershipLevel;
+    recentSubscriptions: Subscription[];
+    stats: Stats;
+}>();
+
+const { t, locale } = useI18n();
+
+const getLevelName = (level: MembershipLevel) => {
+    return level.name[locale.value] || level.name.en || level.slug;
+};
+
+const getDescription = (level: MembershipLevel) => {
+    return level.description[locale.value] || level.description.en || '';
+};
+
+const getBenefits = (level: MembershipLevel) => {
+    const benefits = level.benefits[locale.value] || level.benefits.en || '';
+    // Handle escaped newlines from database
+    return benefits.replace(/\\n/g, '\n');
+};
+
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+};
+
+const getStatusBadge = (status: string) => {
+    const variants = {
+        active: 'default',
+        cancelled: 'secondary',
+        expired: 'destructive',
+        pending: 'outline',
+    } as const;
+
+    return variants[status as keyof typeof variants] || 'secondary';
+};
+
+const syncWithStripe = () => {
+    const form = useForm({});
+    form.post(route('admin.membership-levels.sync-stripe', membershipLevel.id), {
+        onSuccess: () => {
+            // Page will reload with success message
+        },
+    });
+};
+</script>
+
+<template>
+    <Head :title="getLevelName(membershipLevel)" />
+    <AppLayout>
+        <div class="space-y-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <Button variant="ghost" :href="route('admin.membership-levels.index')" class="gap-2">
+                        <ArrowLeft class="h-4 w-4" />
+                        Back
+                    </Button>
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-3xl font-bold">{{ getLevelName(membershipLevel) }}</h1>
+                            <Badge :variant="membershipLevel.is_active ? 'default' : 'secondary'">
+                                {{ membershipLevel.is_active ? 'Active' : 'Inactive' }}
+                            </Badge>
+                            <Badge v-if="membershipLevel.metadata?.is_popular" variant="outline">Popular</Badge>
+                        </div>
+                        <p class="text-gray-500 dark:text-gray-400">{{ getDescription(membershipLevel) }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Button variant="outline" :href="route('admin.membership-levels.users', membershipLevel.id)" class="gap-2">
+                        <Users class="h-4 w-4" />
+                        View All Users
+                    </Button>
+                    <Button variant="outline" @click="syncWithStripe" class="gap-2">
+                        <Zap class="h-4 w-4" />
+                        Sync with Stripe
+                    </Button>
+                    <Button :href="route('admin.membership-levels.edit', membershipLevel.id)" class="gap-2">
+                        <Edit class="h-4 w-4" />
+                        Edit
+                    </Button>
+                </div>
+            </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid gap-4 md:grid-cols-3">
+                        <div class="overflow-hidden border border-gray-200 bg-white shadow-sm sm:rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</div>
+                                    <Users class="h-4 w-4 text-gray-400" />
+                                </div>
+                                <div class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+                                    {{ stats.total_users.toLocaleString() }}
+                                </div>
+                                <div v-if="membershipLevel.max_users" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    of {{ membershipLevel.max_users.toLocaleString() }} max
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="overflow-hidden border border-gray-200 bg-white shadow-sm sm:rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Subscriptions</div>
+                                    <TrendingUp class="h-4 w-4 text-gray-400" />
+                                </div>
+                                <div class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+                                    {{ stats.active_users.toLocaleString() }}
+                                </div>
+                                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ stats.total_users > 0 ? Math.round((stats.active_users / stats.total_users) * 100) : 0 }}% active
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="overflow-hidden border border-gray-200 bg-white shadow-sm sm:rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Revenue</div>
+                                    <DollarSign class="h-4 w-4 text-gray-400" />
+                                </div>
+                                <div class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
+                                    ${{ (stats.monthly_revenue / 100).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+                                </div>
+                                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ membershipLevel.price_formatted }} × {{ stats.active_users }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Details & Configuration -->
+                    <div class="grid gap-6 lg:grid-cols-2">
+                        <!-- Plan Details -->
+                        <div class="overflow-hidden border border-gray-200 bg-white shadow-sm sm:rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                            <div class="p-6">
+                                <div class="mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Plan Details</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Configuration and pricing information</p>
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Price</span>
+                                        <span class="text-sm text-gray-900 dark:text-white">{{ membershipLevel.price_formatted }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Duration</span>
+                                        <span class="text-sm text-gray-900 dark:text-white">
+                                        <Badge v-if="!membershipLevel.duration_months" variant="outline"> Lifetime </Badge>
+                                        <span v-else>
+                                            {{ membershipLevel.duration_months }} month{{ membershipLevel.duration_months !== 1 ? 's' : '' }}
+                                        </span>
+                                    </span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Sort Order</span>
+                                        <span class="text-sm text-gray-900 dark:text-white">{{ membershipLevel.sort_order }}</span>
+                                    </div>
+                                    <div v-if="membershipLevel.max_users" class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">User Limit</span>
+                                        <div class="text-right">
+                                            <div class="text-sm text-gray-900 dark:text-white">
+                                                {{ membershipLevel.max_users.toLocaleString() }}
+                                            </div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                {{ membershipLevel.available_slots || 0 }} slots available
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stripe Integration -->
+                        <div class="overflow-hidden border border-gray-200 bg-white shadow-sm sm:rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                            <div class="p-6">
+                                <div class="mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Stripe Integration</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Connected Stripe products and prices</p>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Product ID</div>
+                                        <div>
+                                            <code
+                                                v-if="membershipLevel.stripe_product_id"
+                                                class="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700"
+                                            >
+                                                {{ membershipLevel.stripe_product_id }}
+                                            </code>
+                                            <span v-else class="text-sm text-gray-500 dark:text-gray-400">Not configured</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Price ID</div>
+                                        <div>
+                                            <code
+                                                v-if="membershipLevel.stripe_price_id"
+                                                class="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700"
+                                            >
+                                                {{ membershipLevel.stripe_price_id }}
+                                            </code>
+                                            <span v-else class="text-sm text-gray-500 dark:text-gray-400">Not configured</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Benefits -->
+                    <div class="overflow-hidden border border-gray-200 bg-white shadow-sm sm:rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                        <div class="p-6">
+                            <div class="mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Benefits</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Features included in this membership level</p>
+                            </div>
+                            <div v-if="getBenefits(membershipLevel)">
+                                <div
+                                    class="text-sm leading-relaxed whitespace-pre-line text-gray-900 dark:text-white"
+                                    v-html="getBenefits(membershipLevel).replace(/\n/g, '<br>')"
+                                ></div>
+                            </div>
+                            <div v-else class="text-sm text-gray-500 dark:text-gray-400">No benefits configured for this membership level.</div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Subscriptions -->
+                    <div class="overflow-hidden border border-gray-200 bg-white shadow-sm sm:rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                        <div class="p-6">
+                            <div class="mb-4 flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Subscriptions</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Latest users who joined this plan</p>
+                                </div>
+                                <Button variant="outline" size="sm" :href="route('admin.membership-levels.users', membershipLevel.id)" class="gap-2">
+                                    View All
+                                    <ExternalLink class="h-3 w-3" />
+                                </Button>
+                            </div>
+                            <div v-if="recentSubscriptions.length === 0" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                                No subscriptions yet
+                            </div>
+                            <div v-else class="rounded-md border border-gray-200 dark:border-gray-700">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>User</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Started</TableHead>
+                                            <TableHead>Expires</TableHead>
+                                            <TableHead>Payment Method</TableHead>
+                                            <TableHead>Auto Renew</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        <TableRow v-for="subscription in recentSubscriptions" :key="subscription.id">
+                                            <TableCell>
+                                                <div>
+                                                    <div class="font-medium">{{ subscription.user.name }}</div>
+                                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                        {{ subscription.user.email }}
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge :variant="getStatusBadge(subscription.status)">
+                                                    {{ subscription.status }}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>{{ formatDate(subscription.started_at) }}</TableCell>
+                                            <TableCell>
+                                                <span v-if="subscription.expires_at">{{ formatDate(subscription.expires_at) }}</span>
+                                                <span v-else class="text-gray-500 dark:text-gray-400">Never</span>
+                                            </TableCell>
+                                            <TableCell class="capitalize">{{ subscription.payment_method }}</TableCell>
+                                            <TableCell>
+                                                <Badge :variant="subscription.auto_renew ? 'default' : 'secondary'">
+                                                    {{ subscription.auto_renew ? 'Yes' : 'No' }}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </AppLayout>
+</template>

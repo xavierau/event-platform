@@ -50,9 +50,109 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(User $user)
+    public function show(User $user): Response
     {
-        //
+        $user->load([
+            'currentMembership.level',
+            'memberships.level',
+            'organizers',
+            'transactions' => function ($query) {
+                $query->orderBy('created_at', 'desc')->limit(10);
+            },
+            'wallet'
+        ]);
+
+        // Get membership history
+        $membershipHistory = $user->memberships()
+            ->with('level')
+            ->orderBy('started_at', 'desc')
+            ->get()
+            ->map(function ($membership) {
+                return [
+                    'id' => $membership->id,
+                    'level_name' => $membership->level->name,
+                    'status' => $membership->status,
+                    'started_at' => $membership->started_at,
+                    'expires_at' => $membership->expires_at,
+                    'payment_method' => $membership->payment_method,
+                    'auto_renew' => $membership->auto_renew,
+                    'stripe_subscription_id' => $membership->stripe_subscription_id,
+                ];
+            });
+
+        // Get current membership details
+        $currentMembership = null;
+        if ($user->currentMembership) {
+            $currentMembership = [
+                'id' => $user->currentMembership->id,
+                'level_name' => $user->currentMembership->level->name,
+                'level_id' => $user->currentMembership->level->id,
+                'status' => $user->currentMembership->status,
+                'started_at' => $user->currentMembership->started_at,
+                'expires_at' => $user->currentMembership->expires_at,
+                'payment_method' => $user->currentMembership->payment_method,
+                'auto_renew' => $user->currentMembership->auto_renew,
+                'stripe_subscription_id' => $user->currentMembership->stripe_subscription_id,
+                'subscription_metadata' => $user->currentMembership->subscription_metadata,
+            ];
+        }
+
+        // Get organizer information
+        $organizerInfo = $user->organizers->map(function ($organizer) {
+            return [
+                'id' => $organizer->id,
+                'name' => $organizer->name,
+                'role' => $organizer->pivot->role_in_organizer,
+                'is_active' => $organizer->pivot->is_active,
+                'joined_at' => $organizer->pivot->joined_at,
+            ];
+        });
+
+        // Get wallet information
+        $walletInfo = null;
+        if ($user->wallet) {
+            $walletInfo = [
+                'points_balance' => $user->wallet->points_balance,
+                'kill_points_balance' => $user->wallet->kill_points_balance,
+            ];
+        }
+
+        // Get recent transactions
+        $recentTransactions = $user->transactions->map(function ($transaction) {
+            return [
+                'id' => $transaction->id,
+                'amount' => $transaction->amount,
+                'type' => $transaction->type,
+                'description' => $transaction->description,
+                'created_at' => $transaction->created_at,
+            ];
+        });
+
+        // Get Stripe information
+        $stripeInfo = [
+            'customer_id' => $user->stripe_id,
+            'all_customer_ids' => $user->getAllStripeCustomerIds(),
+            'has_payment_method' => $user->hasDefaultPaymentMethod(),
+        ];
+
+        return Inertia::render('Admin/Users/Show', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'mobile_number' => $user->mobile_number,
+                'is_commenting_blocked' => $user->is_commenting_blocked,
+                'email_verified_at' => $user->email_verified_at,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ],
+            'currentMembership' => $currentMembership,
+            'membershipHistory' => $membershipHistory,
+            'organizerInfo' => $organizerInfo,
+            'walletInfo' => $walletInfo,
+            'recentTransactions' => $recentTransactions,
+            'stripeInfo' => $stripeInfo,
+        ]);
     }
 
     /**

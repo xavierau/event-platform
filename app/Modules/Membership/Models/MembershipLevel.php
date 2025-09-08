@@ -14,7 +14,7 @@ class MembershipLevel extends Model
 
     protected $table = 'membership_levels';
 
-    public array $translatable = ['name', 'description'];
+    public array $translatable = ['name', 'description', 'benefits'];
 
     protected $fillable = [
         'name',
@@ -29,6 +29,8 @@ class MembershipLevel extends Model
         'is_active',
         'sort_order',
         'metadata',
+        'stripe_product_id',
+        'stripe_price_id',
     ];
 
     protected $casts = [
