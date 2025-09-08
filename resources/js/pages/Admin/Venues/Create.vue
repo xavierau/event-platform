@@ -308,7 +308,7 @@ const getTranslation = (translations: any, locale: string = 'en', fallbackLocale
 
                                 <!-- Is Active -->
                                 <div class="flex items-center">
-                                    <input type="checkbox" v-model="form.is_active" id="is_active" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" />
+                                    <input type="checkbox" v-model="form.is_active" id="is_active" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-2 focus:ring-3 dark:focus:ring-indigo-600 " />
                                     <label for="is_active" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Active</label>
                                 </div>
                                 <div v-if="form.errors.is_active" class="input-error">{{ form.errors.is_active }}</div>

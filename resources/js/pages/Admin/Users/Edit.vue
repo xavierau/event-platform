@@ -28,7 +28,7 @@
                                 <select
                                     id="membership_level_id"
                                     v-model="form.membership_level_id"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-3 sm:text-sm dark:bg-gray-700 dark:border-gray-600"
                                 >
                                     <option :value="null">{{ t('common.select_option') }}</option>
                                     <option v-for="level in membershipLevels" :key="level.id" :value="level.id">

@@ -125,7 +125,7 @@
                                 name="event_occurrence"
                                 :value="occurrence.id"
                                 v-model="selectedOccurrenceId"
-                                class="form-radio h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-500"
+                                class="form-radio h-4 w-4 border-gray-300 text-indigo-600 focus:ring-2 focus:ring-3 dark:border-gray-500"
                             />
                             <span class="ml-3 text-sm text-gray-700 dark:text-gray-200">
                                 <span class="font-medium">{{ occurrence.name || 'Main Occurrence' }}</span

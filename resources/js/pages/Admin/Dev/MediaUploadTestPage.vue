@@ -124,7 +124,7 @@ const breadcrumbs = [
                 />
                 <div class="mt-3">
                     <label for="someOtherField" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Other Field (Single):</label>
-                    <input type="text" v-model="singleForm.someOtherField" id="someOtherField" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
+                    <input type="text" v-model="singleForm.someOtherField" id="someOtherField" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-3 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
                 </div>
 
                 <fieldset class="mt-4 border dark:border-gray-700 p-3 rounded-md">
@@ -185,7 +185,7 @@ const breadcrumbs = [
                 />
                  <div class="mt-3">
                     <label for="anotherField" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Other Field (Multiple):</label>
-                    <input type="text" v-model="multipleForm.anotherField" id="anotherField" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
+                    <input type="text" v-model="multipleForm.anotherField" id="anotherField" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-3 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300" />
                 </div>
                 <div v-if="multipleForm.errors.multipleFiles" class="text-red-500 text-sm mt-1">{{ multipleForm.errors.multipleFiles }}</div>
                 <div v-if="multipleForm.errors.anotherField" class="text-red-500 text-sm mt-1">{{ multipleForm.errors.anotherField }}</div>
