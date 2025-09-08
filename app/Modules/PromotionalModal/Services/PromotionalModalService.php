@@ -70,7 +70,7 @@ class PromotionalModalService
         $membershipLevelIds = [];
         if ($user) {
             $membershipLevelIds = $user->memberships()
-                ->where('is_active', true)
+                ->active()
                 ->pluck('membership_level_id')
                 ->toArray();
         }

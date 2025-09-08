@@ -29,36 +29,64 @@ class WebPromotionalModalController extends Controller
             'per_page' => 'nullable|integer|min:1|max:100',
         ]);
 
-        // Get paginated modals using the service
-        $modals = $this->promotionalModalService->getPaginatedModals(
-            $validated['per_page'] ?? 15
-        );
+        // Build query with filters applied at database level
+        $query = PromotionalModal::withTrashed()->byPriority();
+        
+        // TEMPORARY: Debug and bypass the mysterious page filtering
+        $originalQuery = clone $query;
+        $debugSql = $query->toSql();
+        $debugBindings = $query->getBindings();
+        \Log::info('Original query SQL: ' . $debugSql);
+        \Log::info('Original query bindings: ' . json_encode($debugBindings));
 
-        // Apply filters if provided
+        // Apply search filter
         if (!empty($validated['search_title'])) {
-            $searchResults = $this->promotionalModalService->searchModals($validated['search_title']);
-            // Convert search results to paginated format for consistency
-            $modals = new \Illuminate\Pagination\LengthAwarePaginator(
-                $searchResults,
-                $searchResults->count(),
-                $validated['per_page'] ?? 15,
-                1,
-                ['path' => $request->url(), 'query' => $request->query()]
-            );
+            $searchTerm = $validated['search_title'];
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title->en', 'like', "%{$searchTerm}%")
+                    ->orWhere('title->zh-TW', 'like', "%{$searchTerm}%")
+                    ->orWhere('title->zh-CN', 'like', "%{$searchTerm}%")
+                    ->orWhere('content->en', 'like', "%{$searchTerm}%")
+                    ->orWhere('content->zh-TW', 'like', "%{$searchTerm}%")
+                    ->orWhere('content->zh-CN', 'like', "%{$searchTerm}%")
+                    ->orWhere('button_text', 'like', "%{$searchTerm}%")
+                    ->orWhere('button_url', 'like', "%{$searchTerm}%");
+            });
         }
 
         // Apply type filter
         if (!empty($validated['type'])) {
-            $filteredItems = $modals->getCollection()->filter(fn($modal) => $modal->type === $validated['type']);
-            $modals->setCollection($filteredItems);
+            $query->forType($validated['type']);
         }
 
         // Apply status filter
         if (!empty($validated['status'])) {
             $isActive = $validated['status'] === 'active';
-            $filteredItems = $modals->getCollection()->filter(fn($modal) => $modal->is_active === $isActive);
-            $modals->setCollection($filteredItems);
+            $query->where('is_active', $isActive);
         }
+
+        // Get paginated results - use manual pagination to bypass any automatic filtering
+        $perPage = $validated['per_page'] ?? 15;
+        $page = request('page', 1);
+        
+        \Log::info('Before paginate - SQL: ' . $query->toSql());
+        \Log::info('Before paginate - Bindings: ' . json_encode($query->getBindings()));
+        
+        // Manual pagination to avoid any Laravel magic
+        $total = $query->count();
+        $items = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
+        
+        // Create manual paginator
+        $modals = new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'pageName' => 'page'
+            ]
+        );
 
         // Transform the data for the Vue component
         $transformedModals = $modals->getCollection()->map(function ($modal) {
@@ -113,32 +141,29 @@ class WebPromotionalModalController extends Controller
     {
         $modal = $promotionalModal->load('media');
 
+        // Use toArray() to ensure translatable fields are properly formatted
+        $modalDataArray = PromotionalModalData::from($modal->toArray())->toArray();
+
+        // Get available locales for the frontend
+        $configuredLocales = config('app.available_locales', ['en' => 'English']);
+        $availableLocales = collect($configuredLocales)->map(function ($name, $code) {
+            return [
+                'code' => $code,
+                'name' => $name,
+            ];
+        })->values()->toArray();
+
         return Inertia::render('Admin/PromotionalModals/Edit', [
             'promotionalModal' => [
                 'id' => $modal->id,
-                'title' => $modal->title,
-                'content' => $modal->content,
-                'type' => $modal->type,
-                'pages' => $modal->pages,
-                'membership_levels' => $modal->membership_levels,
-                'user_segments' => $modal->user_segments,
-                'start_at' => $modal->start_at?->toISOString(),
-                'end_at' => $modal->end_at?->toISOString(),
-                'display_frequency' => $modal->display_frequency,
-                'cooldown_hours' => $modal->cooldown_hours,
-                'is_active' => $modal->is_active,
-                'priority' => $modal->priority,
-                'sort_order' => $modal->sort_order,
-                'button_text' => $modal->button_text,
-                'button_url' => $modal->button_url,
-                'is_dismissible' => $modal->is_dismissible,
-                'display_conditions' => $modal->display_conditions,
+                ...$modalDataArray,
                 'banner_image_url' => $modal->getBannerImageUrl(),
                 'background_image_url' => $modal->getBackgroundImageUrl(),
                 'impressions_count' => $modal->impressions()->count(),
                 'clicks_count' => $modal->impressions()->where('action', 'click')->count(),
                 'conversion_rate' => $this->calculateConversionRate($modal),
             ],
+            'availableLocales' => $availableLocales,
         ]);
     }
 
