@@ -368,7 +368,20 @@ const handleBackgroundImageUpload = (event: Event) => {
 };
 
 const submit = () => {
-    form.put(route('admin.promotional-modals.update', props.promotionalModal.id), {
+    form.transform((data) => ({
+        ...data,
+        // Ensure title and content maintain their multilingual array structure
+        title: typeof data.title === 'object' ? data.title : {
+            en: data.title || '',
+            'zh-TW': '',
+            'zh-CN': ''
+        },
+        content: typeof data.content === 'object' ? data.content : {
+            en: data.content || '',
+            'zh-TW': '',
+            'zh-CN': ''
+        },
+    })).put(route('admin.promotional-modals.update', props.promotionalModal.id), {
         onSuccess: () => {
             // Redirect will be handled by the controller
         }

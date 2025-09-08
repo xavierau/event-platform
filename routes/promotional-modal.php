@@ -69,8 +69,17 @@ Route::middleware(['web', 'auth'])->prefix('admin')->group(function () {
     Route::get('/promotional-modals/create', [WebPromotionalModalController::class, 'create'])
         ->name('admin.promotional-modals.create');
 
+    Route::post('/promotional-modals', [WebPromotionalModalController::class, 'store'])
+        ->name('admin.promotional-modals.store');
+
     Route::get('/promotional-modals/{promotional_modal}/edit', [WebPromotionalModalController::class, 'edit'])
         ->name('admin.promotional-modals.edit');
+
+    Route::put('/promotional-modals/{promotional_modal}', [WebPromotionalModalController::class, 'update'])
+        ->name('admin.promotional-modals.update');
+
+    Route::delete('/promotional-modals/{promotional_modal}', [WebPromotionalModalController::class, 'destroy'])
+        ->name('admin.promotional-modals.destroy');
 
     Route::get('/promotional-modals/analytics', [WebPromotionalModalController::class, 'analytics'])
         ->name('admin.promotional-modals.analytics');

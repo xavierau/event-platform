@@ -3,6 +3,7 @@
 namespace App\Modules\PromotionalModal\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\PromotionalModal\DataTransferObjects\PromotionalModalData;
 use App\Modules\PromotionalModal\Models\PromotionalModal;
 use App\Modules\PromotionalModal\Services\PromotionalModalService;
 use Illuminate\Http\Request;
@@ -139,6 +140,101 @@ class WebPromotionalModalController extends Controller
                 'conversion_rate' => $this->calculateConversionRate($modal),
             ],
         ]);
+    }
+
+    /**
+     * Store a newly created promotional modal.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => 'required|string|in:modal,banner',
+            'title' => 'required|array',
+            'title.en' => 'required|string|max:255',
+            'title.zh-TW' => 'nullable|string|max:255',
+            'title.zh-CN' => 'nullable|string|max:255',
+            'content' => 'required|array',
+            'content.en' => 'required|string',
+            'content.zh-TW' => 'nullable|string',
+            'content.zh-CN' => 'nullable|string',
+            'button_text' => 'nullable|string|max:100',
+            'button_url' => 'nullable|url|max:500',
+            'is_dismissible' => 'boolean',
+            'pages' => 'nullable|array',
+            'pages.*' => 'string|max:100',
+            'display_frequency' => 'required|string|in:once,daily,weekly,always',
+            'priority' => 'required|integer|min:0|max:100',
+            'start_at' => 'nullable|date',
+            'end_at' => 'nullable|date|after:start_at',
+            'is_active' => 'boolean',
+            'uploaded_banner_image' => 'nullable|image|max:2048',
+            'uploaded_background_image' => 'nullable|image|max:5120',
+        ]);
+
+        try {
+            $modalData = PromotionalModalData::from($validated);
+            $modal = $this->promotionalModalService->createModal($modalData);
+
+            return redirect()->route('admin.promotional-modals.index')
+                ->with('success', 'Promotional modal created successfully.');
+        } catch (\Exception $e) {
+            return back()->withInput()->withErrors(['error' => 'Failed to create promotional modal: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Update the specified promotional modal.
+     */
+    public function update(Request $request, PromotionalModal $promotionalModal)
+    {
+        $validated = $request->validate([
+            'type' => 'required|string|in:modal,banner',
+            'title' => 'required|array',
+            'title.en' => 'required|string|max:255',
+            'title.zh-TW' => 'nullable|string|max:255',
+            'title.zh-CN' => 'nullable|string|max:255',
+            'content' => 'required|array',
+            'content.en' => 'required|string',
+            'content.zh-TW' => 'nullable|string',
+            'content.zh-CN' => 'nullable|string',
+            'button_text' => 'nullable|string|max:100',
+            'button_url' => 'nullable|url|max:500',
+            'is_dismissible' => 'boolean',
+            'pages' => 'nullable|array',
+            'pages.*' => 'string|max:100',
+            'display_frequency' => 'required|string|in:once,daily,weekly,always',
+            'priority' => 'required|integer|min:0|max:100',
+            'start_at' => 'nullable|date',
+            'end_at' => 'nullable|date|after:start_at',
+            'is_active' => 'boolean',
+            'uploaded_banner_image' => 'nullable|image|max:2048',
+            'uploaded_background_image' => 'nullable|image|max:5120',
+        ]);
+
+        try {
+            $modalData = PromotionalModalData::from($validated);
+            $modal = $this->promotionalModalService->updateModal($promotionalModal, $modalData);
+
+            return redirect()->route('admin.promotional-modals.index')
+                ->with('success', 'Promotional modal updated successfully.');
+        } catch (\Exception $e) {
+            return back()->withInput()->withErrors(['error' => 'Failed to update promotional modal: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Remove the specified promotional modal.
+     */
+    public function destroy(PromotionalModal $promotionalModal)
+    {
+        try {
+            $this->promotionalModalService->deleteModal($promotionalModal);
+
+            return redirect()->route('admin.promotional-modals.index')
+                ->with('success', 'Promotional modal deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to delete promotional modal: ' . $e->getMessage()]);
+        }
     }
 
     /**
