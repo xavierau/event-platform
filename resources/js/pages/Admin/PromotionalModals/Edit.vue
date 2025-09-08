@@ -271,19 +271,10 @@
 
 <script setup lang="ts">
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, watchEffect } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/Shared/PageHeader.vue';
 import { getTranslation } from '@/Utils/i18n';
-
-const page = usePage();
-const currentLocale = computed(() => page.props.locale as 'en' | 'zh-HK' | 'zh-CN');
-
-const locales = [
-    { code: 'en', name: 'English' },
-    { code: 'zh-TW', name: 'Traditional Chinese' },
-    { code: 'zh-CN', name: 'Simplified Chinese' }
-];
 
 interface PromotionalModal {
     id: number;
@@ -325,7 +316,17 @@ interface PromotionalModalForm {
 
 const props = defineProps<{
     promotionalModal: PromotionalModal;
+    availableLocales?: { code: string; name: string; }[];
 }>();
+
+const page = usePage();
+const currentLocale = computed(() => page.props.locale as 'en' | 'zh-HK' | 'zh-CN');
+
+const locales = props.availableLocales || [
+    { code: 'en', name: 'English' },
+    { code: 'zh-TW', name: 'Traditional Chinese' },
+    { code: 'zh-CN', name: 'Simplified Chinese' }
+];
 
 const formatDateForInput = (date: string | null): string => {
     if (!date) return '';
@@ -333,20 +334,33 @@ const formatDateForInput = (date: string | null): string => {
 };
 
 const form = useForm<PromotionalModalForm>({
-    type: props.promotionalModal.type,
-    title: props.promotionalModal.title,
-    content: props.promotionalModal.content,
-    button_text: props.promotionalModal.button_text || '',
-    button_url: props.promotionalModal.button_url || '',
-    is_dismissible: props.promotionalModal.is_dismissible,
-    pages: props.promotionalModal.pages || [],
-    display_frequency: props.promotionalModal.display_frequency,
-    priority: props.promotionalModal.priority,
-    start_at: formatDateForInput(props.promotionalModal.start_at),
-    end_at: formatDateForInput(props.promotionalModal.end_at),
-    is_active: props.promotionalModal.is_active,
+    type: 'modal',
+    title: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {}),
+    content: locales.reduce((acc, loc) => ({ ...acc, [loc.code]: '' }), {}),
+    button_text: '',
+    button_url: '',
+    is_dismissible: true,
+    pages: [],
+    display_frequency: 'once',
+    priority: 50,
+    start_at: '',
+    end_at: '',
+    is_active: true,
     uploaded_banner_image: null,
     uploaded_background_image: null,
+});
+
+// Use watchEffect to populate data when props change (following Events pattern)
+watchEffect(() => {
+    if (props.promotionalModal) {
+        form.defaults({
+            ...form.data,
+            ...props.promotionalModal,
+            start_at: formatDateForInput(props.promotionalModal.start_at),
+            end_at: formatDateForInput(props.promotionalModal.end_at),
+        });
+        form.reset();
+    }
 });
 
 const statusClass = (isActive: boolean) => {

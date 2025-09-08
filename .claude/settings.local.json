@@ -68,7 +68,8 @@
       "mcp__laravel-boost__list-artisan-commands",
       "Bash(node:*)",
       "Bash(timeout 10s npm run dev)",
-      "mcp__playwright__browser_wait_for"
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_network_requests"
     ],
     "deny": []
   },
