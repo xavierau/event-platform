@@ -120,3 +120,4 @@ return Inertia::render('Page', [
 - `main` → `develop` → `feature/*`, `hotfix/*`, `release/*`
 
 **⚠️ Key Principles**: Study existing patterns, trace data flow systematically, never hardcode solutions, always test changes.
+- The development server is https://eventplatform.test and it's always runing with frontend hotreload

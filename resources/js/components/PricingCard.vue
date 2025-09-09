@@ -14,7 +14,7 @@ interface MembershipLevel {
     price_formatted: string;
     stripe_price_id: string;
     duration_months: number;
-    benefits: string[];
+    benefits: Record<string, string>;
     is_popular: boolean;
     slug: string;
 }
@@ -38,6 +38,13 @@ const planDescription = computed(() => {
     return props.plan.description[locale.value] || props.plan.description.en || '';
 });
 
+const benefitsList = computed(() => {
+    if (!props.plan.benefits) return [];
+    const benefits = props.plan.benefits[locale.value] || props.plan.benefits.en || '';
+    if (!benefits) return [];
+    return benefits.split('\n').filter(benefit => benefit.trim());
+});
+
 const selectPlan = () => {
     emit('select', props.plan);
 };
@@ -45,10 +52,10 @@ const selectPlan = () => {
 
 <template>
     <div :class="[
-        'relative rounded-lg border bg-card p-6 shadow-sm transition-all duration-200',
+        'relative rounded-lg border bg-card p-4 shadow-sm transition-all duration-200 h-full flex flex-col w-full max-w-xs flex-shrink-0',
         isPopular 
-            ? 'border-primary ring-2 ring-primary/20 transform scale-105' 
-            : 'border-border hover:border-primary/50',
+            ? 'border-primary ring-2 ring-primary/20 mt-4' 
+            : 'border-border hover:border-primary/50 mt-8',
         'hover:shadow-md'
     ]">
         <!-- Popular Badge -->
@@ -65,28 +72,28 @@ const selectPlan = () => {
         </div>
         
         <!-- Price -->
-        <div class="mt-6 text-center">
-            <div class="flex items-baseline justify-center gap-1">
-                <span class="text-4xl font-bold text-foreground">
+        <div class="mt-6 text-center px-2">
+            <div class="flex items-baseline justify-center gap-1 flex-wrap">
+                <span class="text-3xl font-bold text-foreground break-words">
                     {{ plan.price === 0 ? t('pricing.free') : plan.price_formatted }}
                 </span>
-                <span v-if="plan.price > 0" class="text-sm text-muted-foreground">
+                <span v-if="plan.price > 0" class="text-sm text-muted-foreground whitespace-nowrap">
                     / {{ t('pricing.month') }}
                 </span>
             </div>
         </div>
         
         <!-- Benefits -->
-        <div class="mt-6">
+        <div class="mt-6 flex-grow">
             <ul class="space-y-3">
                 <li 
-                    v-for="benefit in plan.benefits" 
+                    v-for="benefit in benefitsList" 
                     :key="benefit" 
                     class="flex items-center gap-3"
                 >
                     <Check class="h-4 w-4 text-primary flex-shrink-0" />
                     <span class="text-sm text-foreground">
-                        {{ t(`membership.benefits.${benefit}`) }}
+                        {{ benefit }}
                     </span>
                 </li>
             </ul>

@@ -22,7 +22,7 @@ interface MembershipLevel {
     price_formatted: string;
     stripe_price_id: string;
     duration_months: number;
-    benefits: string[];
+    benefits: Record<string, string>;
     is_popular: boolean;
     slug: string;
 }
@@ -226,7 +226,8 @@ const submitRegistration = () => {
                 </p>
             </div>
             
-            <div class="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+            <div class="w-full px-4">
+                <div class="flex flex-wrap justify-center gap-6 max-w-7xl mx-auto">
                 <PricingCard
                     v-for="plan in membershipLevels"
                     :key="plan.id"
@@ -234,6 +235,7 @@ const submitRegistration = () => {
                     :is-popular="plan.is_popular"
                     @select="selectPlan"
                 />
+                </div>
             </div>
             
             <div class="text-center text-sm text-muted-foreground">
