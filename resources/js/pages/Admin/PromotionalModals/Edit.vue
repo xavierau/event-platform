@@ -10,7 +10,7 @@
                             subtitle="Update promotional modal settings and content"
                         >
                             <template #actions>
-                                <Link :href="route('admin.promotional-modals.analytics', promotionalModal.id)" 
+                                <Link :href="route('admin.promotional-modals.show-analytics', promotionalModal.id)" 
                                       class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 focus:outline-none focus:border-blue-700 focus:ring focus:ring-blue-200 disabled:opacity-25 transition">
                                     View Analytics
                                 </Link>
