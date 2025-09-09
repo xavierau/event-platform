@@ -31,7 +31,38 @@ return new class extends Migration
                 $table->index(['component', 'created_at']);
                 $table->index(['user_id', 'created_at']);
             });
+        } else {
+            // Table exists, check if we need to add missing constraints or columns
+            Schema::table('frontend_logs', function (Blueprint $table) {
+                // Only add foreign key if it doesn't exist
+                if (! $this->foreignKeyExists('frontend_logs', 'frontend_logs_user_id_foreign')) {
+                    $table->foreign('user_id', 'frontend_logs_user_id_foreign')
+                        ->references('id')
+                        ->on('users')
+                        ->nullOnDelete();
+                }
+            });
         }
+    }
+
+    /**
+     * Check if a foreign key constraint exists.
+     */
+    private function foreignKeyExists(string $table, string $constraintName): bool
+    {
+        $connection = Schema::getConnection();
+        $databaseName = $connection->getDatabaseName();
+        
+        $result = $connection->select("
+            SELECT CONSTRAINT_NAME 
+            FROM information_schema.KEY_COLUMN_USAGE 
+            WHERE TABLE_SCHEMA = ? 
+            AND TABLE_NAME = ? 
+            AND CONSTRAINT_NAME = ?
+            AND REFERENCED_TABLE_NAME IS NOT NULL
+        ", [$databaseName, $table, $constraintName]);
+
+        return count($result) > 0;
     }
 
     /**
