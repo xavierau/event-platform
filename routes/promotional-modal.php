@@ -62,10 +62,10 @@ Route::middleware(['web', 'auth'])->prefix('admin/api')->group(function () {
 
     // Analytics endpoints
     Route::get('/promotional-modals/{promotional_modal}/analytics', [AdminPromotionalModalController::class, 'analytics'])
-        ->name('admin.promotional-modals.analytics');
+        ->name('admin.api.promotional-modals.analytics');
 
     Route::get('/promotional-modals/system/analytics', [AdminPromotionalModalController::class, 'systemAnalytics'])
-        ->name('admin.promotional-modals.system-analytics');
+        ->name('admin.api.promotional-modals.system-analytics');
 });
 
 // Admin web routes for promotional modal management pages
@@ -87,6 +87,9 @@ Route::middleware(['web', 'auth'])->prefix('admin')->group(function () {
 
     Route::delete('/promotional-modals/{promotional_modal}', [WebPromotionalModalController::class, 'destroy'])
         ->name('admin.promotional-modals.destroy');
+
+    Route::get('/promotional-modals/{promotional_modal}/analytics', [WebPromotionalModalController::class, 'showAnalytics'])
+        ->name('admin.promotional-modals.show-analytics');
 
     Route::get('/promotional-modals/analytics', [WebPromotionalModalController::class, 'analytics'])
         ->name('admin.promotional-modals.analytics');
