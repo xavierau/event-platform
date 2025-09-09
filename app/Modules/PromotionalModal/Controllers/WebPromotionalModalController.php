@@ -271,6 +271,16 @@ class WebPromotionalModalController extends Controller
     }
 
     /**
+     * Display the analytics page for a specific promotional modal.
+     */
+    public function showAnalytics(PromotionalModal $promotionalModal): Response
+    {
+        return Inertia::render('Admin/PromotionalModals/ShowAnalytics', [
+            'promotionalModal' => $promotionalModal
+        ]);
+    }
+
+    /**
      * Calculate conversion rate for a modal.
      */
     private function calculateConversionRate(PromotionalModal $modal): float
