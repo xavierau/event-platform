@@ -1573,7 +1573,8 @@
             "title": "Create an account",
             "description": "Enter your details below to create your account",
             "page_title": "Sign up",
-            "submit": "Create Account"
+            "submit": "Create Account",
+            "with_plan": "Sign up with Plan"
         },
         "no_account": "Don't have an account?",
         "sign_up": "Sign up",
@@ -1615,6 +1616,30 @@
         "logged_out": "You have been logged out successfully.",
         "session_expired": "Your session has expired. Please log in again.",
         "have_account": "Already have an account?"
+    },
+    "pricing": {
+        "choose_your_plan": "Choose Your Plan",
+        "plan_description": "Select the perfect plan for your event management needs",
+        "free": "Free",
+        "month": "month",
+        "select_plan": "Select Plan",
+        "most_popular": "Most Popular"
+    },
+    "registration": {
+        "steps": {
+            "choose_plan": "Choose Plan",
+            "create_account": "Create Account"
+        },
+        "create_account": "Create Your Account",
+        "selected_plan": "Selected Plan: {plan}",
+        "change_plan": "Change Plan",
+        "success_message": "Registration successful! Welcome to our platform.",
+        "errors": {
+            "email_taken": "This email address is already registered.",
+            "invalid_plan": "The selected plan is no longer available.",
+            "general": "Registration failed. Please check your details and try again.",
+            "server_error": "Server error occurred. Please try again later."
+        }
     },
     "platform": {
         "app_name": "ShowEasy",
