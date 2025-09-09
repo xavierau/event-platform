@@ -1573,7 +1573,8 @@
             "title": "建立一個帳戶",
             "description": "在下方輸入您的詳細資訊以建立您的帳戶",
             "page_title": "註冊",
-            "submit": "建立帳戶"
+            "submit": "建立帳戶",
+            "with_plan": "註冊會員方案"
         },
         "no_account": "還沒有帳戶嗎？",
         "sign_up": "註冊",
@@ -1615,6 +1616,30 @@
         "logged_out": "您已成功登出。",
         "session_expired": "您的連線階段已過期，請重新登入。",
         "have_account": "已經有帳戶了？"
+    },
+    "pricing": {
+        "choose_your_plan": "選擇您的方案",
+        "plan_description": "為您的活動管理需求選擇完美的方案",
+        "free": "免費",
+        "month": "月",
+        "select_plan": "選擇方案",
+        "most_popular": "最受歡迎"
+    },
+    "registration": {
+        "steps": {
+            "choose_plan": "選擇方案",
+            "create_account": "建立帳戶"
+        },
+        "create_account": "建立您的帳戶",
+        "selected_plan": "已選擇方案：{plan}",
+        "change_plan": "更改方案",
+        "success_message": "註冊成功！歡迎加入我們的平台。",
+        "errors": {
+            "email_taken": "此電子郵件地址已被註冊。",
+            "invalid_plan": "所選方案已不再可用。",
+            "general": "註冊失敗。請檢查您的詳細資訊並重試。",
+            "server_error": "伺服器錯誤。請稍後重試。"
+        }
     },
     "platform": {
         "app_name": "ShowEasy",
