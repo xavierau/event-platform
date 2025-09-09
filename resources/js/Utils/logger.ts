@@ -148,6 +148,94 @@ class Logger {
         this.log('error', component, message, data);
     }
 
+    // Registration specific logging methods
+    registration = {
+        pageVisit: (flowId: string, step: string, data?: any) => {
+            this.info('Registration', `Registration page visit: ${step}`, { 
+                flow_id: flowId, 
+                step, 
+                ...data 
+            });
+        },
+        
+        planSelected: (flowId: string, planData: any) => {
+            this.info('Registration', 'User selected membership plan', {
+                flow_id: flowId,
+                step: 'plan_selection',
+                plan_id: planData.id,
+                plan_slug: planData.slug,
+                plan_price: planData.price,
+                is_popular: planData.is_popular,
+            });
+        },
+        
+        formSubmitted: (flowId: string, formData: any) => {
+            this.info('Registration', 'Registration form submitted', {
+                flow_id: flowId,
+                step: 'form_submission',
+                email: formData.email,
+                name: formData.name,
+                mobile_number: formData.mobile_number,
+                selected_price_id: formData.selected_price_id,
+            });
+        },
+        
+        validationError: (flowId: string, errors: any, formData?: any) => {
+            this.error('Registration', 'Form validation errors occurred', {
+                flow_id: flowId,
+                step: 'form_validation',
+                validation_errors: errors,
+                email: formData?.email,
+                selected_price_id: formData?.selected_price_id,
+            });
+        },
+        
+        submitError: (flowId: string, error: any, formData?: any) => {
+            this.error('Registration', 'Registration form submission failed', {
+                flow_id: flowId,
+                step: 'form_submission_error',
+                error_message: error.message || error,
+                error_type: typeof error,
+                email: formData?.email,
+                selected_price_id: formData?.selected_price_id,
+            });
+        },
+        
+        redirectToStripe: (flowId: string, data?: any) => {
+            this.info('Registration', 'Redirecting user to Stripe checkout', {
+                flow_id: flowId,
+                step: 'stripe_redirect',
+                ...data,
+            });
+        },
+        
+        registrationSuccess: (flowId: string, data?: any) => {
+            this.info('Registration', 'Registration completed successfully', {
+                flow_id: flowId,
+                step: 'registration_complete',
+                ...data,
+            });
+        },
+        
+        registrationCancelled: (flowId: string, data?: any) => {
+            this.warn('Registration', 'Registration cancelled by user', {
+                flow_id: flowId,
+                step: 'registration_cancelled',
+                ...data,
+            });
+        },
+        
+        error: (flowId: string, message: string, error: any, context?: any) => {
+            this.error('Registration', message, {
+                flow_id: flowId,
+                error_message: error.message || error,
+                error_type: typeof error,
+                stack_trace: error.stack,
+                ...context,
+            });
+        },
+    };
+
     // QR Scanner specific logging methods
     qrScanner = {
         init: (data: any) => {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\FrontendLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -45,6 +46,28 @@ class FrontendLogController extends Controller
             // Add the data if present
             if (isset($logEntry['data'])) {
                 $context['data'] = $logEntry['data'];
+            }
+
+            // Store in database for queryable analytics
+            try {
+                FrontendLog::create([
+                    'level' => $logEntry['level'],
+                    'component' => $logEntry['component'],
+                    'message' => $logEntry['message'],
+                    'data' => $logEntry['data'] ?? null,
+                    'client_timestamp' => $logEntry['timestamp'],
+                    'url' => $logEntry['url'],
+                    'user_agent' => $logEntry['userAgent'],
+                    'ip_address' => $request->ip(),
+                    'session_id' => session()->getId(),
+                    'user_id' => $user?->id,
+                ]);
+            } catch (\Exception $e) {
+                // Log database storage failure but don't fail the request
+                Log::channel('frontend')->error('[FRONTEND] Failed to store log in database', [
+                    'error' => $e->getMessage(),
+                    'original_log' => $logEntry,
+                ]);
             }
 
             // Log based on level using dedicated frontend channel
