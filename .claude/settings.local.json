@@ -69,7 +69,8 @@
       "Bash(node:*)",
       "Bash(timeout 10s npm run dev)",
       "mcp__playwright__browser_wait_for",
-      "mcp__playwright__browser_network_requests"
+      "mcp__playwright__browser_network_requests",
+      "mcp__playwright__browser_fill_form"
     ],
     "deny": []
   },

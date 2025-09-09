@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { ref, computed, onMounted, watch } from 'vue';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,8 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import { LoaderCircle, ArrowLeft } from 'lucide-vue-next';
 // @ts-expect-error - vue-i18n has no type definitions
 import { useI18n } from 'vue-i18n';
+import { logger } from '@/Utils/logger';
+import { showToast } from '@/composables/useToast';
 
 interface MembershipLevel {
     id: number;
@@ -27,11 +29,14 @@ interface MembershipLevel {
 
 const props = defineProps<{
     membershipLevels: MembershipLevel[];
+    flowId?: string;
 }>();
 
 const { t, locale } = useI18n();
 const currentStep = ref<'pricing' | 'registration'>('pricing');
 const selectedPlan = ref<MembershipLevel | null>(null);
+const registrationFlowId = ref<string>(props.flowId || '');
+const hasFormErrors = ref(false);
 
 const form = useForm({
     name: '',
@@ -40,7 +45,46 @@ const form = useForm({
     password: '',
     password_confirmation: '',
     selected_price_id: '',
+    flow_id: registrationFlowId.value,
 });
+
+// Generate flow ID if not provided from backend
+onMounted(() => {
+    if (!registrationFlowId.value) {
+        registrationFlowId.value = crypto.randomUUID();
+        form.flow_id = registrationFlowId.value;
+    }
+    
+    // Log initial page visit
+    logger.registration.pageVisit(registrationFlowId.value, 'pricing_page_loaded', {
+        membership_levels_count: props.membershipLevels.length,
+        available_plans: props.membershipLevels.map(level => level.slug),
+    });
+});
+
+// Watch for form errors
+watch(() => form.errors, (newErrors) => {
+    hasFormErrors.value = Object.keys(newErrors).length > 0;
+    
+    if (hasFormErrors.value) {
+        logger.registration.validationError(
+            registrationFlowId.value, 
+            newErrors, 
+            {
+                email: form.email,
+                selected_price_id: form.selected_price_id,
+            }
+        );
+        
+        // Show user-friendly error message
+        const errorFields = Object.keys(newErrors);
+        const errorMessage = errorFields.length === 1 
+            ? `Please fix the error in the ${errorFields[0]} field.`
+            : `Please fix the errors in the following fields: ${errorFields.join(', ')}.`;
+            
+        showToast(errorMessage, 'error', 4000);
+    }
+}, { deep: true });
 
 const selectedPlanName = computed(() => {
     if (!selectedPlan.value) return '';
@@ -50,18 +94,89 @@ const selectedPlanName = computed(() => {
 const selectPlan = (plan: MembershipLevel) => {
     selectedPlan.value = plan;
     form.selected_price_id = plan.stripe_price_id;
+    
+    // Log plan selection
+    logger.registration.planSelected(registrationFlowId.value, plan);
+    
     currentStep.value = 'registration';
+    
+    // Log step change
+    logger.registration.pageVisit(registrationFlowId.value, 'registration_form_displayed', {
+        selected_plan: plan.slug,
+        plan_price: plan.price,
+    });
 };
 
 const goBackToPricing = () => {
+    logger.registration.pageVisit(registrationFlowId.value, 'back_to_pricing', {
+        previous_selection: selectedPlan.value?.slug,
+    });
+    
     currentStep.value = 'pricing';
 };
 
 const submitRegistration = () => {
+    // Clear any previous form errors for cleaner UI
+    hasFormErrors.value = false;
+    
+    // Log form submission attempt
+    logger.registration.formSubmitted(registrationFlowId.value, {
+        name: form.name,
+        email: form.email,
+        mobile_number: form.mobile_number,
+        selected_price_id: form.selected_price_id,
+    });
+    
     form.post(route('register.subscription.store'), {
         preserveScroll: true,
-        onSuccess: () => {
-            // Handled by redirect to Stripe Checkout or success page
+        onStart: () => {
+            logger.registration.pageVisit(registrationFlowId.value, 'form_submission_started', {
+                email: form.email,
+                selected_plan: form.selected_price_id,
+            });
+        },
+        onSuccess: (response) => {
+            logger.registration.registrationSuccess(registrationFlowId.value, {
+                email: form.email,
+                selected_plan: form.selected_price_id,
+                redirect_type: 'success',
+            });
+            
+            showToast(t('registration.success_message'), 'success', 3000);
+        },
+        onError: (errors) => {
+            logger.registration.submitError(registrationFlowId.value, {
+                message: 'Form submission failed with validation errors',
+                errors: errors,
+            }, {
+                email: form.email,
+                selected_price_id: form.selected_price_id,
+            });
+            
+            // Handle specific error cases
+            if (errors.email) {
+                showToast(t('registration.errors.email_taken'), 'error', 5000);
+            } else if (errors.selected_price_id) {
+                showToast(t('registration.errors.invalid_plan'), 'error', 5000);
+            } else {
+                showToast(t('registration.errors.general'), 'error', 5000);
+            }
+        },
+        onException: (exception) => {
+            logger.registration.error(registrationFlowId.value, 'Form submission exception', exception, {
+                email: form.email,
+                selected_price_id: form.selected_price_id,
+                step: 'form_submission',
+            });
+            
+            showToast(t('registration.errors.server_error'), 'error', 5000);
+        },
+        onFinish: () => {
+            logger.registration.pageVisit(registrationFlowId.value, 'form_submission_finished', {
+                email: form.email,
+                selected_plan: form.selected_price_id,
+                has_errors: hasFormErrors.value,
+            });
         },
     });
 };
