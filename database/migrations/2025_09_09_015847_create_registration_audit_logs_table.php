@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('registration_audit_logs', function (Blueprint $table) {
             $table->id();
-            $table->string('flow_id')->unique()->index(); // UUID to track entire registration flow
+            $table->string('flow_id')->index(); // UUID to track entire registration flow
             $table->string('step', 50)->index(); // step in registration process
             $table->string('action', 100)->index(); // action taken (e.g., form_submitted, validation_failed, stripe_checkout_created)
             $table->string('status', 50)->index(); // success, failed, pending
