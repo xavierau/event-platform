@@ -38,7 +38,14 @@ Route::middleware(['web'])->prefix('api')->group(function () {
 // Admin routes for managing promotional modals
 Route::middleware(['web', 'auth'])->prefix('admin/api')->group(function () {
     // CRUD operations
-    Route::apiResource('promotional-modals', AdminPromotionalModalController::class);
+    Route::apiResource('promotional-modals', AdminPromotionalModalController::class)
+        ->names([
+            'index' => 'admin.api.promotional-modals.index',
+            'store' => 'admin.api.promotional-modals.store', 
+            'show' => 'admin.api.promotional-modals.show',
+            'update' => 'admin.api.promotional-modals.update',
+            'destroy' => 'admin.api.promotional-modals.destroy'
+        ]);
 
     // Additional admin endpoints
     Route::post('/promotional-modals/{promotional_modal}/toggle', [AdminPromotionalModalController::class, 'toggleStatus'])
