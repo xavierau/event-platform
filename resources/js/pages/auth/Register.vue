@@ -35,19 +35,44 @@ const submit = () => {
             <div class="grid gap-6">
                 <div class="grid gap-2">
                     <Label for="name">{{ t('forms.fields.name.label') }}</Label>
-                    <Input id="name" type="text" required autofocus :tabindex="1" autocomplete="name" v-model="form.name" :placeholder="t('forms.fields.name.placeholder')" />
+                    <Input
+                        id="name"
+                        type="text"
+                        required
+                        autofocus
+                        :tabindex="1"
+                        autocomplete="name"
+                        v-model="form.name"
+                        :placeholder="t('forms.fields.name.placeholder')"
+                    />
                     <InputError :message="form.errors.name" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="email">{{ t('forms.fields.email.label') }}</Label>
-                    <Input id="email" type="email" required :tabindex="2" autocomplete="email" v-model="form.email" :placeholder="t('forms.fields.email.placeholder')" />
+                    <Input
+                        id="email"
+                        type="email"
+                        required
+                        :tabindex="2"
+                        autocomplete="email"
+                        v-model="form.email"
+                        :placeholder="t('forms.fields.email.placeholder')"
+                    />
                     <InputError :message="form.errors.email" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="mobile_number">{{ t('forms.fields.mobile_number.label') }}</Label>
-                    <Input id="mobile_number" type="tel" required :tabindex="3" autocomplete="tel" v-model="form.mobile_number" :placeholder="t('forms.fields.mobile_number.placeholder')" />
+                    <Input
+                        id="mobile_number"
+                        type="tel"
+                        required
+                        :tabindex="3"
+                        autocomplete="tel"
+                        v-model="form.mobile_number"
+                        :placeholder="t('forms.fields.mobile_number.placeholder')"
+                    />
                     <InputError :message="form.errors.mobile_number" />
                 </div>
 
@@ -85,9 +110,11 @@ const submit = () => {
                 </Button>
             </div>
 
-            <div class="text-center text-sm text-muted-foreground">
+            <div class="text-muted-foreground text-center text-sm">
                 {{ t('auth.have_account') }}
-                <TextLink :href="route('login')" class="underline underline-offset-4" :tabindex="7">{{ t('auth.login.submit') }}</TextLink>
+                <TextLink :href="route('login')" class="underline underline-offset-4" :tabindex="7">
+                    {{ t('auth.login.submit') }}
+                </TextLink>
             </div>
         </form>
     </AuthBase>
