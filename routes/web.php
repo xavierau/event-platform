@@ -196,6 +196,7 @@ Route::prefix('admin')
 
         // User Management
         Route::resource('users', UserController::class)->middleware('permission:manage-users');
+        Route::post('users/{user}/change-membership', [UserController::class, 'changeMembership'])->name('users.change-membership')->middleware('permission:manage-users');
         
         // Membership Levels Management
         Route::resource('membership-levels', MembershipLevelController::class);
