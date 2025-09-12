@@ -32,6 +32,7 @@ class User extends Authenticatable
         'email',
         'mobile_number',
         'password',
+        'email_verified_at',
         'provider',
         'provider_id',
         'provider_token',

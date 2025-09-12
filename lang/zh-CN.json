@@ -76,7 +76,11 @@
         "popular": "热门",
         "trending": "趋势",
         "featured": "精选",
-        "recommended": "推荐"
+        "recommended": "推荐",
+        "no_membership": "无会员资格",
+        "months": "个月",
+        "select_option": "选择一个选项",
+        "saved": "已保存！"
     },
     "actions": {
         "save": "保存",
@@ -183,7 +187,9 @@
         "show_more": "显示更多",
         "show_less": "显示更少",
         "clear": "清除",
-        "clear_all": "全部清除"
+        "clear_all": "全部清除",
+        "creating": "创建中...",
+        "create_user": "创建用户"
     },
     "navigation": {
         "home": "首页",
@@ -318,7 +324,14 @@
             "choose_file": "选择文件",
             "no_file_selected": "未选择文件",
             "drag_drop_files": "拖放文件到此处",
-            "optional": "（选填）"
+            "optional": "（选填）",
+            "enter_user_name": "请输入用户全名",
+            "enter_email_address": "请输入电子邮件地址", 
+            "enter_mobile_number": "请输入手机号码",
+            "enter_password": "请输入密码",
+            "confirm_password": "请确认密码",
+            "leave_empty_for_default": "留空以使用默认期限",
+            "admin_notes_optional": "关于此用户创建的可选备注"
         },
         "validation": {
             "required": "此字段为必填项",
@@ -380,6 +393,11 @@
                 "placeholder": "确认密码"
             }
         }
+    },
+    "helpers": {
+        "optional_membership_assignment": "可选择在创建时立即为此用户分配会员级别。",
+        "custom_duration_help": "覆盖默认会员期限。留空以使用会员级别的默认期限。",
+        "admin_notes_help": "记录创建此用户的原因或任何其他备注以供审计用途。"
     },
     "status": {
         "active": "激活",
@@ -580,6 +598,7 @@
         "name": "名称",
         "email": "电子邮件",
         "password": "密码",
+        "mobile_number": "手机号码",
         "phone": "电话",
         "address": "地址",
         "city": "城市",
@@ -687,6 +706,11 @@
         "terms_conditions": "条款与条件",
         "privacy_policy": "隐私政策",
         "membership_level": "会员等级",
+        "password_confirmation": "密码确认", 
+        "assign_membership_level": "分配会员等级",
+        "custom_duration_months": "自定义期限（月）",
+        "admin_notes": "管理员备注",
+        "current_membership": "当前会员资格",
         "commenting_blocked": "评论已禁用",
         "date_from": "起始日期",
         "date_to": "结束日期",

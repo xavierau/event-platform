@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Admin\CreateUserByAdminAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ChangeMembershipRequest;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Models\AdminAuditLog;
 use App\Models\User;
 use App\Modules\Membership\Actions\AssignMembershipLevelAction;
 use App\Modules\Membership\Models\MembershipLevel;
@@ -34,17 +38,52 @@ class UserController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): Response
     {
-        //
+        // Get all active membership levels
+        $membershipLevels = MembershipLevel::active()
+            ->ordered()
+            ->get()
+            ->map(function ($level) {
+                return [
+                    'id' => $level->id,
+                    'name' => $level->name,
+                    'description' => $level->description,
+                    'duration_months' => $level->duration_months,
+                    'price' => $level->price,
+                ];
+            });
+
+        return Inertia::render('Admin/Users/Create', [
+            'membershipLevels' => $membershipLevels,
+        ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        //
+        try {
+            $createUserAction = app(CreateUserByAdminAction::class);
+            
+            $user = $createUserAction->execute(
+                $request->validated(),
+                $request->membership_level_id,
+                $request->membership_duration_months,
+                $request->reason
+            );
+
+            return redirect()
+                ->route('admin.users.show', $user)
+                ->with('success', 'User created successfully.');
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Failed to create user: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -121,9 +160,9 @@ class UserController extends Controller
         $recentTransactions = $user->transactions->map(function ($transaction) {
             return [
                 'id' => $transaction->id,
-                'amount' => $transaction->amount,
-                'type' => $transaction->type,
-                'description' => $transaction->description,
+                'amount' => $transaction->total_amount,
+                'type' => $transaction->status->value ?? $transaction->status,
+                'description' => $transaction->notes,
                 'created_at' => $transaction->created_at,
             ];
         });
@@ -215,6 +254,63 @@ class UserController extends Controller
         }
 
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
+    }
+
+    /**
+     * Change user's membership level.
+     */
+    public function changeMembership(ChangeMembershipRequest $request, User $user, AssignMembershipLevelAction $assignMembershipLevelAction)
+    {
+        try {
+            $membershipLevel = MembershipLevel::findOrFail($request->membership_level_id);
+            
+            // Get current membership for audit purposes
+            $oldMembership = $user->currentMembership;
+            
+            // Assign new membership
+            $newMembership = $assignMembershipLevelAction->execute(
+                $user,
+                $membershipLevel,
+                $request->membership_duration_months
+            );
+
+            // Create audit log
+            $actionDetails = [
+                'old_membership' => $oldMembership ? [
+                    'id' => $oldMembership->id,
+                    'level_name' => $oldMembership->level?->name,
+                    'expires_at' => $oldMembership->expires_at,
+                ] : null,
+                'new_membership' => [
+                    'id' => $newMembership->id,
+                    'level_name' => $membershipLevel->name,
+                    'expires_at' => $newMembership->expires_at,
+                    'custom_duration_months' => $request->membership_duration_months,
+                ],
+            ];
+
+            AdminAuditLog::create([
+                'admin_user_id' => auth()->id(),
+                'target_user_id' => $user->id,
+                'action_type' => 'change_membership',
+                'action_details' => $actionDetails,
+                'reason' => $request->reason,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Membership changed successfully.',
+                'user' => $user->fresh(['currentMembership.level']),
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to change membership: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

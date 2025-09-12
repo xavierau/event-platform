@@ -76,7 +76,11 @@
         "popular": "熱門",
         "trending": "趨勢",
         "featured": "精選",
-        "recommended": "推薦"
+        "recommended": "推薦",
+        "no_membership": "無會員資格",
+        "months": "個月",
+        "select_option": "選擇一個選項",
+        "saved": "已儲存！"
     },
     "actions": {
         "save": "儲存",
@@ -183,7 +187,9 @@
         "show_more": "顯示更多",
         "show_less": "顯示更少",
         "clear": "清除",
-        "clear_all": "全部清除"
+        "clear_all": "全部清除",
+        "creating": "建立中...",
+        "create_user": "建立使用者"
     },
     "navigation": {
         "home": "首頁",
@@ -318,7 +324,14 @@
             "choose_file": "選擇檔案",
             "no_file_selected": "未選擇檔案",
             "drag_drop_files": "拖放檔案至此",
-            "optional": "(選填)"
+            "optional": "(選填)",
+            "enter_user_name": "請輸入使用者全名",
+            "enter_email_address": "請輸入電子郵件地址", 
+            "enter_mobile_number": "請輸入行動電話號碼",
+            "enter_password": "請輸入密碼",
+            "confirm_password": "請確認密碼",
+            "leave_empty_for_default": "留空以使用預設期限",
+            "admin_notes_optional": "關於此使用者建立的選填備註"
         },
         "validation": {
             "required": "此欄位為必填",
@@ -378,8 +391,21 @@
             "password_confirmation": {
                 "label": "確認密碼",
                 "placeholder": "確認密碼"
+            },
+            "membership_duration_months": {
+                "label": "自訂期限（月）",
+                "placeholder": "留空以使用預設期限"
+            },
+            "admin_notes": {
+                "label": "管理員備註",
+                "placeholder": "關於此使用者建立的選填備註"
             }
         }
+    },
+    "helpers": {
+        "optional_membership_assignment": "選擇性地在建立時立即為此使用者指派會員等級。",
+        "custom_duration_help": "覆蓋預設會員期限。留空以使用會員等級的預設期限。",
+        "admin_notes_help": "記錄建立此使用者的原因或任何其他備註以供稽核用途。"
     },
     "status": {
         "active": "啟用中",
@@ -582,6 +608,7 @@
         "name": "名稱",
         "email": "電子郵件",
         "password": "密碼",
+        "mobile_number": "手機號碼",
         "phone": "電話",
         "address": "地址",
         "city": "城市",
@@ -689,6 +716,11 @@
         "terms_conditions": "條款與條件",
         "privacy_policy": "隱私權政策",
         "membership_level": "會員等級",
+        "password_confirmation": "密碼確認", 
+        "assign_membership_level": "指派會員等級",
+        "custom_duration_months": "自訂期限（月）",
+        "admin_notes": "管理員備註",
+        "current_membership": "目前會員資格",
         "commenting_blocked": "評論已封鎖",
         "date_from": "開始日期",
         "date_to": "結束日期",

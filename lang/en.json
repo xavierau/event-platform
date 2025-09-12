@@ -76,7 +76,11 @@
         "popular": "Popular",
         "trending": "Trending",
         "featured": "Featured",
-        "recommended": "Recommended"
+        "recommended": "Recommended",
+        "no_membership": "No Membership",
+        "months": "months",
+        "select_option": "Select an option",
+        "saved": "Saved!"
     },
     "actions": {
         "save": "Save",
@@ -183,7 +187,9 @@
         "show_more": "Show More",
         "show_less": "Show Less",
         "clear": "Clear",
-        "clear_all": "Clear All"
+        "clear_all": "Clear All",
+        "creating": "Creating...",
+        "create_user": "Create User"
     },
     "navigation": {
         "home": "Home",
@@ -318,7 +324,14 @@
             "choose_file": "Choose a file",
             "no_file_selected": "No file selected",
             "drag_drop_files": "Drag and drop files here",
-            "optional": "(Optional)"
+            "optional": "(Optional)",
+            "enter_user_name": "Enter user's full name",
+            "enter_email_address": "Enter email address", 
+            "enter_mobile_number": "Enter mobile number",
+            "enter_password": "Enter password",
+            "confirm_password": "Confirm password",
+            "leave_empty_for_default": "Leave empty to use default duration",
+            "admin_notes_optional": "Optional notes about this user creation"
         },
         "validation": {
             "required": "This field is required",
@@ -378,8 +391,21 @@
             "password_confirmation": {
                 "label": "Confirm password",
                 "placeholder": "Confirm password"
+            },
+            "membership_duration_months": {
+                "label": "Custom Duration (months)",
+                "placeholder": "Leave empty to use default duration"
+            },
+            "admin_notes": {
+                "label": "Admin Notes",
+                "placeholder": "Optional notes about this user creation"
             }
         }
+    },
+    "helpers": {
+        "optional_membership_assignment": "Optionally assign a membership level to this user immediately upon creation.",
+        "custom_duration_help": "Override the default membership duration. Leave empty to use the membership level's default duration.",
+        "admin_notes_help": "Record the reason for creating this user or any additional notes for audit purposes."
     },
     "status": {
         "active": "Active",
@@ -581,6 +607,7 @@
         "name": "Name",
         "email": "Email",
         "password": "Password",
+        "mobile_number": "Mobile Number",
         "phone": "Phone",
         "address": "Address",
         "city": "City",
@@ -688,6 +715,11 @@
         "terms_conditions": "Terms & Conditions",
         "privacy_policy": "Privacy Policy",
         "membership_level": "Membership Level",
+        "password_confirmation": "Password Confirmation", 
+        "assign_membership_level": "Assign Membership Level",
+        "custom_duration_months": "Custom Duration (months)",
+        "admin_notes": "Admin Notes",
+        "current_membership": "Current Membership",
         "commenting_blocked": "Commenting Blocked",
         "date_from": "Date From",
         "date_to": "Date To",

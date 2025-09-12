@@ -7,7 +7,15 @@
                     <div
                         class="border-b border-gray-200 bg-white p-6 lg:p-8 dark:border-gray-700 dark:bg-gray-800 dark:bg-gradient-to-bl dark:from-gray-700/50 dark:via-transparent"
                     >
-                        <PageHeader :title="t('users.index_title')" :subtitle="t('users.index_subtitle')" />
+                        <div class="flex items-center justify-between">
+                            <PageHeader :title="t('users.index_title')" :subtitle="t('users.index_subtitle')" />
+                            <Link 
+                                :href="route('admin.users.create')"
+                                class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                            >
+                                {{ t('actions.create_user') }}
+                            </Link>
+                        </div>
 
                         <AdminDataTable>
                             <!-- Header Slot -->
