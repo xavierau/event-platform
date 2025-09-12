@@ -151,7 +151,7 @@ class WishlistService
                     'id' => $event->id,
                     'name' => $event->name,
                     'slug' => $event->slug,
-                    'href' => route('events.show', $event->slug),
+                    'href' => route('events.show', $event->id),
                     'image_url' => $event->getFirstMediaUrl('portrait_poster') ?: $event->getFirstMediaUrl('event_thumbnail') ?: 'https://via.placeholder.com/300x400.png?text=Event',
                     'price_from' => $prices->min() ? $prices->min() / 100 : null,
                     'price_to' => $prices->max() ? $prices->max() / 100 : null,
