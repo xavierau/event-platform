@@ -74,7 +74,7 @@ class InvitationController extends Controller
             ? ($organizer->name['en'] ?? $organizer->name[array_key_first($organizer->name)] ?? 'Unknown')
             : $organizer->name;
 
-        return Inertia::render('Auth/RegisterFromInvitation', [
+        return Inertia::render('auth/RegisterFromInvitation', [
             'invitation' => [
                 'organizer_name' => $organizerName,
                 'role' => $tokenData['role'],
@@ -96,7 +96,7 @@ class InvitationController extends Controller
         // Store invitation data in session for after login
         session(['pending_invitation' => $tokenData]);
 
-        return Inertia::render('Auth/LoginFromInvitation', [
+        return Inertia::render('auth/LoginFromInvitation', [
             'invitation' => [
                 'organizer_name' => $organizerName,
                 'role' => $tokenData['role'],
