@@ -125,6 +125,23 @@ const statusClass = (status: string | null): string => {
         default: return 'bg-gray-200 text-gray-800 dark:bg-gray-500 dark:text-gray-100';
     }
 };
+
+const formatTotalRevenue = (): string => {
+    // First try the default currency
+    if (statistics.total_revenue[statistics.default_currency]) {
+        return formatPrice(statistics.total_revenue[statistics.default_currency], statistics.default_currency);
+    }
+
+    // If default currency doesn't exist, use the first available currency
+    const currencies = Object.keys(statistics.total_revenue);
+    if (currencies.length > 0) {
+        const firstCurrency = currencies[0];
+        return formatPrice(statistics.total_revenue[firstCurrency], firstCurrency);
+    }
+
+    // If no revenue data, show 0 with default currency
+    return formatPrice(0, statistics.default_currency);
+};
 </script>
 
 <template>
@@ -192,7 +209,7 @@ const statusClass = (status: string | null): string => {
                                         <div class="ml-4">
                                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{{ t('bookings.stats.total_revenue') }}</p>
                                             <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                                                {{ formatPrice(statistics.total_revenue[statistics.default_currency] ?? 0, statistics.default_currency) }}
+                                                {{ formatTotalRevenue() }}
                                             </p>
                                         </div>
                                     </div>

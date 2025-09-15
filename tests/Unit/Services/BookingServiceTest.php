@@ -397,7 +397,7 @@ class BookingServiceTest extends TestCase
         $this->assertIsArray($statistics['total_revenue']);
         $this->assertEquals(20000, $statistics['total_revenue']['USD']); // 4 confirmed transactions * $50.00
         $this->assertCount(5, $statistics['recent_bookings']);
-        $this->assertEquals(config('app.currency'), $statistics['default_currency']);
+        $this->assertEquals(config('currency.default'), $statistics['default_currency']);
     }
 
     /** @test */

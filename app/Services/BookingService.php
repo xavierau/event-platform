@@ -592,7 +592,7 @@ class BookingService
             'used_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::USED)->count(),
             'cancelled_bookings' => (clone $baseQuery)->where('status', BookingStatusEnum::CANCELLED)->count(),
             'total_revenue' => $totalRevenueByCurrency,
-            'default_currency' => config('app.currency', 'USD'),
+            'default_currency' => config('currency.default', 'USD'),
             'recent_bookings' => (clone $baseQuery)
                 ->with(['user', 'event:id,name']) // Remove column selection from user relationship
                 ->latest()
