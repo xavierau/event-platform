@@ -128,19 +128,19 @@ const statusClass = (status: string | null): string => {
 
 const formatTotalRevenue = (): string => {
     // First try the default currency
-    if (statistics.total_revenue[statistics.default_currency]) {
-        return formatPrice(statistics.total_revenue[statistics.default_currency], statistics.default_currency);
+    if (props.statistics.total_revenue[props.statistics.default_currency]) {
+        return formatPrice(props.statistics.total_revenue[props.statistics.default_currency], props.statistics.default_currency);
     }
 
     // If default currency doesn't exist, use the first available currency
-    const currencies = Object.keys(statistics.total_revenue);
+    const currencies = Object.keys(props.statistics.total_revenue);
     if (currencies.length > 0) {
         const firstCurrency = currencies[0];
-        return formatPrice(statistics.total_revenue[firstCurrency], firstCurrency);
+        return formatPrice(props.statistics.total_revenue[firstCurrency], firstCurrency);
     }
 
     // If no revenue data, show 0 with default currency
-    return formatPrice(0, statistics.default_currency);
+    return formatPrice(0, props.statistics.default_currency);
 };
 </script>
 
