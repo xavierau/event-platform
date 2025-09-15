@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\RoleNameEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreCouponRequest;
+use App\Http\Requests\Admin\UpdateCouponRequest;
 use App\Models\Organizer;
 use App\Modules\Coupon\DataTransferObjects\CouponData;
 use App\Modules\Coupon\Models\Coupon;
@@ -10,7 +13,6 @@ use App\Modules\Coupon\Services\CouponService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -22,13 +24,48 @@ class CouponController extends Controller
     }
 
     /**
+     * Get organizers based on user permissions
+     */
+    private function getFilteredOrganizers(): \Illuminate\Database\Eloquent\Collection
+    {
+        $user = auth()->user();
+        $isPlatformAdmin = $user->hasRole(RoleNameEnum::ADMIN);
+
+        $organizersQuery = Organizer::orderBy('name');
+        if (! $isPlatformAdmin) {
+            $userOrganizerIds = $user->organizers->pluck('id');
+            $organizersQuery->whereIn('id', $userOrganizerIds);
+        }
+
+        return $organizersQuery->get(['id', 'name']);
+    }
+
+    /**
+     * Filter coupons query based on user permissions
+     */
+    private function filterCouponsForUser($query)
+    {
+        $user = auth()->user();
+        $isPlatformAdmin = $user->hasRole(RoleNameEnum::ADMIN);
+
+        if (! $isPlatformAdmin) {
+            $userOrganizerIds = $user->organizers->pluck('id');
+            $query->whereIn('organizer_id', $userOrganizerIds);
+        }
+
+        return $query;
+    }
+
+    /**
      * Display a listing of coupons
      */
     public function index(Request $request): InertiaResponse
     {
-        $organizers = Organizer::orderBy('name')->get(['id', 'name']);
-        // TODO: Implement filtering/searching by organizer, status, type, etc.
-        $coupons = Coupon::with('organizer')
+        $organizers = $this->getFilteredOrganizers();
+
+        $couponsQuery = $this->filterCouponsForUser(Coupon::with('organizer'));
+
+        $coupons = $couponsQuery
             ->when($request->input('organizer_id'), function ($query) use ($request) {
                 return $query->where('organizer_id', $request->input('organizer_id'));
             })
@@ -36,8 +73,8 @@ class CouponController extends Controller
                 return $query->where('type', $request->input('type'));
             })
             ->when($request->input('search'), function ($query) use ($request) {
-                return $query->where('name', 'like', '%' . $request->input('search') . '%')
-                    ->orWhere('code', 'like', '%' . $request->input('search') . '%');
+                return $query->where('name', 'like', '%'.$request->input('search').'%')
+                    ->orWhere('code', 'like', '%'.$request->input('search').'%');
             })
             ->orderBy('created_at', 'desc')
             ->paginate();
@@ -46,7 +83,7 @@ class CouponController extends Controller
             'pageTitle' => 'Coupons',
             'breadcrumbs' => [
                 ['text' => 'Admin', 'href' => route('admin.dashboard')],
-                ['text' => 'Coupons']
+                ['text' => 'Coupons'],
             ],
             'coupons' => $coupons,
             'organizers' => $organizers,
@@ -58,14 +95,14 @@ class CouponController extends Controller
      */
     public function create(): InertiaResponse
     {
-        $organizers = Organizer::orderBy('name')->get(['id', 'name']);
+        $organizers = $this->getFilteredOrganizers();
 
         return Inertia::render('Admin/Coupons/Create', [
             'pageTitle' => 'Create New Coupon',
             'breadcrumbs' => [
                 ['text' => 'Admin', 'href' => route('admin.dashboard')],
                 ['text' => 'Coupons', 'href' => route('admin.coupons.index')],
-                ['text' => 'Create New Coupon']
+                ['text' => 'Create New Coupon'],
             ],
             'organizers' => $organizers,
         ]);
@@ -74,20 +111,9 @@ class CouponController extends Controller
     /**
      * Store a newly created coupon
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreCouponRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'organizer_id' => ['required', 'integer', 'exists:organizers,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'code' => ['required', 'string', 'unique:coupons,code'],
-            'type' => ['required', 'string', 'in:single_use,multi_use'],
-            'discount_value' => ['required', 'integer', 'min:1'],
-            'discount_type' => ['required', 'string', 'in:fixed,percentage'],
-            'max_issuance' => ['nullable', 'integer', 'min:1'],
-            'valid_from' => ['nullable', 'date'],
-            'expires_at' => ['nullable', 'date', 'after:valid_from'],
-        ]);
+        $validated = $request->validated();
 
         Log::info('Coupon creation validated data:', $validated);
 
@@ -113,7 +139,7 @@ class CouponController extends Controller
             'breadcrumbs' => [
                 ['text' => 'Admin', 'href' => route('admin.dashboard')],
                 ['text' => 'Coupons', 'href' => route('admin.coupons.index')],
-                ['text' => $coupon->name]
+                ['text' => $coupon->name],
             ],
             'coupon' => $coupon,
             'statistics' => $statistics,
@@ -125,7 +151,7 @@ class CouponController extends Controller
      */
     public function edit(Coupon $coupon): InertiaResponse
     {
-        $organizers = Organizer::orderBy('name')->get(['id', 'name']);
+        $organizers = $this->getFilteredOrganizers();
 
         // Convert model to array to ensure proper data structure
         $couponArray = $coupon->toArray();
@@ -150,7 +176,7 @@ class CouponController extends Controller
             'breadcrumbs' => [
                 ['text' => 'Admin', 'href' => route('admin.dashboard')],
                 ['text' => 'Coupons', 'href' => route('admin.coupons.index')],
-                ['text' => 'Edit Coupon']
+                ['text' => 'Edit Coupon'],
             ],
             'coupon' => $couponData,
             'organizers' => $organizers,
@@ -160,20 +186,9 @@ class CouponController extends Controller
     /**
      * Update the specified coupon
      */
-    public function update(Request $request, Coupon $coupon): RedirectResponse
+    public function update(UpdateCouponRequest $request, Coupon $coupon): RedirectResponse
     {
-        $validated = $request->validate([
-            'organizer_id' => ['required', 'integer', 'exists:organizers,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'code' => ['required', 'string', Rule::unique('coupons', 'code')->ignore($coupon->id)],
-            'type' => ['required', 'string', 'in:single_use,multi_use'],
-            'discount_value' => ['required', 'integer', 'min:1'],
-            'discount_type' => ['required', 'string', 'in:fixed,percentage'],
-            'max_issuance' => ['nullable', 'integer', 'min:1'],
-            'valid_from' => ['nullable', 'date'],
-            'expires_at' => ['nullable', 'date', 'after:valid_from'],
-        ]);
+        $validated = $request->validated();
 
         Log::info('Coupon update validated data:', $validated);
 
@@ -196,7 +211,7 @@ class CouponController extends Controller
     {
         $deleted = $this->couponService->deleteCoupon($coupon->id);
 
-        if (!$deleted) {
+        if (! $deleted) {
             return redirect()->route('admin.coupons.index')
                 ->with('error', 'Failed to delete coupon.');
         }
@@ -214,7 +229,7 @@ class CouponController extends Controller
             'pageTitle' => 'Coupon Scanner',
             'breadcrumbs' => [
                 ['text' => 'Admin', 'href' => route('admin.dashboard')],
-                ['text' => 'Coupon Scanner']
+                ['text' => 'Coupon Scanner'],
             ],
         ]);
     }
