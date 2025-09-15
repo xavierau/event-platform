@@ -42,7 +42,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function createOrganizerLogin(Request $request): InertiaResponse
     {
-        return Inertia::render('Auth/OrganizerLogin', [
+        return Inertia::render('auth/Login', [
             'canResetPassword' => RouteFacade::has('password.request'),
             'status' => $request->session()->get('status'),
             'loginRoute' => route('organizer.login'),
