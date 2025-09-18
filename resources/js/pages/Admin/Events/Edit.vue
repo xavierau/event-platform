@@ -198,12 +198,18 @@ function handleLandscapePosterSelect(event: Event) {
     const target = event.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
         const file = target.files[0];
-        form.landscape_poster_upload = file;
+        form.uploaded_landscape_poster = file;
         landscapePosterPreview.value = URL.createObjectURL(file);
     }
 }
 
 const tFieldName = (field: string, locale: string): string => `${field}.${locale}`;
+
+function removeGalleryItem(mediaId: number) {
+    if (!form.removed_gallery_ids.includes(mediaId)) {
+        form.removed_gallery_ids.push(mediaId);
+    }
+}
 
 </script>
 
@@ -548,26 +554,63 @@ const tFieldName = (field: string, locale: string): string => `${field}.${locale
                             <!-- Portrait Poster -->
                             <div>
                                 <label for="uploaded_portrait_poster" class="block text-sm font-medium text-gray-700">Portrait Poster</label>
+
+                                <!-- Show existing portrait poster if it exists -->
+                                <div v-if="props.event?.portrait_poster_url && !portraitPosterPreview" class="mt-2 mb-4">
+                                    <p class="text-sm text-gray-600 mb-2">Current portrait poster:</p>
+                                    <img :src="props.event.portrait_poster_url" alt="Current Portrait Poster" class="h-32 w-24 object-cover rounded-md border border-gray-300">
+                                </div>
+
                                 <input type="file" @input="handlePortraitPosterSelect" id="uploaded_portrait_poster" class="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
                                 <p class="mt-1 text-sm text-gray-500">Recommended dimensions: e.g., 800x1200px.</p>
                                 <div v-if="form.errors.uploaded_portrait_poster" class="text-sm text-red-600 mt-1">{{ form.errors.uploaded_portrait_poster }}</div>
-                            </div>
-                            <div v-if="portraitPosterPreview">
-                                    <Label>Portrait poster Preview</Label>
-                                    <img :src="portraitPosterPreview" alt="Logo Preview" class="mt-2 h-32 w-32 object-cover rounded-md">
+
+                                <!-- Show preview of new upload -->
+                                <div v-if="portraitPosterPreview" class="mt-2">
+                                    <p class="text-sm text-gray-600 mb-2">New portrait poster preview:</p>
+                                    <img :src="portraitPosterPreview" alt="New Portrait Preview" class="h-32 w-24 object-cover rounded-md border border-gray-300">
                                 </div>
+                            </div>
 
                             <!-- Landscape Poster -->
                             <div>
                                 <label for="uploaded_landscape_poster" class="block text-sm font-medium text-gray-700">Landscape Poster</label>
-                                <input type="file" @input="form.uploaded_landscape_poster = ($event.target as HTMLInputElement).files?.[0] || null" id="uploaded_landscape_poster" class="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+
+                                <!-- Show existing landscape poster if it exists -->
+                                <div v-if="props.event?.landscape_poster_url && !landscapePosterPreview" class="mt-2 mb-4">
+                                    <p class="text-sm text-gray-600 mb-2">Current landscape poster:</p>
+                                    <img :src="props.event.landscape_poster_url" alt="Current Landscape Poster" class="h-24 w-32 object-cover rounded-md border border-gray-300">
+                                </div>
+
+                                <input type="file" @input="handleLandscapePosterSelect" id="uploaded_landscape_poster" class="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
                                 <p class="mt-1 text-sm text-gray-500">Recommended dimensions: 1200x675px.</p>
                                 <div v-if="form.errors.uploaded_landscape_poster" class="text-sm text-red-600 mt-1">{{ form.errors.uploaded_landscape_poster }}</div>
+
+                                <!-- Show preview of new upload -->
+                                <div v-if="landscapePosterPreview" class="mt-2">
+                                    <p class="text-sm text-gray-600 mb-2">New landscape poster preview:</p>
+                                    <img :src="landscapePosterPreview" alt="New Landscape Preview" class="h-24 w-32 object-cover rounded-md border border-gray-300">
+                                </div>
                             </div>
 
                             <!-- Gallery -->
                             <div>
                                 <label for="uploaded_gallery" class="block text-sm font-medium text-gray-700">Gallery Images</label>
+
+                                <!-- Show existing gallery images if they exist -->
+                                <div v-if="props.event?.gallery_items && props.event.gallery_items.filter(item => !form.removed_gallery_ids.includes(item.id)).length > 0" class="mt-2 mb-4">
+                                    <p class="text-sm text-gray-600 mb-2">Current gallery images:</p>
+                                    <div class="grid grid-cols-4 gap-4">
+                                        <div v-for="item in props.event.gallery_items.filter(item => !form.removed_gallery_ids.includes(item.id))" :key="item.id" class="relative">
+                                            <img :src="item.url" :alt="item.name || 'Gallery image'" class="h-24 w-24 object-cover rounded-md border border-gray-300">
+                                            <button type="button" @click="removeGalleryItem(item.id)"
+                                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">
+                                                ×
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <input type="file" @input="form.uploaded_gallery = Array.from(($event.target as HTMLInputElement).files || [])" multiple id="uploaded_gallery" class="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
                                 <p class="mt-1 text-sm text-gray-500">Upload multiple images for the event gallery.</p>
                                 <div v-if="form.errors.uploaded_gallery" class="text-sm text-red-600 mt-1">
