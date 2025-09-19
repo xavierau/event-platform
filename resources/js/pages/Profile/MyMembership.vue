@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue';
 import BottomNavbar from '../../components/Public/BottomNavbar.vue';
 import { User } from '@/types/index';
 import { useI18n } from 'vue-i18n';
+import FrontendFooter from '@/components/FrontendFooter.vue';
 
 const { t } = useI18n();
 
@@ -76,7 +77,10 @@ onMounted(() => {
             </section>
         </main>
 
-        <BottomNavbar />
+        <FrontendFooter />
+
+
+<!--        <BottomNavbar />-->
     </div>
 </template>
 
