@@ -80,7 +80,11 @@
         "no_membership": "No Membership",
         "months": "months",
         "select_option": "Select an option",
-        "saved": "Saved!"
+        "saved": "Saved!",
+        "date_tbd": "Date TBD",
+        "event_date": "Event Date",
+        "dismiss": "Dismiss",
+        "welcome_title": "Welcome to ShowEasy"
     },
     "actions": {
         "save": "Save",
@@ -188,6 +192,7 @@
         "show_less": "Show Less",
         "clear": "Clear",
         "clear_all": "Clear All",
+        "search": "Search",
         "creating": "Creating...",
         "create_user": "Create User"
     },
@@ -843,6 +848,7 @@
     "bookings": {
         "index_title": "Bookings",
         "index_subtitle": "Manage and view all bookings across events.",
+        "my_bookings": "My Bookings",
         "my_bookings_title": "My Bookings",
         "my_bookings_subtitle": "View and manage your event bookings",
         "create_booking": "Create Booking",
@@ -925,6 +931,14 @@
             "status": "Status",
             "event": "Event",
             "date_range": "Date Range"
+        },
+        "empty": {
+            "no_upcoming": "No upcoming events",
+            "no_past": "No past events",
+            "no_bookings": "No bookings",
+            "upcoming_description": "You don't have any upcoming bookings. Explore events and book your next experience!",
+            "past_description": "You don't have any past bookings yet.",
+            "all_description": "You don't have any bookings yet. Start exploring amazing events!"
         }
     },
     "organizers": {
@@ -1290,15 +1304,41 @@
             "fully_used": "Fully Used"
         },
         "usage": {
-            "recent_usage": "Recent Usage"
+            "recent_usage": "Recent Usage",
+            "uses": "uses",
+            "at": "at"
         },
         "actions": {
             "redeem_by_pin": "Redeem by PIN",
-            "show_qr_code": "Show QR Code"
+            "show_qr_code": "Show QR Code",
+            "redeem_coupon": "Redeem Coupon"
         },
         "filters": {
             "all_coupons": "All Coupons",
             "fully_used": "Fully Used"
+        },
+        "empty": {
+            "no_coupons_found": "No coupons found",
+            "no_coupons_yet": "You don't have any coupons yet. Check back later for available coupons!",
+            "try_adjusting": "Try adjusting your search or filters."
+        },
+        "errors": {
+            "pin_length": "PIN must be exactly 6 digits",
+            "invalid_pin": "Invalid PIN code",
+            "generic_error": "An error occurred while processing your request"
+        },
+        "modals": {
+            "qr_title": "QR Code",
+            "qr_alt_text": "Coupon QR Code",
+            "generating_qr": "Generating QR code...",
+            "qr_instruction": "Show this QR code to the merchant to redeem your coupon.",
+            "pin_title": "Redeem by PIN",
+            "pin_process_title": "How it works",
+            "pin_step_1": "1. Tell the merchant you want to use a coupon",
+            "pin_step_2": "2. They will provide you with a 6-digit PIN",
+            "pin_step_3": "3. Enter the PIN below to redeem your coupon",
+            "merchant_pin_label": "6-Digit Merchant PIN",
+            "pin_placeholder": "123456"
         }
     },
     "membership": {
@@ -1648,6 +1688,45 @@
         "logged_out": "You have been logged out successfully.",
         "session_expired": "Your session has expired. Please log in again.",
         "have_account": "Already have an account?"
+    },
+    "email_verification": {
+        "title": "Verify email",
+        "page_title": "Email verification",
+        "description": "Please verify your email address by clicking on the link we just emailed to you.",
+        "unverified_message": "Please verify your email address to access all features.",
+        "expiration_info": "Verification links expire after 60 minutes.",
+        "resend": "Resend verification email",
+        "sending": "Sending...",
+        "link_sent_message": "A new verification link has been sent to the email address you provided during registration.",
+        "dismiss": "Dismiss"
+    },
+    "profile": {
+        "my_profile": "My Profile",
+        "back": "← Back",
+        "profile_information": "Profile Information",
+        "edit": "Edit",
+        "cancel": "Cancel",
+        "member_since": "Member since",
+        "name": "Name",
+        "email": "Email",
+        "save_changes": "Save Changes",
+        "saving": "Saving...",
+        "email_verification_required": "Email Verification Required",
+        "email_unverified_message": "Your email address is unverified. Please check your email and click the verification link.",
+        "verification_expire_info": "Verification links expire after 60 minutes.",
+        "resend_verification_email": "Resend Verification Email",
+        "verification_link_sent": "✓ A new verification link has been sent to your email address.",
+        "membership": "Membership",
+        "manage": "Manage",
+        "show_qr": "Show QR",
+        "standard": "Standard",
+        "free": "Free",
+        "expires_on": "Expires on",
+        "upgrade_to_unlock": "Upgrade to unlock premium features",
+        "upgrade": "Upgrade →",
+        "membership_qr_title": "Membership QR Code",
+        "generating_qr": "Generating QR Code...",
+        "qr_verification_instruction": "Present this QR code for membership verification"
     },
     "pricing": {
         "choose_your_plan": "Choose Your Plan",

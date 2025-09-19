@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import LocaleSwitcher from '@/components/Shared/LocaleSwitcher.vue';
+import EmailVerificationAlert from '@/components/Shared/EmailVerificationAlert.vue';
 import { getInitials } from '@/composables/useInitials';
 import type { User } from '@/types';
 // @ts-expect-error - vue-i18n has no type definitions
@@ -29,8 +30,12 @@ const isAuthenticated = computed(() => !!auth.value?.user);
 </script>
 
 <template>
-  <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b dark:border-gray-700">
-    <div class="container mx-auto flex justify-between items-center p-2">
+  <div>
+    <!-- Email Verification Alert -->
+    <EmailVerificationAlert />
+
+    <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 border-b dark:border-gray-700">
+      <div class="container mx-auto flex justify-between items-center p-2">
       <!-- Left side: Logo, Location, Search -->
       <div class="flex items-center space-x-4 flex-1 min-w-0">
 
@@ -90,5 +95,6 @@ const isAuthenticated = computed(() => !!auth.value?.user);
         </template>
       </div>
     </div>
-  </header>
+    </header>
+  </div>
 </template>

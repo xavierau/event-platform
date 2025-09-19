@@ -66,7 +66,11 @@ const submit = () => {
                             required
                             autocomplete="username"
                             placeholder="Email address"
+                            :disabled="!user.email_verified_at"
                         />
+                        <p v-if="!user.email_verified_at" class="text-sm text-muted-foreground">
+                            Email editing is disabled until your email address is verified.
+                        </p>
                         <InputError class="mt-2" :message="form.errors.email" />
                     </div>
 
@@ -84,21 +88,34 @@ const submit = () => {
                         <InputError class="mt-2" :message="form.errors.mobile_number" />
                     </div>
 
-                    <div v-if="mustVerifyEmail && !user.email_verified_at">
-                        <p class="-mt-4 text-sm text-muted-foreground">
-                            Your email address is unverified.
-                            <Link
-                                :href="route('verification.send')"
-                                method="post"
-                                as="button"
-                                class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                            >
-                                Click here to resend the verification email.
-                            </Link>
-                        </p>
+                    <div v-if="mustVerifyEmail && !user.email_verified_at" class="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
+                        <div class="flex items-start space-x-3">
+                            <svg class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                            <div class="flex-1">
+                                <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                                    Email Verification Required
+                                </h3>
+                                <div class="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                                    <p>Your email address is unverified. Please check your email and click the verification link.</p>
+                                    <p class="mt-1">Verification links expire after 60 minutes.</p>
+                                </div>
+                                <div class="mt-3">
+                                    <Link
+                                        :href="route('verification.send')"
+                                        method="post"
+                                        as="button"
+                                        class="inline-flex items-center rounded-md bg-yellow-100 px-3 py-2 text-sm font-medium text-yellow-800 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 dark:bg-yellow-900/50 dark:text-yellow-200 dark:hover:bg-yellow-900"
+                                    >
+                                        Resend Verification Email
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
 
-                        <div v-if="status === 'verification-link-sent'" class="mt-2 text-sm font-medium text-green-600">
-                            A new verification link has been sent to your email address.
+                        <div v-if="status === 'verification-link-sent'" class="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
+                            ✓ A new verification link has been sent to your email address.
                         </div>
                     </div>
 

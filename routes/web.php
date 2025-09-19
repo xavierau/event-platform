@@ -68,20 +68,10 @@ Route::get('/invitation/accept', [\App\Http\Controllers\InvitationController::cl
 Route::post('/invitation/complete-registration', [\App\Http\Controllers\InvitationController::class, 'completeRegistration'])
     ->name('invitation.complete-registration');
 
-// --- AUTHENTICATED USER ROUTES ---
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Dashboard & Profile
-//    Route::get('/dashboard', fn() => Inertia::render('Dashboard'))->name('dashboard');
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // User-specific pages
-    Route::get('/my-bookings', [MyBookingsController::class, 'index'])->name('my-bookings');
+// --- AUTHENTICATED USER ROUTES (Basic Features) ---
+Route::middleware(['auth'])->group(function () {
+    // Wishlist features - allow without verification
     Route::get('/my-wishlist', [MyWishlistController::class, 'index'])->name('my-wishlist');
-    Route::get('/my-wallet', [MyWalletController::class, 'index'])->name('my-wallet');
-    Route::get('/my-coupons', [MyCouponsController::class, 'index'])->name('my-coupons');
-    Route::get('/my-membership', [ProfileController::class, 'myMembership'])->name('my-membership');
 
     // Wishlist API-like routes (session-based)
     Route::prefix('wishlist')->group(function () {
@@ -92,6 +82,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{event}/toggle', [\App\Http\Controllers\Api\WishlistController::class, 'toggle']);
         Route::get('/{event}/check', [\App\Http\Controllers\Api\WishlistController::class, 'check']);
     });
+
+    // Profile management - requires verification
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Financial and booking features - require verification
+    Route::get('/my-bookings', [MyBookingsController::class, 'index'])->name('my-bookings');
+    Route::get('/my-wallet', [MyWalletController::class, 'index'])->name('my-wallet');
+    Route::get('/my-coupons', [MyCouponsController::class, 'index'])->name('my-coupons');
+    Route::get('/my-membership', [ProfileController::class, 'myMembership'])->name('my-membership');
 
     // Wallet API-like routes (session-based)
     Route::prefix('wallet')->group(function () {
@@ -107,6 +108,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Booking Initiation
     Route::post('/bookings/initiate', [BookingController::class, 'initiateBooking'])->name('bookings.initiate');
+});
+
+// --- VERIFIED USER ROUTES (Sensitive Features) ---
+Route::middleware(['auth', 'verified'])->group(function () {
 
     // Comments
     Route::post('/events/{event}/comments', [CommentController::class, 'store'])->name('events.comments.store');
@@ -120,7 +125,7 @@ Route::prefix('admin')
     ->group(function () {
         // Dashboard and core functionality
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-        
+
         // Events and related resources
         Route::post('editor/image-upload', [EditorUploadController::class, 'uploadImage'])->name('editor.image.upload');
         Route::resource('events', EventController::class)->except(['show']);
@@ -133,19 +138,19 @@ Route::prefix('admin')
             ->name('events.ticket-definitions');
         Route::post('bookings/search-users', [AdminBookingController::class, 'searchUsers'])
             ->name('bookings.search-users');
-        
+
         // Organizer management
         Route::resource('organizers', OrganizerController::class);
         Route::post('organizers/{organizer}/invite', [OrganizerController::class, 'inviteUser'])->name('organizers.invite');
-        
+
         // Venues
         Route::post('venues/{venue}', [VenueController::class, 'update'])->name('venues.update.post');
         Route::resource('venues', VenueController::class);
-        
+
         // Coupons
         Route::resource('coupons', CouponController::class);
         Route::get('coupon-scanner', [CouponController::class, 'scanner'])->name('coupons.scanner');
-        
+
         // Mass Coupon Assignment routes
         Route::prefix('coupon-assignment')
             ->name('coupon-assignment.')->group(function () {
@@ -161,14 +166,14 @@ Route::prefix('admin')
         Route::post('/comments/{comment}/approve', [CommentController::class, 'approve']);
         Route::put('/comments/{comment}/reject', [CommentController::class, 'reject']);
         Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
-        
+
         // Scanner tools
         Route::prefix('qr-scanner')->name('qr-scanner.')->group(function () {
             Route::get('/', [QrScannerController::class, 'index'])->name('index');
             Route::post('/validate', [QrScannerController::class, 'validateQrCode'])->name('validate');
             Route::post('/check-in', [QrScannerController::class, 'checkIn'])->name('check-in');
         });
-        
+
         Route::prefix('member-scanner')->name('member-scanner.')->group(function () {
             Route::get('/', [MemberScannerController::class, 'index'])->name('index');
             Route::post('/validate', [MemberScannerController::class, 'validateMember'])->name('validate');
@@ -185,7 +190,7 @@ Route::prefix('admin')
         // Site-wide settings and management
         Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
         Route::put('settings', [SiteSettingController::class, 'update'])->name('settings.update');
-        
+
         // Platform-wide taxonomies
         Route::resource('categories', CategoryController::class);
         Route::resource('tags', TagController::class);
@@ -203,7 +208,7 @@ Route::prefix('admin')
         // User Management
         Route::resource('users', UserController::class)->middleware('permission:manage-users');
         Route::post('users/{user}/change-membership', [UserController::class, 'changeMembership'])->name('users.change-membership')->middleware('permission:manage-users');
-        
+
         // Membership Levels Management
         Route::resource('membership-levels', MembershipLevelController::class);
         Route::get('membership-levels/{membershipLevel}/users', [MembershipLevelController::class, 'users'])->name('membership-levels.users');

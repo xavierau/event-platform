@@ -80,7 +80,11 @@
         "no_membership": "無會員資格",
         "months": "個月",
         "select_option": "選擇一個選項",
-        "saved": "已儲存！"
+        "saved": "已儲存！",
+        "date_tbd": "日期待定",
+        "event_date": "活動日期",
+        "dismiss": "關閉",
+        "welcome_title": "歡迎來到 ShowEasy"
     },
     "actions": {
         "save": "儲存",
@@ -188,6 +192,7 @@
         "show_less": "顯示更少",
         "clear": "清除",
         "clear_all": "全部清除",
+        "search": "搜尋",
         "creating": "建立中...",
         "create_user": "建立使用者"
     },
@@ -842,6 +847,7 @@
     "bookings": {
         "index_title": "預訂",
         "index_subtitle": "管理和檢視所有活動的預訂。",
+        "my_bookings": "我的預訂",
         "my_bookings_title": "我的預訂",
         "my_bookings_subtitle": "檢視和管理您的活動預訂",
         "create_booking": "建立預訂",
@@ -924,6 +930,14 @@
             "status": "狀態",
             "event": "活動",
             "date_range": "日期範圍"
+        },
+        "empty": {
+            "no_upcoming": "沒有即將到來的活動",
+            "no_past": "沒有過去的活動",
+            "no_bookings": "沒有預訂",
+            "upcoming_description": "您目前沒有即將到來的預訂。探索精彩活動，預訂您的下一次體驗！",
+            "past_description": "您還沒有任何過去的預訂。",
+            "all_description": "您還沒有任何預訂。開始探索精彩活動吧！"
         }
     },
     "organizers": {
@@ -1289,15 +1303,41 @@
             "fully_used": "已使用完"
         },
         "usage": {
-            "recent_usage": "最近使用"
+            "recent_usage": "最近使用",
+            "uses": "次使用",
+            "at": "於"
         },
         "actions": {
             "redeem_by_pin": "以 PIN 碼兌換",
-            "show_qr_code": "以 QR 碼兌換"
+            "show_qr_code": "顯示 QR 碼",
+            "redeem_coupon": "兌換優惠券"
         },
         "filters": {
             "all_coupons": "所有優惠券",
             "fully_used": "已使用完"
+        },
+        "empty": {
+            "no_coupons_found": "找不到優惠券",
+            "no_coupons_yet": "您目前還沒有任何優惠券。請稍後再查看可用的優惠券！",
+            "try_adjusting": "請嘗試調整您的搜尋條件或篩選器。"
+        },
+        "errors": {
+            "pin_length": "PIN 碼必須是 6 位數字",
+            "invalid_pin": "無效的 PIN 碼",
+            "generic_error": "處理您的請求時發生錯誤"
+        },
+        "modals": {
+            "qr_title": "QR 碼",
+            "qr_alt_text": "優惠券 QR 碼",
+            "generating_qr": "正在產生 QR 碼...",
+            "qr_instruction": "向商家展示此 QR 碼以兌換您的優惠券。",
+            "pin_title": "以 PIN 碼兌換",
+            "pin_process_title": "運作方式",
+            "pin_step_1": "1. 告訴商家您要使用優惠券",
+            "pin_step_2": "2. 他們會提供您一組 6 位數 PIN 碼",
+            "pin_step_3": "3. 在下方輸入 PIN 碼以兌換優惠券",
+            "merchant_pin_label": "6 位數商家 PIN 碼",
+            "pin_placeholder": "123456"
         }
     },
     "membership": {
@@ -1648,6 +1688,45 @@
         "logged_out": "您已成功登出。",
         "session_expired": "您的連線階段已過期，請重新登入。",
         "have_account": "已經有帳戶了？"
+    },
+    "email_verification": {
+        "title": "驗證電子郵件",
+        "page_title": "電子郵件驗證",
+        "description": "請點擊我們剛發送給您的電子郵件中的連結來驗證您的電子郵件地址。",
+        "unverified_message": "請驗證您的電子郵件地址以存取所有功能。",
+        "expiration_info": "驗證連結將在 60 分鐘後過期。",
+        "resend": "重新發送驗證郵件",
+        "sending": "發送中...",
+        "link_sent_message": "新的驗證連結已發送到您註冊時提供的電子郵件地址。",
+        "dismiss": "關閉"
+    },
+    "profile": {
+        "my_profile": "我的個人資料",
+        "back": "← 返回",
+        "profile_information": "個人資料",
+        "edit": "編輯",
+        "cancel": "取消",
+        "member_since": "會員始於",
+        "name": "姓名",
+        "email": "電子郵件",
+        "save_changes": "儲存變更",
+        "saving": "儲存中...",
+        "email_verification_required": "需要驗證電子郵件",
+        "email_unverified_message": "您的電子郵件地址尚未驗證。請檢查您的電子郵件並點擊驗證連結。",
+        "verification_expire_info": "驗證連結將在 60 分鐘後過期。",
+        "resend_verification_email": "重新發送驗證郵件",
+        "verification_link_sent": "✓ 新的驗證連結已發送到您的電子郵件地址。",
+        "membership": "會員資格",
+        "manage": "管理",
+        "show_qr": "顯示 QR 碼",
+        "standard": "標準",
+        "free": "免費",
+        "expires_on": "到期日",
+        "upgrade_to_unlock": "升級以解鎖高級功能",
+        "upgrade": "升級 →",
+        "membership_qr_title": "會員 QR 碼",
+        "generating_qr": "正在產生 QR 碼...",
+        "qr_verification_instruction": "出示此 QR 碼以進行會員身份驗證"
     },
     "pricing": {
         "choose_your_plan": "選擇您的方案",
