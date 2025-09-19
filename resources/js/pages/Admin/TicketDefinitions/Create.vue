@@ -18,14 +18,16 @@ interface AvailableLocales {
     [key: string]: string;
 }
 
-import type { TicketDefinitionCreateFormData } from '@/types/ticket';
+import type { TicketDefinitionCreateFormData, MembershipLevel, MembershipDiscount } from '@/types/ticket';
 import type { EventOccurrenceOption } from '@/types/ticket';
+import MembershipDiscountConfig from '@/components/Admin/MembershipDiscountConfig.vue';
 
 const props = defineProps<{
     statuses: StatusOption[];
     availableLocales: AvailableLocales;
     timezones: string[];
     eventOccurrences: EventOccurrenceOption[];
+    membershipLevels: MembershipLevel[];
     errors?: Record<string, string>;
 }>();
 
@@ -45,6 +47,7 @@ const form = useForm<TicketDefinitionCreateFormData & { timezone: string | null;
     max_per_order: undefined,
     timezone: 'Asia/Hong_Kong',
     event_occurrence_ids: [],
+    membership_discounts: [],
 });
 
 const statusOptions = computed(() => {
@@ -226,6 +229,14 @@ const submit = () => {
                                 </CardContent>
                             </Card>
 
+                            <!-- Membership Discounts Configuration -->
+                            <MembershipDiscountConfig
+                                v-model="form.membership_discounts"
+                                :membership-levels="props.membershipLevels"
+                                :ticket-price="form.price ? Math.round(form.price * 100) : null"
+                                :currency="form.currency"
+                                :errors="form.errors"
+                            />
 
                             <div class="mt-6 flex justify-end space-x-4">
                                 <Link :href="route('admin.ticket-definitions.index')">

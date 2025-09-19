@@ -6,6 +6,8 @@ use App\Modules\Membership\Models\UserMembership;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\TicketDefinition;
 use Spatie\Translatable\HasTranslations;
 
 class MembershipLevel extends Model
@@ -109,5 +111,15 @@ class MembershipLevel extends Model
     public function hasBenefit(string $benefit): bool
     {
         return in_array($benefit, $this->benefits ?? []);
+    }
+
+    /**
+     * The ticket definitions that have discounts for this membership level.
+     */
+    public function ticketDiscounts(): BelongsToMany
+    {
+        return $this->belongsToMany(TicketDefinition::class, 'ticket_definition_membership_discounts')
+            ->withPivot(['discount_type', 'discount_value'])
+            ->withTimestamps();
     }
 }

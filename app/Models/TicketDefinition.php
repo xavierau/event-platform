@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Modules\Membership\Models\MembershipLevel;
 
 class TicketDefinition extends Model
 {
@@ -100,7 +101,64 @@ class TicketDefinition extends Model
         return $initialStock - $bookedQuantity;
     }
 
-    public function getPublicData(): array
+    /**
+     * The membership levels that have discounts for this ticket definition.
+     */
+    public function membershipDiscounts(): BelongsToMany
+    {
+        return $this->belongsToMany(MembershipLevel::class, 'ticket_definition_membership_discounts')
+            ->withPivot(['discount_type', 'discount_value'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if this ticket definition has a discount for the given membership level.
+     */
+    public function hasMembershipDiscount(MembershipLevel $membershipLevel): bool
+    {
+        return $this->membershipDiscounts()->where('membership_level_id', $membershipLevel->id)->exists();
+    }
+
+    /**
+     * Get the membership price for a given user.
+     * Returns the regular price if no membership or discount applies.
+     */
+    public function getMembershipPrice(User $user): int
+    {
+        $activeMembershipLevel = $user->getActiveMembershipLevel();
+
+        if (!$activeMembershipLevel) {
+            return $this->price;
+        }
+
+        // Check if this ticket has a discount for the user's membership level
+        $discount = $this->membershipDiscounts()
+            ->where('membership_level_id', $activeMembershipLevel->id)
+            ->first();
+
+        if (!$discount) {
+            return $this->price;
+        }
+
+        return $this->applyDiscount($this->price, $discount->pivot->discount_type, $discount->pivot->discount_value);
+    }
+
+    /**
+     * Apply discount to a price based on type and value.
+     */
+    protected function applyDiscount(int $basePrice, string $discountType, int $discountValue): int
+    {
+        if ($discountType === 'percentage') {
+            $discountAmount = round($basePrice * ($discountValue / 100));
+            return max(0, $basePrice - $discountAmount);
+        } elseif ($discountType === 'fixed') {
+            return max(0, $basePrice - $discountValue);
+        }
+
+        return $basePrice;
+    }
+
+    public function getPublicData(?User $user = null): array
     {
         $effectivePrice = $this->pivot->price_override ?? $this->price;
 
@@ -108,7 +166,7 @@ class TicketDefinition extends Model
         $quantityForOccurrence = $this->pivot->quantity_for_occurrence;
         $availableQuantity = $quantityForOccurrence ?? $this->quantity_available;
 
-        return [
+        $publicData = [
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
@@ -118,5 +176,16 @@ class TicketDefinition extends Model
             'min_per_order' => $this->min_per_order,
             'quantity_available' => $availableQuantity,
         ];
+
+        // Include membership pricing if user is provided
+        if ($user) {
+            $membershipPrice = $this->getMembershipPrice($user);
+            $hasMembershipDiscount = $membershipPrice < $this->price;
+
+            $publicData['membership_price'] = $membershipPrice / 100; // Convert from cents
+            $publicData['has_membership_discount'] = $hasMembershipDiscount;
+        }
+
+        return $publicData;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Modules\Membership\Models\UserMembership;
+use App\Modules\Membership\Models\MembershipLevel;
 use App\Modules\Wallet\Models\Wallet;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -132,6 +133,16 @@ class User extends Authenticatable
     public function hasMembership(): bool
     {
         return $this->currentMembership()->exists();
+    }
+
+    /**
+     * Get the user's active membership level.
+     */
+    public function getActiveMembershipLevel(): ?MembershipLevel
+    {
+        $currentMembership = $this->currentMembership()->first();
+
+        return $currentMembership ? $currentMembership->level : null;
     }
 
     /**

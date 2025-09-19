@@ -44,6 +44,11 @@ class UpsertTicketDefinitionAction
 
             $dataForModel = $ticketData->toArray();
             unset($dataForModel['id']);
+
+            // Remove membership_discounts from model data as it's handled separately
+            $membershipDiscounts = $dataForModel['membership_discounts'] ?? null;
+            unset($dataForModel['membership_discounts']);
+
             // Add UTC dates to the data for model
             $dataForModel['availability_window_start_utc'] = $availabilityWindowStartUtc;
             $dataForModel['availability_window_end_utc'] = $availabilityWindowEndUtc;
@@ -67,6 +72,27 @@ class UpsertTicketDefinitionAction
             if ($ticketData->event_occurrence_ids !== null) {
                 $ticketDefinition->eventOccurrences()->sync($ticketData->event_occurrence_ids);
                 Log::info('UpsertTicketDefinitionAction: Synced EventOccurrences for TicketDefinition ' . $ticketDefinition->id, ['event_occurrence_ids' => $ticketData->event_occurrence_ids]);
+            }
+
+            // Sync membership discounts if provided
+            if ($membershipDiscounts !== null) {
+                $syncData = [];
+                foreach ($membershipDiscounts as $discount) {
+                    $syncData[$discount['membership_level_id']] = [
+                        'discount_type' => $discount['discount_type'],
+                        'discount_value' => $discount['discount_value'],
+                    ];
+                }
+
+                try {
+                    $ticketDefinition->membershipDiscounts()->sync($syncData);
+                    Log::info('UpsertTicketDefinitionAction: Synced MembershipDiscounts for TicketDefinition ' . $ticketDefinition->id, ['membership_discounts' => $syncData]);
+                } catch (\Exception $e) {
+                    Log::warning('UpsertTicketDefinitionAction: Failed to sync membership discounts - relationship may not exist', [
+                        'ticketDefinitionId' => $ticketDefinition->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
             }
 
             return $ticketDefinition->refresh();

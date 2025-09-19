@@ -144,8 +144,9 @@ class BookingService
                     }
                     // If $ticketDefinition->quantity_available is null, we assume infinite stock and skip the check.
 
-                    // Use DB price, not $itemData->price_at_purchase for calculation integrity
-                    $itemTotal = $ticketDefinition->price * $requestedQuantity;
+                    // Use membership price if user has active membership, otherwise regular price
+                    $pricePerUnit = $ticketDefinition->getMembershipPrice($user);
+                    $itemTotal = $pricePerUnit * $requestedQuantity;
                     $totalAmount += $itemTotal;
                     $currency = strtolower($ticketDefinition->currency); // Assuming all items in a booking share currency
 
@@ -162,7 +163,7 @@ class BookingService
                     $lineItemsForStripe[] = [
                         'price_data' => [
                             'currency' => $currency,
-                            'unit_amount' => $ticketDefinition->price, // Price from DB, in cents
+                            'unit_amount' => $pricePerUnit, // Use membership price, in cents
                             'product_data' => [
                                 'name' => $ticketDefinition->name,
                                 'description' => $productDescription, // Use the validated/fallback description
@@ -208,6 +209,7 @@ class BookingService
             if (count($data->items) > 0) {
                 foreach ($data->items as $itemData) {
                     $ticketDefinition = TicketDefinition::findOrFail($itemData->ticket_id); // Fetch ticket definition once per item type
+                    $membershipPrice = $ticketDefinition->getMembershipPrice($user);
                     for ($i = 0; $i < $itemData->quantity; $i++) { // Loop for each unit of this ticket type
                         // This would ideally use a CreateBookingAction as per TRX-004
                         $qrCodeIdentifier = QrCodeHelper::generate();
@@ -219,14 +221,15 @@ class BookingService
                             'qr_code_identifier' => $qrCodeIdentifier, // Generate BK- format QR code
                             'booking_number' => $qrCodeIdentifier, // Generate BK- format QR code
                             'quantity' => 1, // Each booking record represents one physical ticket
-                            'price_per_unit' => $ticketDefinition->price, // Price from DB
-                            'price_at_booking' => $ticketDefinition->price, // Adding the missing price_at_booking field
-                            'currency_at_booking' => $currency, // Adding the missing currency_at_booking field
-                            'total_price' => $ticketDefinition->price, // Price for one unit
-                            'currency' => $currency,
+                            'price_at_booking' => $membershipPrice, // Adding the actual paid price (per unit)
+                            'currency_at_booking' => $currency,
                             'status' => $initialBookingStatus, // Use the determined initial booking status
                             'max_allowed_check_ins' => $ticketDefinition->max_check_ins ?? 1, // Set max check-ins from ticket definition
-                            // Consider adding a unique reference/seat number here if applicable per ticket
+                            'metadata' => [
+                                'original_price' => $ticketDefinition->price, // Store original price for reference
+                                'membership_discount_applied' => $membershipPrice < $ticketDefinition->price,
+                                'discount_amount' => $ticketDefinition->price - $membershipPrice,
+                            ],
                         ]);
                         $createdBookings[] = $booking;
                     }

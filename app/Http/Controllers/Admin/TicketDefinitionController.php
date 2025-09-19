@@ -8,6 +8,7 @@ use App\Enums\TicketDefinitionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\EventOccurrence;
 use App\Models\TicketDefinition;
+use App\Modules\Membership\Models\MembershipLevel;
 use App\Services\TicketDefinitionService;
 use DateTimeZone;
 use Exception;
@@ -96,11 +97,25 @@ class TicketDefinitionController extends Controller
             })
             ->values(); // Reset array keys after filtering
 
+        // Get active membership levels for discount configuration
+        $membershipLevels = MembershipLevel::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'slug', 'is_active'])
+            ->map(function ($level) {
+                return [
+                    'id' => $level->id,
+                    'name' => $level->name,
+                    'slug' => $level->slug,
+                    'is_active' => $level->is_active,
+                ];
+            });
+
         return Inertia::render('Admin/TicketDefinitions/Create', [
             'statuses' => collect(TicketDefinitionStatus::cases())->map(fn($status) => ['value' => $status->value, 'label' => $status->getLabel()]),
             'availableLocales' => config('app.available_locales', ['en' => 'English']),
             'timezones' => DateTimeZone::listIdentifiers(DateTimeZone::ALL),
             'eventOccurrences' => $eventOccurrences,
+            'membershipLevels' => $membershipLevels,
         ]);
     }
 
@@ -162,12 +177,41 @@ class TicketDefinitionController extends Controller
             })
             ->values(); // Reset array keys after filtering
 
+        // Get active membership levels for discount configuration
+        $membershipLevels = MembershipLevel::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'slug', 'is_active'])
+            ->map(function ($level) {
+                return [
+                    'id' => $level->id,
+                    'name' => $level->name,
+                    'slug' => $level->slug,
+                    'is_active' => $level->is_active,
+                ];
+            });
+
+        // Get existing membership discounts for this ticket
+        $membershipDiscounts = \Illuminate\Support\Facades\DB::table('ticket_definition_membership_discounts')
+            ->where('ticket_definition_id', $ticketDefinition->id)
+            ->select('membership_level_id', 'discount_type', 'discount_value')
+            ->get()
+            ->map(function ($discount) {
+                return [
+                    'membership_level_id' => $discount->membership_level_id,
+                    'discount_type' => $discount->discount_type,
+                    'discount_value' => $discount->discount_value,
+                ];
+            })
+            ->toArray();
+
         return Inertia::render('Admin/TicketDefinitions/Edit', [
             'ticketDefinition' => TicketDefinitionData::fromModel($ticketDefinition),
             'statuses' => collect(TicketDefinitionStatus::cases())->map(fn($status) => ['value' => $status->value, 'label' => $status->getLabel()]),
             'availableLocales' => config('app.available_locales', ['en' => 'English']),
             'timezones' => DateTimeZone::listIdentifiers(DateTimeZone::ALL),
             'eventOccurrences' => $eventOccurrences,
+            'membershipLevels' => $membershipLevels,
+            'membershipDiscounts' => $membershipDiscounts,
         ]);
     }
 
