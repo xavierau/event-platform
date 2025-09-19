@@ -95,7 +95,10 @@ const totalPrice = computed(() => {
     return 0;
   }
   return props.occurrence.tickets.reduce((total, ticket) => {
-    return total + (ticket.price * (selectedTickets.value[ticket.id] || 0));
+    // Use membership price if available, otherwise use regular price
+    const ticketWithDiscount = ticket as PublicTicketType & { has_membership_discount?: boolean; membership_price?: number };
+    const effectivePrice = ticketWithDiscount.has_membership_discount ? ticketWithDiscount.membership_price! : ticket.price;
+    return total + (effectivePrice * (selectedTickets.value[ticket.id] || 0));
   }, 0);
 });
 
@@ -138,10 +141,11 @@ const confirmPurchase = async () => {
     props.occurrence.tickets.forEach(ticket => {
       const quantity = selectedTickets.value[ticket.id];
       if (quantity > 0) {
+        const ticketWithDiscount = ticket as PublicTicketType & { has_membership_discount?: boolean; membership_price?: number };
         bookingItems.push({
           ticket_id: ticket.id,
           quantity: quantity,
-          price_at_purchase: ticket.price,
+          price_at_purchase: ticketWithDiscount.has_membership_discount ? ticketWithDiscount.membership_price! : ticket.price,
           name: ticket.name
         });
       }
@@ -231,7 +235,24 @@ const confirmPurchase = async () => {
               <div>
                 <h4 class="font-semibold text-gray-700 dark:text-gray-200">{{ ticket.name }}</h4>
                 <p v-if="ticket.description" class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.description }}</p>
-                <p class="text-sm text-pink-500 dark:text-pink-400 font-medium">{{ formatTicketPrice(ticket.price, ticket.currency) }}</p>
+
+                <!-- Display pricing with membership discount styling -->
+                <div v-if="(ticket as any).has_membership_discount" class="space-y-1">
+                  <p class="text-sm text-pink-500 dark:text-pink-400 font-medium">
+                    {{ formatTicketPrice((ticket as any).membership_price, ticket.currency) }}
+                    <span class="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-0.5 rounded">
+                      Save {{ (ticket as any).savings_percentage }}%
+                    </span>
+                  </p>
+                  <p class="text-xs text-gray-400 dark:text-gray-500 line-through">
+                    {{ formatTicketPrice(ticket.price, ticket.currency) }}
+                  </p>
+                </div>
+
+                <!-- Regular pricing when no membership discount -->
+                <p v-else class="text-sm text-pink-500 dark:text-pink-400 font-medium">
+                  {{ formatTicketPrice(ticket.price, ticket.currency) }}
+                </p>
               </div>
               <div class="flex items-center space-x-2">
                 <button
