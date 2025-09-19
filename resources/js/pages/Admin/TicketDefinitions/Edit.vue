@@ -19,8 +19,9 @@ interface AvailableLocales {
 }
 
 // For the incoming prop
-import type { TicketDefinitionProp } from '@/types/ticket'; // TicketDefinitionEditFormData removed as form structure defined directly
+import type { TicketDefinitionProp, MembershipLevel, MembershipDiscount } from '@/types/ticket'; // TicketDefinitionEditFormData removed as form structure defined directly
 import type { EventOccurrenceOption } from '@/types/ticket';
+import MembershipDiscountConfig from '@/components/Admin/MembershipDiscountConfig.vue';
 
 const props = defineProps<{
     ticketDefinition: TicketDefinitionProp;
@@ -28,6 +29,8 @@ const props = defineProps<{
     availableLocales: AvailableLocales;
     timezones: string[]; // Added
     eventOccurrences: EventOccurrenceOption[];
+    membershipLevels: MembershipLevel[];
+    membershipDiscounts: MembershipDiscount[];
     errors?: Record<string, string>;
 }>();
 
@@ -49,6 +52,7 @@ interface EditFormType {
     max_per_order: number | string | undefined;
     timezone: string | null;
     event_occurrence_ids: number[] | null;
+    membership_discounts: MembershipDiscount[];
     [key: string]: any; // Index signature to satisfy FormDataType constraint
 }
 
@@ -68,6 +72,7 @@ const form = useForm<EditFormType>({
     max_per_order: props.ticketDefinition?.max_per_order ?? undefined,
     timezone: props.ticketDefinition?.timezone ?? null, // Added and initialized
     event_occurrence_ids: props.ticketDefinition?.event_occurrence_ids ?? [],
+    membership_discounts: props.membershipDiscounts || [],
     // metadata: props.ticketDefinition?.metadata || null, // Removed
 });
 
@@ -273,6 +278,15 @@ const submit = () => {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            <!-- Membership Discounts Configuration -->
+                            <MembershipDiscountConfig
+                                v-model="form.membership_discounts"
+                                :membership-levels="props.membershipLevels"
+                                :ticket-price="form.price ? Math.round(form.price * 100) : null"
+                                :currency="form.currency"
+                                :errors="form.errors"
+                            />
 
                             <div class="mt-6 flex justify-end space-x-4">
                                 <Link :href="route('admin.ticket-definitions.index')">

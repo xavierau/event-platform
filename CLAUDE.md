@@ -119,5 +119,31 @@ return Inertia::render('Page', [
 ### Git Flow
 - `main` → `develop` → `feature/*`, `hotfix/*`, `release/*`
 
-**⚠️ Key Principles**: Study existing patterns, trace data flow systematically, never hardcode solutions, always test changes.
+## Debugging Journal Requirement
+
+**MANDATORY**: After fixing any bug or resolving a complex issue, create a debugging journal in `docs/debugging-journals/`:
+
+### Journal Naming Convention
+```
+DEBUGGING_JOURNAL_YYYY-MM-DD_issue-description.md
+```
+
+### Required Sections
+1. **🔍 Problem Description** - Symptoms, expected behavior, files involved
+2. **🛠️ Root Cause Analysis** - Exact issue with code examples
+3. **✅ The Solution** - Fixed code with before/after
+4. **🔬 Troubleshooting Strategy** - Step-by-step investigation workflow
+5. **🚫 Prevention Strategies** - Best practices, testing, code review guidelines
+6. **📊 Time Investment** - Breakdown of resolution time and lessons learned
+7. **🎯 Key Takeaways** - Critical lessons for future developers
+
+### Purpose
+- Help future developers identify similar problems
+- Document troubleshooting strategies and workflows
+- Build institutional knowledge for the development team
+- Prevent recurring issues through documented prevention strategies
+
+**Example**: `docs/debugging-journals/DEBUGGING_JOURNAL_2025-01-19_vue-input-binding.md`
+
+**⚠️ Key Principles**: Study existing patterns, trace data flow systematically, never hardcode solutions, always test changes, **document debugging intelligence**.
 - The development server is https://eventplatform.test and it's always runing with frontend hotreload

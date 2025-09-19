@@ -68,6 +68,8 @@ class TicketDefinitionData extends Data
 
         public readonly ?string $timezone = null,
 
+        public readonly ?array $membership_discounts = null,
+
         public readonly ?Carbon $created_at = null,
         public readonly ?Carbon $updated_at = null
     ) {}
@@ -91,6 +93,10 @@ class TicketDefinitionData extends Data
             'timezone' => ['nullable', 'string', 'timezone:all'],
             'event_occurrence_ids' => ['nullable', 'array'],
             'event_occurrence_ids.*' => ['integer', 'exists:event_occurrences,id'],
+            'membership_discounts' => ['nullable', 'array'],
+            'membership_discounts.*.membership_level_id' => ['required', 'integer', 'exists:membership_levels,id'],
+            'membership_discounts.*.discount_type' => ['required', 'string', 'in:percentage,fixed'],
+            'membership_discounts.*.discount_value' => ['required', 'integer', 'min:0'],
         ];
         $availableLocales = config('app.available_locales', ['en' => 'English']);
         $primaryLocale = config('app.locale', 'en');
@@ -112,6 +118,21 @@ class TicketDefinitionData extends Data
     public static function fromModel(TicketDefinition $ticketDefinition): self
     {
         $dtoTimezone = $ticketDefinition->timezone ?? config('app.timezone', 'UTC');
+
+        // Get membership discounts using direct query (relationship method has issues)
+        $membershipDiscounts = \Illuminate\Support\Facades\DB::table('ticket_definition_membership_discounts')
+            ->where('ticket_definition_id', $ticketDefinition->id)
+            ->select('membership_level_id', 'discount_type', 'discount_value')
+            ->get()
+            ->map(function ($discount) {
+                return [
+                    'membership_level_id' => $discount->membership_level_id,
+                    'discount_type' => $discount->discount_type,
+                    'discount_value' => $discount->discount_value,
+                ];
+            })
+            ->toArray();
+
         return new self(
             id: $ticketDefinition->id,
             name: $ticketDefinition->getTranslations('name'),
@@ -129,7 +150,8 @@ class TicketDefinitionData extends Data
             timezone: $ticketDefinition->timezone,
             created_at: $ticketDefinition->created_at,
             updated_at: $ticketDefinition->updated_at,
-            event_occurrence_ids: $ticketDefinition->eventOccurrences()->pluck('id')->toArray()
+            event_occurrence_ids: $ticketDefinition->eventOccurrences()->pluck('id')->toArray(),
+            membership_discounts: $membershipDiscounts
         );
     }
 }

@@ -86,6 +86,7 @@ export interface TicketDefinitionCreateFormData {
     min_per_order: number | null | undefined;
     max_per_order: number | null | undefined;
     status: string;
+    membership_discounts?: MembershipDiscount[];
     [key: string]: any; // Index signature for form compatibility
 }
 
@@ -108,6 +109,27 @@ export interface TicketDefinitionsPaginated {
     current_page: number;
     last_page: number;
     per_page: number;
+}
+
+/**
+ * Membership level for discount configuration
+ */
+export interface MembershipLevel {
+    id: number;
+    name: Record<string, string> | string;
+    slug: string;
+    is_active: boolean;
+    price?: number;
+    description?: Record<string, string> | string;
+}
+
+/**
+ * Membership discount configuration
+ */
+export interface MembershipDiscount {
+    membership_level_id: number;
+    discount_type: 'percentage' | 'fixed';
+    discount_value: number;
 }
 
 /**
