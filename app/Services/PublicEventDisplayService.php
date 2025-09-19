@@ -79,13 +79,14 @@ class PublicEventDisplayService
     {
         $firstOccurrence = $event->eventOccurrences->first();
         $lastOccurrence = $event->eventOccurrences->last();
+        $user = auth()->user();
 
         return [
             'id' => $event->id,
             'name' => $event->name,
             'href' => route('events.show', $event->id),
             'image_url' => $this->getEventImageUrl($event),
-            'price_from' => $this->calculateMinimumPrice($event),
+            'price_from' => $this->calculateMinimumPrice($event, $user),
             'date_range' => $this->formatDateRange(
                 $firstOccurrence?->start_at_utc,
                 $lastOccurrence?->start_at_utc,
@@ -118,6 +119,9 @@ class PublicEventDisplayService
             throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Event not found with identifier: {$eventIdentifier}");
         }
 
+        // Get current user and membership
+        $user = auth()->user();
+
         // Load approved comments using polymorphic relationship manually
         // Working around potential caching issues with the relationship
         $comments = \App\Models\Comment::where('commentable_type', \App\Models\Event::class)
@@ -128,13 +132,10 @@ class PublicEventDisplayService
             ->get();
 
         // Calculate price range using model method
-        $priceRange = $event->getPriceRange();
+        $priceRange = $event->getPriceRange($user);
 
         // Get primary venue using model method
         $primaryVenue = $event->getPrimaryVenue();
-
-        // Get current user and membership
-        $user = auth()->user();
         
         // Refresh user relationships to ensure we have the latest membership data
         if ($user) {
@@ -223,11 +224,13 @@ class PublicEventDisplayService
      */
     protected function mapEventOccurrences($occurrences): array
     {
-        return $occurrences->map(function ($occurrence) {
+        $user = auth()->user();
+
+        return $occurrences->map(function ($occurrence) use ($user) {
             $publicData = $occurrence->getPublicData();
             // Now, explicitly map the ticket definitions using the service's own method
             // $publicData['tickets'] already contains the collection from $occurrence->ticketDefinitions
-            $publicData['tickets'] = $this->mapTicketDefinitions($publicData['tickets']);
+            $publicData['tickets'] = $this->mapTicketDefinitions($publicData['tickets'], $user);
             return $publicData;
         })->toArray();
     }
@@ -235,10 +238,10 @@ class PublicEventDisplayService
     /**
      * Map ticket definitions for display
      */
-    protected function mapTicketDefinitions($ticketDefinitions): array
+    protected function mapTicketDefinitions($ticketDefinitions, ?\App\Models\User $user = null): array
     {
-        return $ticketDefinitions->map(function (TicketDefinition $ticket) {
-            return $ticket->getPublicData();
+        return $ticketDefinitions->map(function (TicketDefinition $ticket) use ($user) {
+            return $ticket->getPublicData($user);
         })->toArray();
     }
 
@@ -295,11 +298,12 @@ class PublicEventDisplayService
      * Uses the Event model's getPriceRange method which applies availability filtering
      *
      * @param Event $event
+     * @param \App\Models\User|null $user
      * @return int|null
      */
-    protected function calculateMinimumPrice(Event $event): ?int
+    protected function calculateMinimumPrice(Event $event, ?\App\Models\User $user = null): ?int
     {
-        $priceRange = $event->getPriceRange();
+        $priceRange = $event->getPriceRange($user);
 
         if (! $priceRange) {
             return null;

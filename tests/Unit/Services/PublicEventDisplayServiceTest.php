@@ -528,4 +528,242 @@ class PublicEventDisplayServiceTest extends TestCase
         $this->assertContains('VIP Package', $ticketNames);
         $this->assertContains('Student Discount', $ticketNames);
     }
+
+    /** @test */
+    public function getEventDetailData_includes_membership_pricing_for_authenticated_member()
+    {
+        // Arrange
+        $category = Category::factory()->create(['name' => ['en' => 'Concert']]);
+        $venue = Venue::factory()->create(['name' => ['en' => 'Concert Hall']]);
+
+        $event = Event::factory()->create([
+            'name' => ['en' => 'VIP Concert'],
+            'event_status' => 'published',
+            'category_id' => $category->id
+        ]);
+
+        $occurrence = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+            'start_at_utc' => now()->addDays(10),
+            'status' => 'scheduled'
+        ]);
+
+        // Create a membership level
+        $membershipLevel = \App\Modules\Membership\Models\MembershipLevel::factory()->create([
+            'name' => ['en' => 'Premium Member'],
+            'is_active' => true
+        ]);
+
+        // Create a user with active membership
+        $user = \App\Models\User::factory()->create();
+        \App\Modules\Membership\Models\UserMembership::factory()->create([
+            'user_id' => $user->id,
+            'membership_level_id' => $membershipLevel->id,
+            'status' => 'active',
+            'expires_at' => now()->addMonths(6)
+        ]);
+
+        // Create tickets with membership discounts
+        $regularTicket = TicketDefinition::factory()->create([
+            'name' => ['en' => 'General Admission'],
+            'price' => 10000, // $100.00
+            'currency' => 'HKD',
+            'status' => 'active',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null
+        ]);
+
+        $vipTicket = TicketDefinition::factory()->create([
+            'name' => ['en' => 'VIP Access'],
+            'price' => 20000, // $200.00
+            'currency' => 'HKD',
+            'status' => 'active',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null
+        ]);
+
+        // Set up membership discounts
+        $regularTicket->membershipDiscounts()->attach($membershipLevel->id, [
+            'discount_type' => 'percentage',
+            'discount_value' => 20 // 20% off
+        ]);
+
+        $vipTicket->membershipDiscounts()->attach($membershipLevel->id, [
+            'discount_type' => 'fixed',
+            'discount_value' => 5000 // $50 off
+        ]);
+
+        $occurrence->ticketDefinitions()->attach([$regularTicket->id, $vipTicket->id]);
+
+        // Act as the member user
+        $this->actingAs($user);
+        $result = $this->service->getEventDetailData($event->id);
+
+        // Assert
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('occurrences', $result);
+        $this->assertCount(1, $result['occurrences']);
+
+        $occurrence = $result['occurrences'][0];
+        $this->assertArrayHasKey('tickets', $occurrence);
+        $this->assertCount(2, $occurrence['tickets']);
+
+        // Find the regular ticket
+        $regularTicketData = collect($occurrence['tickets'])
+            ->firstWhere('name', 'General Admission');
+
+        $this->assertNotNull($regularTicketData);
+        $this->assertEquals(100, $regularTicketData['price']); // Original price
+        $this->assertArrayHasKey('membership_price', $regularTicketData);
+        $this->assertEquals(80, $regularTicketData['membership_price']); // 20% discount
+        $this->assertArrayHasKey('has_membership_discount', $regularTicketData);
+        $this->assertTrue($regularTicketData['has_membership_discount']);
+        $this->assertArrayHasKey('savings_amount', $regularTicketData);
+        $this->assertEquals(20, $regularTicketData['savings_amount']); // $20 savings
+        $this->assertArrayHasKey('savings_percentage', $regularTicketData);
+        $this->assertEquals(20, $regularTicketData['savings_percentage']); // 20% savings
+
+        // Find the VIP ticket
+        $vipTicketData = collect($occurrence['tickets'])
+            ->firstWhere('name', 'VIP Access');
+
+        $this->assertNotNull($vipTicketData);
+        $this->assertEquals(200, $vipTicketData['price']); // Original price
+        $this->assertArrayHasKey('membership_price', $vipTicketData);
+        $this->assertEquals(150, $vipTicketData['membership_price']); // $50 fixed discount
+        $this->assertArrayHasKey('has_membership_discount', $vipTicketData);
+        $this->assertTrue($vipTicketData['has_membership_discount']);
+        $this->assertArrayHasKey('savings_amount', $vipTicketData);
+        $this->assertEquals(50, $vipTicketData['savings_amount']); // $50 savings
+        $this->assertArrayHasKey('savings_percentage', $vipTicketData);
+        $this->assertEquals(25, $vipTicketData['savings_percentage']); // 25% savings ($50/$200)
+    }
+
+    /** @test */
+    public function getEventDetailData_excludes_membership_pricing_for_non_members()
+    {
+        // Arrange
+        $category = Category::factory()->create(['name' => ['en' => 'Concert']]);
+        $venue = Venue::factory()->create(['name' => ['en' => 'Concert Hall']]);
+
+        $event = Event::factory()->create([
+            'name' => ['en' => 'Public Concert'],
+            'event_status' => 'published',
+            'category_id' => $category->id
+        ]);
+
+        $occurrence = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+            'start_at_utc' => now()->addDays(10),
+            'status' => 'scheduled'
+        ]);
+
+        $ticket = TicketDefinition::factory()->create([
+            'name' => ['en' => 'Standard Ticket'],
+            'price' => 5000, // $50.00
+            'currency' => 'HKD',
+            'status' => 'active',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null
+        ]);
+
+        $occurrence->ticketDefinitions()->attach($ticket->id);
+
+        // Act without authentication
+        $result = $this->service->getEventDetailData($event->id);
+
+        // Assert
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('occurrences', $result);
+        $this->assertCount(1, $result['occurrences']);
+
+        $occurrence = $result['occurrences'][0];
+        $this->assertArrayHasKey('tickets', $occurrence);
+        $this->assertCount(1, $occurrence['tickets']);
+
+        $ticketData = $occurrence['tickets'][0];
+        $this->assertEquals('Standard Ticket', $ticketData['name']);
+        $this->assertEquals(50, $ticketData['price']);
+        $this->assertArrayNotHasKey('membership_price', $ticketData);
+        $this->assertArrayNotHasKey('has_membership_discount', $ticketData);
+    }
+
+    /** @test */
+    public function getEventDetailData_shows_membership_price_range_for_authenticated_member()
+    {
+        // Arrange
+        $category = Category::factory()->create(['name' => ['en' => 'Concert']]);
+        $venue = Venue::factory()->create(['name' => ['en' => 'Concert Hall']]);
+
+        $event = Event::factory()->create([
+            'name' => ['en' => 'Member-Only Concert'],
+            'event_status' => 'published',
+            'category_id' => $category->id
+        ]);
+
+        $occurrence = EventOccurrence::factory()->create([
+            'event_id' => $event->id,
+            'venue_id' => $venue->id,
+            'start_at_utc' => now()->addDays(10),
+            'status' => 'scheduled'
+        ]);
+
+        // Create a membership level
+        $membershipLevel = \App\Modules\Membership\Models\MembershipLevel::factory()->create([
+            'name' => ['en' => 'Gold Member'],
+            'is_active' => true
+        ]);
+
+        // Create a user with active membership
+        $user = \App\Models\User::factory()->create();
+        \App\Modules\Membership\Models\UserMembership::factory()->create([
+            'user_id' => $user->id,
+            'membership_level_id' => $membershipLevel->id,
+            'status' => 'active',
+            'expires_at' => now()->addMonths(6)
+        ]);
+
+        // Create tickets with different membership discounts
+        $cheapTicket = TicketDefinition::factory()->create([
+            'name' => ['en' => 'Basic Ticket'],
+            'price' => 5000, // $50.00 regular
+            'currency' => 'HKD',
+            'status' => 'active',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null
+        ]);
+
+        $expensiveTicket = TicketDefinition::factory()->create([
+            'name' => ['en' => 'Premium Ticket'],
+            'price' => 15000, // $150.00 regular
+            'currency' => 'HKD',
+            'status' => 'active',
+            'availability_window_start_utc' => null,
+            'availability_window_end_utc' => null
+        ]);
+
+        // Set up membership discounts - 20% off each
+        $cheapTicket->membershipDiscounts()->attach($membershipLevel->id, [
+            'discount_type' => 'percentage',
+            'discount_value' => 20 // $40.00 after discount
+        ]);
+
+        $expensiveTicket->membershipDiscounts()->attach($membershipLevel->id, [
+            'discount_type' => 'percentage',
+            'discount_value' => 20 // $120.00 after discount
+        ]);
+
+        $occurrence->ticketDefinitions()->attach([$cheapTicket->id, $expensiveTicket->id]);
+
+        // Act as the member user
+        $this->actingAs($user);
+        $result = $this->service->getEventDetailData($event->id);
+
+        // Assert - price range should reflect membership pricing ($40.00-120.00) not regular ($50.00-150.00)
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('price_range', $result);
+        $this->assertEquals('HK$40.00-120.00', $result['price_range']);
+    }
 }
