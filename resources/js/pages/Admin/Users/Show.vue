@@ -194,7 +194,7 @@
                                     <TableRow v-for="transaction in recentTransactions" :key="transaction.id">
                                         <TableCell class="font-medium text-gray-900 dark:text-white">
                                             <span :class="transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'">
-                                                {{ transaction.amount >= 0 ? '+' : '' }}{{ transaction.amount.toLocaleString() }}
+                                                {{ transaction.amount >= 0 ? '+' : '' }}{{ formatPrice(Math.abs(transaction.amount), null) }}
                                             </span>
                                         </TableCell>
                                         <TableCell>{{ transaction.type }}</TableCell>
@@ -248,6 +248,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import PageHeader from '@/components/Shared/PageHeader.vue';
 import { TableHead, TableRow, TableCell } from '@/components/ui/table';
 import AdminDataTable from '@/components/Shared/AdminDataTable.vue';
+import { useCurrency } from '@/composables/useCurrency';
 
 interface User {
     id: number;
@@ -320,6 +321,8 @@ defineProps<{
     recentTransactions: Transaction[];
     stripeInfo: StripeInfo;
 }>();
+
+const { formatPrice } = useCurrency();
 
 const formatDate = (dateString: string): string => {
     const options: Intl.DateTimeFormatOptions = { 

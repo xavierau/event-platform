@@ -842,6 +842,16 @@
         "membership": {
             "required": "需要會員資格",
             "info": "此活動僅限會員參加。"
+        },
+        "pricing": {
+            "member_price": "會員價格",
+            "regular": "一般價格",
+            "save": "節省",
+            "off": "折扣",
+            "member_benefits_applied": "已應用會員優惠",
+            "member_price_applied": "已應用會員價格",
+            "members_save_hint": "會員可享此活動最高25%優惠。",
+            "learn_more": "了解更多"
         }
     },
     "bookings": {

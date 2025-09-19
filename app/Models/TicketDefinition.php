@@ -179,11 +179,30 @@ class TicketDefinition extends Model
 
         // Include membership pricing if user is provided
         if ($user) {
-            $membershipPrice = $this->getMembershipPrice($user);
-            $hasMembershipDiscount = $membershipPrice < $this->price;
+            $activeMembershipLevel = $user->getActiveMembershipLevel();
 
-            $publicData['membership_price'] = $membershipPrice / 100; // Convert from cents
-            $publicData['has_membership_discount'] = $hasMembershipDiscount;
+            if ($activeMembershipLevel) {
+                // Check if this ticket has a discount for the user's membership level
+                $discount = $this->membershipDiscounts()
+                    ->where('membership_level_id', $activeMembershipLevel->id)
+                    ->first();
+
+                if ($discount) {
+                    // Apply discount to the effective price (which includes price overrides)
+                    $membershipPrice = $this->applyDiscount($effectivePrice, $discount->pivot->discount_type, $discount->pivot->discount_value);
+                    $hasMembershipDiscount = $membershipPrice < $effectivePrice;
+
+                    if ($hasMembershipDiscount) {
+                        $savingsAmount = $effectivePrice - $membershipPrice;
+                        $savingsPercentage = round(($savingsAmount / $effectivePrice) * 100);
+
+                        $publicData['membership_price'] = $membershipPrice / 100; // Convert from cents
+                        $publicData['has_membership_discount'] = true;
+                        $publicData['savings_amount'] = $savingsAmount / 100; // Convert from cents
+                        $publicData['savings_percentage'] = $savingsPercentage;
+                    }
+                }
+            }
         }
 
         return $publicData;

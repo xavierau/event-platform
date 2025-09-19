@@ -187,7 +187,7 @@ class MembershipService
 
     public function checkMembershipStatus(User $user): ?UserMembership
     {
-        return $user->memberships()->latest('started_at')->first();
+        return $user->memberships()->with('level')->latest('started_at')->first();
     }
 
     public function renewMembership(User $user, ?int $months = null): ?UserMembership

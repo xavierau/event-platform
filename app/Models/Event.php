@@ -218,9 +218,10 @@ class Event extends Model implements HasMedia
      * Calculate the price range for this event across all occurrences and tickets
      * Only considers tickets that are currently available within their availability window
      *
+     * @param \App\Models\User|null $user User to calculate membership pricing for
      * @return string|null Formatted price range or null if no tickets available
      */
-    public function getPriceRange(): ?string
+    public function getPriceRange(?\App\Models\User $user = null): ?string
     {
         // Ensure eventOccurrences and their ticketDefinitions are loaded
         if (!$this->relationLoaded('eventOccurrences')) {
@@ -231,8 +232,8 @@ class Event extends Model implements HasMedia
 
         // Calculate price range across all occurrences and tickets
         // Only include tickets that are currently available
-        $allPrices = $this->eventOccurrences->flatMap(function ($occurrence) use ($nowUtc) {
-            return $occurrence->ticketDefinitions->filter(function ($ticket) use ($nowUtc) {
+        $allPrices = $this->eventOccurrences->flatMap(function ($occurrence) use ($nowUtc, $user) {
+            return $occurrence->ticketDefinitions->filter(function ($ticket) use ($nowUtc, $user) {
                 // Check if ticket is currently available based on availability window
                 if ($ticket->availability_window_start_utc === null && $ticket->availability_window_end_utc === null) {
                     // No availability window set - ticket is available
@@ -245,9 +246,33 @@ class Event extends Model implements HasMedia
                 $beforeEnd = $ticket->availability_window_end_utc === null || $ticket->availability_window_end_utc >= $nowUtc;
 
                 return $afterStart && $beforeEnd;
-            })->map(function ($ticket) {
+            })->map(function ($ticket) use ($user) {
                 // Use price_override if available, otherwise use original price
-                return $ticket->pivot->price_override ?? $ticket->price;
+                $basePrice = $ticket->pivot->price_override ?? $ticket->price;
+
+                // If user is provided and has membership, calculate membership pricing on the effective price
+                if ($user) {
+                    $activeMembershipLevel = $user->getActiveMembershipLevel();
+
+                    if ($activeMembershipLevel) {
+                        // Check if this ticket has a discount for the user's membership level
+                        $discount = $ticket->membershipDiscounts()
+                            ->where('membership_level_id', $activeMembershipLevel->id)
+                            ->first();
+
+                        if ($discount) {
+                            // Apply discount to the effective price (which includes price overrides)
+                            if ($discount->pivot->discount_type === 'percentage') {
+                                $discountAmount = round($basePrice * ($discount->pivot->discount_value / 100));
+                                return max(0, $basePrice - $discountAmount);
+                            } elseif ($discount->pivot->discount_type === 'fixed') {
+                                return max(0, $basePrice - $discount->pivot->discount_value);
+                            }
+                        }
+                    }
+                }
+
+                return $basePrice;
             });
         })->filter()->values();
 

@@ -823,6 +823,16 @@
             "single_required": "需要{level}會員資格",
             "required": "需要会员资格",
             "info": "此活动仅对会员开放。"
+        },
+        "pricing": {
+            "member_price": "会员价格",
+            "regular": "常规价格",
+            "save": "节省",
+            "off": "折扣",
+            "member_benefits_applied": "已应用会员优惠",
+            "member_price_applied": "已应用会员价格",
+            "members_save_hint": "会员可享受此活动最高25%的优惠。",
+            "learn_more": "了解更多"
         }
     },
     "bookings": {

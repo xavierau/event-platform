@@ -52,7 +52,7 @@ onMounted(() => {
                 <div v-if="hasMembership" class="space-y-3">
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('membership.fields.plan') }}:</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ membership.level.name.en }}</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ membership.level?.name?.en || 'N/A' }}</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('status.label') }}:</span>
