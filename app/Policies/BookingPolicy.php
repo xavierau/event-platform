@@ -73,4 +73,13 @@ class BookingPolicy
             OrganizerPermissionEnum::MANAGE_BOOKINGS
         );
     }
+
+    /**
+     * Determine whether the user can create manual bookings.
+     * Only platform admins can create manual bookings.
+     */
+    public function createManual(User $user): bool
+    {
+        return $user->hasRole('admin');
+    }
 }

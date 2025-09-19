@@ -2,19 +2,24 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\DataTransferObjects\Booking\ManualBookingData;
 use App\Enums\RoleNameEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ManualBookingRequest;
 use App\Services\BookingService;
+use App\Services\ManualBookingService;
 use Illuminate\Http\Request;
 use App\Enums\BookingStatusEnum;
 
 class BookingController extends Controller
 {
     protected BookingService $bookingService;
+    protected ManualBookingService $manualBookingService;
 
-    public function __construct(BookingService $bookingService)
+    public function __construct(BookingService $bookingService, ManualBookingService $manualBookingService)
     {
         $this->bookingService = $bookingService;
+        $this->manualBookingService = $manualBookingService;
     }
 
     /**
@@ -49,6 +54,7 @@ class BookingController extends Controller
             'statuses' => $statuses,
             'statistics' => $statistics,
             'filters' => $filters,
+            'canCreateManualBooking' => $user->hasRole(RoleNameEnum::ADMIN->value),
             'pageTitle' => __('bookings.index_title'),
             'breadcrumbs' => [
                 ['title' => __('common.admin'), 'href' => route('admin.dashboard')],
@@ -58,30 +64,62 @@ class BookingController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new manual booking.
      */
     public function create()
     {
-        // TODO: Implement booking creation form if needed
+        // Use policy to check authorization
+        $this->authorize('createManual', \App\Models\Booking::class);
+
+        $formData = $this->manualBookingService->getFormData();
+
         return inertia('Admin/Bookings/Create', [
-            'pageTitle' => 'Create Booking',
+            'users' => $formData['users'],
+            'events' => $formData['events'],
+            'currencies' => $formData['currencies'],
+            'pageTitle' => __('Create Manual Booking'),
             'breadcrumbs' => [
-                ['title' => 'Admin', 'href' => route('admin.dashboard')],
-                ['title' => 'Bookings', 'href' => route('admin.bookings.index')],
-                ['title' => 'Create']
+                ['title' => __('common.admin'), 'href' => route('admin.dashboard')],
+                ['title' => __('bookings.index_title'), 'href' => route('admin.bookings.index')],
+                ['title' => __('Create Manual Booking')]
             ]
         ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created manual booking.
      */
-    public function store(Request $request)
+    public function store(ManualBookingRequest $request)
     {
-        // TODO: Implement booking creation logic
-        // $bookingData = BookingData::from($request->all());
-        // $this->bookingService->createBooking($bookingData);
-        // return redirect()->route('admin.bookings.index');
+        // Use policy to check authorization (the request already handles this too)
+        $this->authorize('createManual', \App\Models\Booking::class);
+
+        try {
+            $data = ManualBookingData::from([
+                ...$request->validated(),
+                'created_by_admin_id' => auth()->id(),
+            ]);
+
+            $result = $this->manualBookingService->createManualBooking($data);
+
+            $message = $result['message'] . ' ' . implode(', ', $result['booking_numbers']);
+
+            return redirect()
+                ->route('admin.bookings.index')
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            \Log::error('Manual booking creation failed', [
+                'admin_id' => auth()->id(),
+                'request_data' => $request->validated(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['general' => __('Failed to create manual booking. Please try again.')]);
+        }
     }
 
     /**
@@ -171,6 +209,70 @@ class BookingController extends Controller
     {
         // TODO: Implement CSV export functionality
         // This would be useful for admin reporting
+    }
+
+    /**
+     * Search users for manual booking creation (AJAX endpoint).
+     */
+    public function searchUsers(Request $request)
+    {
+        // Use policy to check authorization
+        $this->authorize('createManual', \App\Models\Booking::class);
+
+        $request->validate([
+            'search' => 'required|string|min:2|max:255',
+            'limit' => 'sometimes|integer|min:1|max:50'
+        ]);
+
+        $searchTerm = $request->input('search');
+        $limit = $request->input('limit', 20);
+
+        // Search users by name or email
+        $users = \App\Models\User::where(function ($query) use ($searchTerm) {
+            $query->where('name', 'like', "%{$searchTerm}%")
+                  ->orWhere('email', 'like', "%{$searchTerm}%");
+        })
+        ->select('id', 'name', 'email')
+        ->limit($limit)
+        ->orderBy('name')
+        ->get();
+
+        return response()->json([
+            'success' => true,
+            'users' => $users,
+        ]);
+    }
+
+    /**
+     * Get ticket definitions for a specific event (AJAX endpoint).
+     */
+    public function getTicketDefinitions(Request $request, int $eventId)
+    {
+        // Use policy to check authorization
+        $this->authorize('createManual', \App\Models\Booking::class);
+
+        $request->validate([
+            'event_id' => 'sometimes|integer|exists:events,id'
+        ]);
+
+        $ticketDefinitions = $this->manualBookingService->getTicketDefinitionsForEvent($eventId);
+
+        return response()->json([
+            'success' => true,
+            'ticket_definitions' => $ticketDefinitions->map(function ($ticket) {
+                return [
+                    'id' => $ticket->id,
+                    'name' => is_array($ticket->name) ? $ticket->name : ['en' => $ticket->name],
+                    'description' => is_array($ticket->description) ? $ticket->description : ['en' => $ticket->description ?? ''],
+                    'price' => $ticket->price,
+                    'currency' => $ticket->currency,
+                    'total_quantity' => $ticket->total_quantity,
+                    'min_per_order' => $ticket->min_per_order,
+                    'max_per_order' => $ticket->max_per_order,
+                    'formatted_price' => number_format($ticket->price / 100, 2) . ' ' . strtoupper($ticket->currency),
+                ];
+            }),
+        ]);
     }
 
     /**

@@ -127,6 +127,12 @@ Route::prefix('admin')
         Route::resource('events.occurrences', EventOccurrenceController::class)->shallow();
         Route::resource('ticket-definitions', TicketDefinitionController::class);
         Route::resource('bookings', AdminBookingController::class);
+
+        // Manual booking endpoints
+        Route::get('events/{event}/ticket-definitions', [AdminBookingController::class, 'getTicketDefinitions'])
+            ->name('events.ticket-definitions');
+        Route::post('bookings/search-users', [AdminBookingController::class, 'searchUsers'])
+            ->name('bookings.search-users');
         
         // Organizer management
         Route::resource('organizers', OrganizerController::class);
