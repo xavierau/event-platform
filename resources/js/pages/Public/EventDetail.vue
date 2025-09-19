@@ -110,6 +110,62 @@ const formatPrice = (priceRange: string | null) => {
 
 const eventPrice = formatPrice(props.event.price_range);
 
+// Computed properties for membership pricing
+const hasMembershipPricing = computed(() => {
+    if (!selectedOccurrence.value?.tickets) return false;
+    return selectedOccurrence.value.tickets.some(ticket => ticket.has_membership_discount);
+});
+
+const membershipPricingData = computed(() => {
+    if (!selectedOccurrence.value?.tickets || !hasMembershipPricing.value) return null;
+
+    const ticketsWithDiscounts = selectedOccurrence.value.tickets.filter(ticket => ticket.has_membership_discount);
+    if (ticketsWithDiscounts.length === 0) return null;
+
+    // Find the ticket with the highest savings for display
+    const bestDiscount = ticketsWithDiscounts.reduce((best, current) => {
+        return (current.savings_percentage || 0) > (best.savings_percentage || 0) ? current : best;
+    });
+
+    return {
+        memberPrice: bestDiscount.membership_price,
+        regularPrice: bestDiscount.price,
+        savingsAmount: bestDiscount.savings_amount,
+        savingsPercentage: bestDiscount.savings_percentage,
+        currency: bestDiscount.currency
+    };
+});
+
+const showMembershipUpgradeHint = computed(() => {
+    // Show hint for non-members when membership discounts are available
+    if (isAuthenticated.value) return false; // Don't show to members
+    if (!selectedOccurrence.value?.tickets) return false;
+
+    return selectedOccurrence.value.tickets.some(ticket => {
+        // Check if any tickets have potential membership discounts
+        // This would require backend data about available discounts
+        return false; // For now, we'll implement this when we have the data structure
+    });
+});
+
+const formatCurrency = (amount: number, currency: string = 'HKD') => {
+    const currencySymbols: Record<string, string> = {
+        HKD: 'HK$',
+        USD: '$',
+        EUR: '€',
+        GBP: '£',
+        JPY: '¥',
+        CNY: '¥',
+        TWD: 'NT$',
+        SGD: 'S$',
+        AUD: 'A$',
+        CAD: 'C$'
+    };
+
+    const symbol = currencySymbols[currency.toUpperCase()] || currency.toUpperCase() + ' ';
+    return `${symbol}${amount.toFixed(2)}`;
+};
+
 // Computed property for the overall date range shown in the hero section
 const heroDateRange = computed(() => {
     if (props.event.occurrences && props.event.occurrences.length > 0) {
@@ -340,19 +396,80 @@ const handleCommentAdded = (newComment: Comment) => {
                 </div>
             </section>
 
-            <!-- Price Section -->
+            <!-- Enhanced Price Section with Membership Pricing -->
             <section class="mt-3 bg-white p-4 shadow-sm dark:bg-gray-800" v-if="selectedOcurrenceHasTickets">
-                <div class="container mx-auto flex items-center justify-between">
-                    <div>
-                        <span class="text-2xl font-bold text-red-500 dark:text-red-400">
-                            <span class="text-base">{{ eventPrice.currency }}</span
-                            >{{ eventPrice.amount }}
-                        </span>
-                        <span class="text-2xl font-bold text-red-500 dark:text-red-400">{{ eventPrice.suffix }}</span>
-                        <span
-                            v-if="event.discount_info"
-                            class="ml-2 rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600 dark:bg-red-700 dark:text-red-300"
-                        >
+                <div class="container mx-auto">
+                    <!-- Member Pricing Display -->
+                    <div v-if="hasMembershipPricing && membershipPricingData" class="space-y-2">
+                        <!-- Primary Member Price -->
+                        <div class="flex items-center space-x-3">
+                            <div>
+                                <span class="text-2xl font-bold text-pink-500 dark:text-pink-400">
+                                    {{ formatCurrency(membershipPricingData.memberPrice, membershipPricingData.currency) }}
+                                </span>
+                                <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {{ t('events.pricing.member_price') }}
+                                </span>
+                            </div>
+                            <!-- Savings Badge -->
+                            <div class="rounded-full bg-green-100 px-3 py-1 dark:bg-green-800">
+                                <span class="text-sm font-semibold text-green-700 dark:text-green-200">
+                                    {{ t('events.pricing.save') }} {{ formatCurrency(membershipPricingData.savingsAmount, membershipPricingData.currency) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Regular Price Reference -->
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500 line-through dark:text-gray-400">
+                                {{ t('events.pricing.regular') }}: {{ formatCurrency(membershipPricingData.regularPrice, membershipPricingData.currency) }}
+                            </span>
+                            <span class="text-xs text-green-600 dark:text-green-400">
+                                ({{ membershipPricingData.savingsPercentage }}% {{ t('events.pricing.off') }})
+                            </span>
+                        </div>
+
+                        <!-- Member Status Indicator -->
+                        <div class="flex items-center space-x-2">
+                            <svg class="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-xs text-gray-600 dark:text-gray-300">
+                                {{ t('events.pricing.member_benefits_applied') }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Regular Pricing Display (for non-members or members without discounts) -->
+                    <div v-else>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-2xl font-bold text-red-500 dark:text-red-400">
+                                    <span class="text-base">{{ eventPrice.currency }}</span>{{ eventPrice.amount }}
+                                </span>
+                                <span class="text-2xl font-bold text-red-500 dark:text-red-400">{{ eventPrice.suffix }}</span>
+
+                                <!-- Member Price Indicator for members without discounts -->
+                                <span v-if="isAuthenticated && event.user_membership" class="ml-2 text-sm text-gray-600 dark:text-gray-300">
+                                    ({{ t('events.pricing.member_price_applied') }})
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Membership Upgrade Hint for Non-Members -->
+                        <div v-if="showMembershipUpgradeHint" class="mt-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                {{ t('events.pricing.members_save_hint') }}
+                                <a href="#" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                    {{ t('events.pricing.learn_more') }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Legacy discount info display -->
+                    <div v-if="event.discount_info" class="mt-2">
+                        <span class="inline-block rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600 dark:bg-red-700 dark:text-red-300">
                             {{ event.discount_info }}
                         </span>
                     </div>

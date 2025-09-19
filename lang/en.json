@@ -843,6 +843,16 @@
             "single_required": "This event is exclusive to {level} members.",
             "required": "Membership Required",
             "info": "This event is exclusive to members. Please log in or sign up to access."
+        },
+        "pricing": {
+            "member_price": "Member Price",
+            "regular": "Regular",
+            "save": "Save",
+            "off": "off",
+            "member_benefits_applied": "Member benefits applied",
+            "member_price_applied": "Member price applied",
+            "members_save_hint": "Members save up to 25% on this event.",
+            "learn_more": "Learn more"
         }
     },
     "bookings": {
