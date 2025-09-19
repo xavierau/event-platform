@@ -89,6 +89,7 @@ const props = defineProps<{
     statuses: StatusOption[];
     statistics: Statistics;
     filters: Filters;
+    canCreateManualBooking: boolean;
 }>();
 
 // Form
@@ -153,9 +154,14 @@ const formatTotalRevenue = (): string => {
                     <div class="p-6 lg:p-8 bg-white dark:bg-gray-800 dark:bg-gradient-to-bl dark:from-gray-700/50 dark:via-transparent border-b border-gray-200 dark:border-gray-700">
                         <PageHeader :title="t('bookings.index_title')" :subtitle="t('bookings.index_subtitle')">
                             <template #actions>
-                                <Link :href="route('admin.qr-scanner.index')" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 active:bg-blue-700 focus:outline-none focus:border-blue-700 focus:ring focus:ring-blue-200 disabled:opacity-25 transition">
-                                    {{ t('bookings.scan_qr_button') }}
-                                </Link>
+                                <div class="flex gap-3">
+                                    <Link v-if="canCreateManualBooking" :href="route('admin.bookings.create')" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500 active:bg-green-700 focus:outline-none focus:border-green-700 focus:ring focus:ring-green-200 disabled:opacity-25 transition">
+                                        {{ t('Create Manual Booking') }}
+                                    </Link>
+                                    <Link :href="route('admin.qr-scanner.index')" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 active:bg-blue-700 focus:outline-none focus:border-blue-700 focus:ring focus:ring-blue-200 disabled:opacity-25 transition">
+                                        {{ t('bookings.scan_qr_button') }}
+                                    </Link>
+                                </div>
                             </template>
                         </PageHeader>
 
