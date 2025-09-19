@@ -35,6 +35,11 @@ export interface PublicTicketType {
     quantity_available?: number; // Available quantity for purchase
     max_per_order?: number;
     min_per_order?: number;
+    // Membership pricing fields (available when user is authenticated with membership)
+    membership_price?: number; // Discounted price for user's membership level
+    has_membership_discount?: boolean; // Whether user gets a discount
+    savings_amount?: number; // Amount saved with membership discount
+    savings_percentage?: number; // Percentage saved with membership discount
 }
 
 /**
