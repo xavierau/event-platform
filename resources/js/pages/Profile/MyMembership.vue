@@ -78,9 +78,6 @@ onMounted(() => {
         </main>
 
         <FrontendFooter />
-
-
-<!--        <BottomNavbar />-->
     </div>
 </template>
 
