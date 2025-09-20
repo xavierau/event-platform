@@ -204,6 +204,7 @@ class UserController extends Controller
         $userData = $user->toArray();
         $userData['membership_level'] = $user->currentMembership?->level?->name ?? 'N/A';
         $userData['current_membership_level_id'] = $user->currentMembership?->membership_level_id;
+        $userData['is_email_verified'] = $user->hasVerifiedEmail();
         $organizer = $user->organizers->first();
         $userData['organizer_info'] = $organizer ? $organizer->name . ' (' . ($organizer->pivot->role_in_organizer ?? 'N/A') . ')' : 'N/A';
 
@@ -233,6 +234,7 @@ class UserController extends Controller
     {
         $request->validate([
             'is_commenting_blocked' => 'required|boolean',
+            'email_verified' => 'nullable|boolean',
             'membership_level_id' => 'nullable|exists:membership_levels,id',
             'membership_duration_months' => 'nullable|integer|min:1|max:120',
         ]);
@@ -241,12 +243,43 @@ class UserController extends Controller
             'is_commenting_blocked' => $request->is_commenting_blocked,
         ]);
 
+        // Handle email verification toggle
+        if ($request->has('email_verified')) {
+            $oldVerificationStatus = $user->hasVerifiedEmail() ? 'verified' : 'unverified';
+
+            if ($request->email_verified && !$user->hasVerifiedEmail()) {
+                $user->markEmailAsVerified();
+                $newVerificationStatus = 'verified';
+            } elseif (!$request->email_verified && $user->hasVerifiedEmail()) {
+                $user->email_verified_at = null;
+                $user->save();
+                $newVerificationStatus = 'unverified';
+            } else {
+                $newVerificationStatus = $oldVerificationStatus;
+            }
+
+            // Create audit log if status changed
+            if ($oldVerificationStatus !== $newVerificationStatus) {
+                AdminAuditLog::create([
+                    'admin_user_id' => auth()->id(),
+                    'target_user_id' => $user->id,
+                    'action_type' => 'email_verification_change',
+                    'action_details' => [
+                        'old_status' => $oldVerificationStatus,
+                        'new_status' => $newVerificationStatus,
+                    ],
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+            }
+        }
+
         // Handle membership level assignment
         if ($request->filled('membership_level_id')) {
             $membershipLevel = MembershipLevel::find($request->membership_level_id);
             if ($membershipLevel) {
                 $assignMembershipLevelAction->execute(
-                    $user, 
+                    $user,
                     $membershipLevel,
                     $request->membership_duration_months
                 );

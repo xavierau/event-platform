@@ -72,6 +72,17 @@
                                  {{ form.errors.is_commenting_blocked }}
                              </div>
 
+                            <div class="flex items-center space-x-2">
+                                <Switch id="email_verified" v-model:checked="form.email_verified" />
+                                <Label for="email_verified">{{ t('fields.email_verified') }}</Label>
+                            </div>
+                            <div v-if="form.errors.email_verified" class="text-sm text-red-600">
+                                {{ form.errors.email_verified }}
+                            </div>
+                            <div v-if="props.user.email_verified_at" class="text-sm text-gray-500 dark:text-gray-400">
+                                {{ t('helpers.email_verified_at', { date: new Date(props.user.email_verified_at).toLocaleDateString() }) }}
+                            </div>
+
                             <div class="flex items-center gap-4">
                                 <Button :disabled="form.processing">{{ t('actions.save') }}</Button>
                                  <Transition enter-active-class="transition ease-in-out" enter-from-class="opacity-0" leave-active-class="transition ease-in-out" leave-to-class="opacity-0">
@@ -103,6 +114,7 @@ const props = defineProps<{
         current_membership_level_id?: number;
         membership_level?: string;
         organizer_info?: string;
+        is_email_verified?: boolean;
     };
     membershipLevels: MembershipLevel[];
 }>();
@@ -111,6 +123,7 @@ const { t, locale } = useI18n();
 
 const form = useForm({
     is_commenting_blocked: props.user ? props.user.is_commenting_blocked : false,
+    email_verified: props.user ? props.user.is_email_verified : false,
     membership_level_id: props.user?.current_membership_level_id || null,
     membership_duration_months: null as number | null,
 });
