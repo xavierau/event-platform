@@ -2,6 +2,7 @@
 
 namespace App\DataTransferObjects;
 
+use App\Enums\BookingStatusEnum;
 use App\Enums\CheckInMethod;
 use App\Enums\CheckInStatus;
 use Carbon\Carbon;
@@ -74,7 +75,7 @@ class BookingData extends Data
     public function __construct(
         public int $id,
         public string $booking_number,
-        public string $status,
+        public BookingStatusEnum $status,
         public int $quantity,
         public UserData $user,
     ) {}
