@@ -73,7 +73,7 @@
                              </div>
 
                             <div class="flex items-center space-x-2">
-                                <Switch id="email_verified" v-model:checked="form.email_verified" />
+                                <Switch id="email_verified" v-model="emailVerified" />
                                 <Label for="email_verified">{{ t('fields.email_verified') }}</Label>
                             </div>
                             <div v-if="form.errors.email_verified" class="text-sm text-red-600">
@@ -98,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -121,12 +121,22 @@ const props = defineProps<{
 
 const { t, locale } = useI18n();
 
+const emailVerifiedValue = props.user ? (props.user.is_email_verified ?? false) : false;
+
+// Use a separate ref for email verification to ensure reactivity
+const emailVerified = ref(emailVerifiedValue);
+
 const form = useForm({
     is_commenting_blocked: props.user ? props.user.is_commenting_blocked : false,
-    email_verified: props.user ? props.user.is_email_verified : false,
+    email_verified: emailVerified.value,
     membership_level_id: props.user?.current_membership_level_id || null,
     membership_duration_months: null as number | null,
 });
+
+// Watch emailVerified and sync with form
+watch(emailVerified, (newValue) => {
+    form.email_verified = newValue;
+}, { immediate: true });
 
 const pageTitle = computed(() => t('users.edit_title', { name: props.user.name }));
 
