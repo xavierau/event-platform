@@ -55,6 +55,7 @@
         "date-fns": "^3.0.0",
         "dayjs": "^1.11.13",
         "laravel-vite-plugin": "^1.0",
+        "lodash-es": "^4.17.21",
         "lucide-vue-next": "^0.468.0",
         "qrcode": "^1.5.4",
         "reka-ui": "^2.3.1",
