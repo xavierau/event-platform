@@ -26,6 +26,27 @@ class CheckInRecordData extends Data
 
     public static function fromCheckInLog($checkInLog): self
     {
+        // Ensure required relationships exist
+        if (! $checkInLog->booking) {
+            throw new \InvalidArgumentException('CheckInLog must have a booking relationship');
+        }
+
+        if (! $checkInLog->booking->event) {
+            throw new \InvalidArgumentException('CheckInLog booking must have an event relationship');
+        }
+
+        if (! $checkInLog->booking->event->organizer) {
+            throw new \InvalidArgumentException('CheckInLog booking event must have an organizer relationship');
+        }
+
+        if (! $checkInLog->booking->user) {
+            throw new \InvalidArgumentException('CheckInLog booking must have a user relationship');
+        }
+
+        if (! $checkInLog->eventOccurrence) {
+            throw new \InvalidArgumentException('CheckInLog must have an eventOccurrence relationship');
+        }
+
         return new self(
             id: $checkInLog->id,
             check_in_timestamp: $checkInLog->check_in_timestamp,

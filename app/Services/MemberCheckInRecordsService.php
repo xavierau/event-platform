@@ -2,10 +2,9 @@
 
 namespace App\Services;
 
-use App\DataTransferObjects\CheckInRecordData;
-use App\Enums\CheckInStatus;
+use App\DataTransferObjects\MemberCheckInRecordData;
 use App\Enums\RoleNameEnum;
-use App\Models\CheckInLog;
+use App\Models\MemberCheckIn;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,10 +13,10 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class CheckInRecordsService
+class MemberCheckInRecordsService
 {
     /**
-     * Get check-in records with filtering and pagination
+     * Get member check-in records with filtering and pagination
      */
     public function getCheckInRecords(User $user, array $filters = []): LengthAwarePaginator
     {
@@ -30,14 +29,14 @@ class CheckInRecordsService
     }
 
     /**
-     * Get all check-in records for export (no pagination)
+     * Get all member check-in records for export (no pagination)
      */
     public function getCheckInRecordsForExport(User $user, array $filters = []): Collection
     {
         $query = $this->buildQuery($user, $filters);
 
-        return $query->get()->map(function ($checkInLog) {
-            return CheckInRecordData::fromCheckInLog($checkInLog);
+        return $query->get()->map(function ($memberCheckIn) {
+            return MemberCheckInRecordData::fromMemberCheckIn($memberCheckIn);
         });
     }
 
@@ -46,7 +45,7 @@ class CheckInRecordsService
      */
     public function exportToCsv(Collection $records): StreamedResponse
     {
-        $filename = 'check-in-records-'.now()->format('Y-m-d-H-i-s').'.csv';
+        $filename = 'member-check-in-records-'.now()->format('Y-m-d-H-i-s').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -64,40 +63,34 @@ class CheckInRecordsService
 
             // CSV Headers
             fputcsv($file, [
-                'Check-in Time',
-                'Status',
-                'Method',
-                'Event Name',
-                'Occurrence Name',
-                'Occurrence Start',
-                'Venue',
-                'Attendee Name',
-                'Attendee Email',
-                'Booking Number',
-                'Booking Quantity',
-                'Operator Name',
-                'Organization',
+                'Scan Time',
+                'Member Name',
+                'Member Email',
+                'Scanner Name',
+                'Scanner Email',
                 'Location',
+                'Device Identifier',
+                'Membership Level',
+                'Membership Status',
+                'Event Name',
+                'Event Occurrence',
                 'Notes',
             ]);
 
             // CSV Data
             foreach ($records as $record) {
                 fputcsv($file, [
-                    $record->check_in_timestamp->format('Y-m-d H:i:s'),
-                    $record->status->value,
-                    $record->method->value,
-                    is_array($record->event->name) ? ($record->event->name['en'] ?? reset($record->event->name)) : $record->event->name,
-                    is_array($record->event_occurrence->name) ? ($record->event_occurrence->name['en'] ?? reset($record->event_occurrence->name)) : $record->event_occurrence->name,
-                    $record->event_occurrence->start_at->format('Y-m-d H:i:s'),
-                    $record->event_occurrence->venue_name ?? '',
-                    $record->booking->user->name,
-                    $record->booking->user->email,
-                    $record->booking->booking_number,
-                    $record->booking->quantity,
-                    $record->operator?->name ?? '',
-                    is_array($record->organizer->name) ? ($record->organizer->name['en'] ?? reset($record->organizer->name)) : $record->organizer->name,
-                    $record->location_description ?? '',
+                    $record->scanned_at->format('Y-m-d H:i:s'),
+                    $record->member->name,
+                    $record->member->email,
+                    $record->scanner?->name ?? '',
+                    $record->scanner?->email ?? '',
+                    $record->location ?? '',
+                    $record->device_identifier ?? '',
+                    $record->membership_data['membershipLevel'] ?? $record->membership_data['level'] ?? '',
+                    $record->membership_data['membershipStatus'] ?? $record->membership_data['status'] ?? '',
+                    $record->event ? (is_array($record->event->name) ? ($record->event->name['en'] ?? reset($record->event->name)) : $record->event->name) : '',
+                    $record->event_occurrence ? (is_array($record->event_occurrence->name) ? ($record->event_occurrence->name['en'] ?? reset($record->event_occurrence->name)) : $record->event_occurrence->name) : '',
                     $record->notes ?? '',
                 ]);
             }
@@ -113,12 +106,12 @@ class CheckInRecordsService
      */
     private function buildQuery(User $user, array $filters): Builder
     {
-        $query = CheckInLog::with([
-            'booking.user',
-            'booking.event.organizer',
+        $query = MemberCheckIn::with([
+            'member',
+            'scanner',
+            'event.organizer',
             'eventOccurrence',
-            'operator',
-        ])->orderBy('check_in_timestamp', 'desc');
+        ])->orderBy('scanned_at', 'desc');
 
         // Apply organization filter based on user role
         $query = $this->applyOrganizationFilter($query, $user);
@@ -128,14 +121,14 @@ class CheckInRecordsService
             $query = $this->applySearchFilter($query, $filters['search']);
         }
 
-        // Apply status filter
-        if (! empty($filters['status'])) {
-            $query = $this->applyStatusFilter($query, $filters['status']);
+        // Apply scanner filter
+        if (! empty($filters['scanner_id'])) {
+            $query = $this->applyScannerFilter($query, $filters['scanner_id']);
         }
 
-        // Apply method filter
-        if (! empty($filters['method'])) {
-            $query = $this->applyMethodFilter($query, $filters['method']);
+        // Apply location filter
+        if (! empty($filters['location'])) {
+            $query = $this->applyLocationFilter($query, $filters['location']);
         }
 
         // Apply date range filter
@@ -174,7 +167,7 @@ class CheckInRecordsService
         $userOrganizerIds = $user->activeOrganizers()->pluck('organizers.id');
 
         if ($userOrganizerIds->isNotEmpty()) {
-            return $query->whereHas('booking.event', function (Builder $eventQuery) use ($userOrganizerIds) {
+            return $query->whereHas('event', function (Builder $eventQuery) use ($userOrganizerIds) {
                 $eventQuery->whereIn('organizer_id', $userOrganizerIds);
             });
         }
@@ -184,48 +177,32 @@ class CheckInRecordsService
     }
 
     /**
-     * Apply search filter for user name, email, or booking number
+     * Apply search filter for member name, email
      */
     public function applySearchFilter(Builder $query, string $search): Builder
     {
         return $query->where(function (Builder $q) use ($search) {
-            $q->whereHas('booking.user', function (Builder $userQuery) use ($search) {
-                $userQuery->where('name', 'LIKE', "%{$search}%")
+            $q->whereHas('member', function (Builder $memberQuery) use ($search) {
+                $memberQuery->where('name', 'LIKE', "%{$search}%")
                     ->orWhere('email', 'LIKE', "%{$search}%");
-            })
-                ->orWhereHas('booking', function (Builder $bookingQuery) use ($search) {
-                    $bookingQuery->where('booking_number', 'LIKE', "%{$search}%");
-                })
-                ->orWhereHas('booking.event', function (Builder $eventQuery) use ($search) {
-                    $eventQuery->where('name->en', 'LIKE', "%{$search}%")
-                        ->orWhere('name', 'LIKE', "%{$search}%");
-                });
+            });
         });
     }
 
     /**
-     * Apply status filter
+     * Apply scanner filter
      */
-    public function applyStatusFilter(Builder $query, string $status): Builder
+    public function applyScannerFilter(Builder $query, int $scannerId): Builder
     {
-        if ($status === 'successful') {
-            return $query->where('status', CheckInStatus::SUCCESSFUL);
-        }
-
-        if ($status === 'failed') {
-            return $query->where('status', '!=', CheckInStatus::SUCCESSFUL);
-        }
-
-        // If specific status is provided, filter by that
-        return $query->where('status', $status);
+        return $query->where('scanned_by_user_id', $scannerId);
     }
 
     /**
-     * Apply method filter
+     * Apply location filter
      */
-    public function applyMethodFilter(Builder $query, string $method): Builder
+    public function applyLocationFilter(Builder $query, string $location): Builder
     {
-        return $query->where('method', $method);
+        return $query->where('location', 'LIKE', "%{$location}%");
     }
 
     /**
@@ -234,11 +211,11 @@ class CheckInRecordsService
     public function applyDateRangeFilter(Builder $query, ?string $startDate, ?string $endDate): Builder
     {
         if ($startDate) {
-            $query->where('check_in_timestamp', '>=', Carbon::parse($startDate)->startOfDay());
+            $query->where('scanned_at', '>=', Carbon::parse($startDate)->startOfDay());
         }
 
         if ($endDate) {
-            $query->where('check_in_timestamp', '<=', Carbon::parse($endDate)->endOfDay());
+            $query->where('scanned_at', '<=', Carbon::parse($endDate)->endOfDay());
         }
 
         return $query;
@@ -249,7 +226,7 @@ class CheckInRecordsService
      */
     public function applySpecificOrganizationFilter(Builder $query, int $organizationId): Builder
     {
-        return $query->whereHas('booking.event', function (Builder $eventQuery) use ($organizationId) {
+        return $query->whereHas('event', function (Builder $eventQuery) use ($organizationId) {
             $eventQuery->where('organizer_id', $organizationId);
         });
     }
@@ -259,13 +236,11 @@ class CheckInRecordsService
      */
     public function applyEventFilter(Builder $query, int $eventId): Builder
     {
-        return $query->whereHas('booking', function (Builder $bookingQuery) use ($eventId) {
-            $bookingQuery->where('event_id', $eventId);
-        });
+        return $query->where('event_id', $eventId);
     }
 
     /**
-     * Get check-in statistics for dashboard
+     * Get member check-in statistics for dashboard
      */
     public function getCheckInStats(User $user, array $filters = []): array
     {
@@ -276,18 +251,18 @@ class CheckInRecordsService
         $baseQuery->getQuery()->orders = null;
 
         $total = $baseQuery->count();
-        $successful = $baseQuery->where('status', CheckInStatus::SUCCESSFUL)->count();
-        $failed = $total - $successful;
 
         $todayQuery = clone $baseQuery;
-        $today = $todayQuery->whereDate('check_in_timestamp', Carbon::today())->count();
+        $today = $todayQuery->whereDate('scanned_at', Carbon::today())->count();
+
+        // Count unique members
+        $uniqueMembersQuery = clone $baseQuery;
+        $uniqueMembers = $uniqueMembersQuery->distinct('user_id')->count('user_id');
 
         return [
             'total' => $total,
-            'successful' => $successful,
-            'failed' => $failed,
             'today' => $today,
-            'success_rate' => $total > 0 ? round(($successful / $total) * 100, 1) : 0,
+            'unique_members' => $uniqueMembers,
         ];
     }
 
@@ -332,5 +307,51 @@ class CheckInRecordsService
             ->where('is_active', 1)
             ->orderBy('name->en')
             ->get();
+    }
+
+    /**
+     * Get available scanners for filtering
+     */
+    public function getAvailableScanners(User $user): Collection
+    {
+        $query = MemberCheckIn::with('scanner')
+            ->select('scanned_by_user_id')
+            ->distinct()
+            ->whereNotNull('scanned_by_user_id');
+
+        // Apply organization filter
+        $query = $this->applyOrganizationFilter($query, $user);
+
+        return $query->get()
+            ->pluck('scanner')
+            ->filter()
+            ->unique('id')
+            ->values()
+            ->map(function ($scanner) {
+                return [
+                    'id' => $scanner->id,
+                    'name' => $scanner->name,
+                    'email' => $scanner->email,
+                ];
+            });
+    }
+
+    /**
+     * Get available locations for filtering
+     */
+    public function getAvailableLocations(User $user): Collection
+    {
+        $query = MemberCheckIn::select('location')
+            ->distinct()
+            ->whereNotNull('location')
+            ->where('location', '!=', '');
+
+        // Apply organization filter
+        $query = $this->applyOrganizationFilter($query, $user);
+
+        return $query->pluck('location')
+            ->filter()
+            ->sort()
+            ->values();
     }
 }
