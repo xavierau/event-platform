@@ -397,7 +397,8 @@
     "helpers": {
         "optional_membership_assignment": "可选择在创建时立即为此用户分配会员级别。",
         "custom_duration_help": "覆盖默认会员期限。留空以使用会员级别的默认期限。",
-        "admin_notes_help": "记录创建此用户的原因或任何其他备注以供审计用途。"
+        "admin_notes_help": "记录创建此用户的原因或任何其他备注以供审计用途。",
+        "email_verified_at": "用户电子邮件地址验证的日期和时间。如未验证请留空。"
     },
     "status": {
         "active": "激活",
@@ -712,6 +713,7 @@
         "admin_notes": "管理员备注",
         "current_membership": "当前会员资格",
         "commenting_blocked": "评论已禁用",
+        "email_verified": "电子邮件已验证",
         "date_from": "起始日期",
         "date_to": "结束日期",
         "transaction": "交易",
@@ -1093,6 +1095,32 @@
             "events_attended": "参加的活动",
             "membership_level": "会员等级",
             "loyalty_points": "忠诚度积分"
+        },
+        "metrics": {
+            "total_users": "总用户数",
+            "with_membership": "有会员资格",
+            "without_membership": "无会员资格",
+            "growth_rate": "增长率",
+            "membership_distribution": "会员分布",
+            "member_growth": "会员增长",
+            "last_12_months": "过去12个月"
+        },
+        "filters": {
+            "title": "筛选器",
+            "clear_all": "清除全部",
+            "search": "搜索",
+            "search_placeholder": "按姓名、邮箱或电话搜索...",
+            "membership_level": "会员等级",
+            "all_levels": "所有等级",
+            "membership_status": "会员状态",
+            "all_statuses": "所有状态",
+            "with_membership": "有会员资格",
+            "without_membership": "无会员资格",
+            "registered_from": "注册起始日",
+            "registered_to": "注册结束日",
+            "active_filters": "启用的筛选器：{count}",
+            "clear": "清除",
+            "apply": "应用"
         }
     },
     "settings": {

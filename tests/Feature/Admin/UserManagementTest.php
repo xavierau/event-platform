@@ -335,10 +335,163 @@ class UserManagementTest extends TestCase
         $response = $this->post(route('admin.users.store'), $userData);
 
         $response->assertSessionHasErrors(['membership_level_id']);
-        
+
         // Verify user was not created
         $this->assertDatabaseMissing('users', [
             'email' => 'test@example.com',
         ]);
+    }
+
+    #[Test]
+    public function admin_can_manually_verify_user_email()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => null, // Unverified email
+        ]);
+
+        $response = $this->patch(route('admin.users.update', $user), [
+            'is_commenting_blocked' => false,
+            'email_verified' => true,
+        ]);
+
+        $response->assertRedirectToRoute('admin.users.index')
+            ->assertSessionHas('success', 'User updated successfully.');
+
+        // Check user email is now verified
+        $user->refresh();
+        expect($user->hasVerifiedEmail())->toBeTrue()
+            ->and($user->email_verified_at)->not->toBeNull();
+
+        // Check audit log was created
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'admin_user_id' => $this->adminUser->id,
+            'target_user_id' => $user->id,
+            'action_type' => 'email_verification_change',
+        ]);
+    }
+
+    #[Test]
+    public function admin_can_manually_unverify_user_email()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(), // Verified email
+        ]);
+
+        $response = $this->patch(route('admin.users.update', $user), [
+            'is_commenting_blocked' => false,
+            'email_verified' => false,
+        ]);
+
+        $response->assertRedirectToRoute('admin.users.index')
+            ->assertSessionHas('success', 'User updated successfully.');
+
+        // Check user email is now unverified
+        $user->refresh();
+        expect($user->hasVerifiedEmail())->toBeFalse()
+            ->and($user->email_verified_at)->toBeNull();
+
+        // Check audit log was created
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'admin_user_id' => $this->adminUser->id,
+            'target_user_id' => $user->id,
+            'action_type' => 'email_verification_change',
+        ]);
+    }
+
+    #[Test]
+    public function email_verification_status_is_included_in_edit_response()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->get(route('admin.users.edit', $user));
+
+        $response->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Users/Edit')
+                ->where('user.email_verified_at', $user->email_verified_at->toISOString())
+                ->where('user.is_email_verified', true)
+            );
+    }
+
+    #[Test]
+    public function email_verification_toggle_validates_boolean()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->patch(route('admin.users.update', $user), [
+            'is_commenting_blocked' => false,
+            'email_verified' => 'invalid',
+        ]);
+
+        $response->assertSessionHasErrors(['email_verified']);
+    }
+
+    #[Test]
+    public function audit_log_contains_email_verification_change_details()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => null,
+        ]);
+
+        $this->patch(route('admin.users.update', $user), [
+            'is_commenting_blocked' => false,
+            'email_verified' => true,
+        ]);
+
+        $auditLog = AdminAuditLog::where('target_user_id', $user->id)
+            ->where('action_type', 'email_verification_change')
+            ->first();
+
+        expect($auditLog)->not->toBeNull()
+            ->and($auditLog->action_details)->toHaveKeys(['old_status', 'new_status'])
+            ->and($auditLog->action_details['old_status'])->toBe('unverified')
+            ->and($auditLog->action_details['new_status'])->toBe('verified');
+    }
+
+    #[Test]
+    public function test_commenting_blocked_update_works()
+    {
+        $targetUser = User::factory()->create();
+
+        $response = $this->patch(route('admin.users.update', $targetUser), [
+            'is_commenting_blocked' => true,
+            // No membership_level_id provided
+        ]);
+
+        $response->assertRedirectToRoute('admin.users.index');
+
+        // Check user property was updated
+        expect($targetUser->fresh()->is_commenting_blocked)->toBeTrue();
+    }
+
+    #[Test]
+    public function test_commenting_blocked_update_with_existing_membership()
+    {
+        $targetUser = User::factory()->create();
+        $membershipLevel = MembershipLevel::factory()->create([
+            'name' => ['en' => 'Premium', 'zh-TW' => '高級會員'],
+            'duration_months' => 12,
+            'is_active' => true,
+        ]);
+
+        // Create existing membership
+        $existingMembership = UserMembership::factory()->create([
+            'user_id' => $targetUser->id,
+            'membership_level_id' => $membershipLevel->id,
+            'status' => \App\Modules\Membership\Enums\MembershipStatus::ACTIVE,
+            'expires_at' => now()->addMonths(6),
+        ]);
+
+        $response = $this->patch(route('admin.users.update', $targetUser), [
+            'is_commenting_blocked' => true,
+            // No membership_level_id provided
+        ]);
+
+        $response->assertRedirectToRoute('admin.users.index');
+
+        // Check user property was updated
+        expect($targetUser->fresh()->is_commenting_blocked)->toBeTrue();
     }
 }
