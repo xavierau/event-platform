@@ -410,7 +410,8 @@
     "helpers": {
         "optional_membership_assignment": "Optionally assign a membership level to this user immediately upon creation.",
         "custom_duration_help": "Override the default membership duration. Leave empty to use the membership level's default duration.",
-        "admin_notes_help": "Record the reason for creating this user or any additional notes for audit purposes."
+        "admin_notes_help": "Record the reason for creating this user or any additional notes for audit purposes.",
+        "email_verified_at": "The date and time when the user's email address was verified. Leave empty if not verified."
     },
     "status": {
         "active": "Active",
@@ -726,6 +727,7 @@
         "admin_notes": "Admin Notes",
         "current_membership": "Current Membership",
         "commenting_blocked": "Commenting Blocked",
+        "email_verified": "Email Verified",
         "date_from": "Date From",
         "date_to": "Date To",
         "transaction": "Transaction",
@@ -1122,6 +1124,32 @@
             "events_attended": "Events Attended",
             "membership_level": "Membership Level",
             "loyalty_points": "Loyalty Points"
+        },
+        "metrics": {
+            "total_users": "Total Users",
+            "with_membership": "With Membership",
+            "without_membership": "Without Membership",
+            "growth_rate": "Growth Rate",
+            "membership_distribution": "Membership Distribution",
+            "member_growth": "Member Growth",
+            "last_12_months": "Last 12 months"
+        },
+        "filters": {
+            "title": "Filters",
+            "clear_all": "Clear All",
+            "search": "Search",
+            "search_placeholder": "Search by name, email, or phone...",
+            "membership_level": "Membership Level",
+            "all_levels": "All Levels",
+            "membership_status": "Membership Status",
+            "all_statuses": "All Statuses",
+            "with_membership": "With Membership",
+            "without_membership": "Without Membership",
+            "registered_from": "Registered From",
+            "registered_to": "Registered To",
+            "active_filters": "Active filters: {count}",
+            "clear": "Clear",
+            "apply": "Apply"
         }
     },
     "settings": {

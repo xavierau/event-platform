@@ -410,7 +410,8 @@
     "helpers": {
         "optional_membership_assignment": "選擇性地在建立時立即為此使用者指派會員等級。",
         "custom_duration_help": "覆蓋預設會員期限。留空以使用會員等級的預設期限。",
-        "admin_notes_help": "記錄建立此使用者的原因或任何其他備註以供稽核用途。"
+        "admin_notes_help": "記錄建立此使用者的原因或任何其他備註以供稽核用途。",
+        "email_verified_at": "使用者電子郵件地址驗證的日期和時間。如未驗證請留空。"
     },
     "status": {
         "active": "啟用中",
@@ -727,6 +728,7 @@
         "admin_notes": "管理員備註",
         "current_membership": "目前會員資格",
         "commenting_blocked": "評論已封鎖",
+        "email_verified": "電子郵件已驗證",
         "date_from": "開始日期",
         "date_to": "結束日期",
         "transaction": "交易",
@@ -1121,6 +1123,32 @@
             "events_attended": "參加的活動",
             "membership_level": "會員等級",
             "loyalty_points": "忠誠點數"
+        },
+        "metrics": {
+            "total_users": "總使用者數",
+            "with_membership": "有會員資格",
+            "without_membership": "無會員資格",
+            "growth_rate": "成長率",
+            "membership_distribution": "會員分布",
+            "member_growth": "會員成長",
+            "last_12_months": "過去12個月"
+        },
+        "filters": {
+            "title": "篩選器",
+            "clear_all": "清除全部",
+            "search": "搜尋",
+            "search_placeholder": "按姓名、電子郵件或電話搜尋...",
+            "membership_level": "會員等級",
+            "all_levels": "所有等級",
+            "membership_status": "會員狀態",
+            "all_statuses": "所有狀態",
+            "with_membership": "有會員資格",
+            "without_membership": "無會員資格",
+            "registered_from": "註冊起始日",
+            "registered_to": "註冊結束日",
+            "active_filters": "啟用的篩選器：{count}",
+            "clear": "清除",
+            "apply": "套用"
         }
     },
     "settings": {

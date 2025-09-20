@@ -206,6 +206,7 @@ Route::prefix('admin')
         Route::patch('contact-submissions/{submission}/toggle-read', [ContactSubmissionController::class, 'toggleRead'])->name('contact-submissions.toggle-read');
 
         // User Management
+        Route::get('users/metrics', [UserController::class, 'metrics'])->name('users.metrics')->middleware('permission:manage-users');
         Route::resource('users', UserController::class)->middleware('permission:manage-users');
         Route::post('users/{user}/change-membership', [UserController::class, 'changeMembership'])->name('users.change-membership')->middleware('permission:manage-users');
 

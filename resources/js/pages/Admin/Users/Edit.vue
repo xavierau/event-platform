@@ -80,7 +80,7 @@
                                 {{ form.errors.email_verified }}
                             </div>
                             <div v-if="props.user.email_verified_at" class="text-sm text-gray-500 dark:text-gray-400">
-                                {{ t('helpers.email_verified_at', { date: new Date(props.user.email_verified_at).toLocaleDateString() }) }}
+                                {{ t('helpers.email_verified_at') }}: {{ new Date(props.user.email_verified_at).toLocaleDateString() }}
                             </div>
 
                             <div class="flex items-center gap-4">

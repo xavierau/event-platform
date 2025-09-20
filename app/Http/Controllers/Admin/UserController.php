@@ -19,9 +19,60 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $users = User::with(['currentMembership.level', 'organizers'])->paginate(10);
+        $query = User::with(['currentMembership.level', 'organizers']);
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('mobile_number', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('membership_level_id')) {
+            $query->whereHas('currentMembership', function ($q) use ($request) {
+                $q->where('membership_level_id', $request->membership_level_id)
+                  ->where('status', 'active')
+                  ->where(function ($subQ) {
+                      $subQ->whereNull('expires_at')
+                           ->orWhere('expires_at', '>', now());
+                  });
+            });
+        }
+
+        if ($request->filled('has_membership')) {
+            if ($request->has_membership === 'yes') {
+                $query->whereHas('currentMembership', function ($q) {
+                    $q->where('status', 'active')
+                      ->where(function ($subQ) {
+                          $subQ->whereNull('expires_at')
+                               ->orWhere('expires_at', '>', now());
+                      });
+                });
+            } elseif ($request->has_membership === 'no') {
+                $query->whereDoesntHave('currentMembership', function ($q) {
+                    $q->where('status', 'active')
+                      ->where(function ($subQ) {
+                          $subQ->whereNull('expires_at')
+                               ->orWhere('expires_at', '>', now());
+                      });
+                });
+            }
+        }
+
+        if ($request->filled('registered_from')) {
+            $query->where('created_at', '>=', $request->registered_from);
+        }
+
+        if ($request->filled('registered_to')) {
+            $query->where('created_at', '<=', $request->registered_to . ' 23:59:59');
+        }
+
+        $users = $query->paginate(10)->withQueryString();
 
         $users->getCollection()->transform(function ($user) {
             $user->membership_level = $user->currentMembership?->level?->name ?? 'N/A';
@@ -30,8 +81,21 @@ class UserController extends Controller
             return $user;
         });
 
+        // Get membership levels for filter dropdown
+        $membershipLevels = MembershipLevel::active()
+            ->ordered()
+            ->get()
+            ->map(function ($level) {
+                return [
+                    'id' => $level->id,
+                    'name' => $level->name,
+                ];
+            });
+
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
+            'membershipLevels' => $membershipLevels,
+            'filters' => $request->only(['search', 'membership_level_id', 'has_membership', 'registered_from', 'registered_to']),
         ]);
     }
 
@@ -344,6 +408,69 @@ class UserController extends Controller
                 'message' => 'Failed to change membership: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Get user metrics for dashboard.
+     */
+    public function metrics()
+    {
+        // Total users count
+        $totalUsers = User::whereNull('deleted_at')->count();
+
+        // Membership level distribution
+        $membershipDistribution = MembershipLevel::with(['userMemberships' => function ($query) {
+            $query->where('status', 'active')
+                  ->where(function ($q) {
+                      $q->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', now());
+                  });
+        }])
+        ->get()
+        ->map(function ($level) {
+            return [
+                'id' => $level->id,
+                'name' => $level->name,
+                'count' => $level->userMemberships->count(),
+            ];
+        });
+
+        // Member growth trend (last 12 months)
+        $memberGrowth = collect();
+        for ($i = 11; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $count = User::whereNull('deleted_at')
+                        ->whereYear('created_at', $date->year)
+                        ->whereMonth('created_at', $date->month)
+                        ->count();
+
+            $memberGrowth->push([
+                'month' => $date->format('Y-m'),
+                'month_name' => $date->format('M Y'),
+                'count' => $count,
+            ]);
+        }
+
+        // Users with active memberships vs without
+        $usersWithMembership = User::whereHas('currentMembership', function ($q) {
+            $q->where('status', 'active')
+              ->where(function ($subQ) {
+                  $subQ->whereNull('expires_at')
+                       ->orWhere('expires_at', '>', now());
+              });
+        })->count();
+
+        $usersWithoutMembership = $totalUsers - $usersWithMembership;
+
+        return response()->json([
+            'total_users' => $totalUsers,
+            'membership_distribution' => $membershipDistribution,
+            'member_growth' => $memberGrowth,
+            'membership_status' => [
+                'with_membership' => $usersWithMembership,
+                'without_membership' => $usersWithoutMembership,
+            ],
+        ]);
     }
 
     /**
