@@ -4,6 +4,7 @@ use App\Enums\RoleNameEnum;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CheckInRecordsController;
 use App\Http\Controllers\Admin\CmsPageController;
 use App\Http\Controllers\Admin\ContactSubmissionController;
 use App\Http\Controllers\Admin\CouponController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Admin\EditorUploadController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\EventOccurrenceController;
 use App\Http\Controllers\Admin\MemberScannerController;
+use App\Http\Controllers\Admin\MembershipLevelController;
 use App\Http\Controllers\Admin\OrganizerController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\QrScannerController;
@@ -19,7 +21,6 @@ use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TicketDefinitionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VenueController;
-use App\Http\Controllers\Admin\MembershipLevelController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\LocaleController;
@@ -117,7 +118,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/events/{event}/comments', [CommentController::class, 'store'])->name('events.comments.store');
 });
 
-
 // --- SHARED ADMIN ROUTES (Platform Admins OR Organizer Members) ---
 Route::prefix('admin')
     ->name('admin.')
@@ -154,12 +154,12 @@ Route::prefix('admin')
         // Mass Coupon Assignment routes
         Route::prefix('coupon-assignment')
             ->name('coupon-assignment.')->group(function () {
-            Route::get('/', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'index'])->name('index');
-            Route::post('/search-users', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'searchUsers'])->name('search-users');
-            Route::post('/user-stats', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'getUserStats'])->name('user-stats');
-            Route::post('/assign', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'assign'])->name('assign');
-            Route::get('/history', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'history'])->name('history');
-        });
+                Route::get('/', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'index'])->name('index');
+                Route::post('/search-users', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'searchUsers'])->name('search-users');
+                Route::post('/user-stats', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'getUserStats'])->name('user-stats');
+                Route::post('/assign', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'assign'])->name('assign');
+                Route::get('/history', [App\Http\Controllers\Admin\CouponAssignmentController::class, 'history'])->name('history');
+            });
 
         // Comments moderation (for events)
         Route::get('/events/{event}/comments/moderation', [CommentController::class, 'indexForModeration']);
@@ -180,12 +180,18 @@ Route::prefix('admin')
             Route::post('/check-in', [MemberScannerController::class, 'checkIn'])->name('check-in');
             Route::get('/history/{member}', [MemberScannerController::class, 'getCheckInHistory'])->name('history');
         });
+
+        // Check-in records management
+        Route::prefix('check-in-records')->name('check-in-records.')->group(function () {
+            Route::get('/', [CheckInRecordsController::class, 'index'])->name('index');
+            Route::get('/export', [CheckInRecordsController::class, 'export'])->name('export');
+        });
     });
 
 // --- PLATFORM ADMIN ONLY ROUTES ---
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value])
+    ->middleware(['auth', 'role:'.RoleNameEnum::ADMIN->value])
     ->group(function () {
         // Site-wide settings and management
         Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
@@ -206,6 +212,7 @@ Route::prefix('admin')
         Route::patch('contact-submissions/{submission}/toggle-read', [ContactSubmissionController::class, 'toggleRead'])->name('contact-submissions.toggle-read');
 
         // User Management
+        Route::get('users/metrics', [UserController::class, 'metrics'])->name('users.metrics')->middleware('permission:manage-users');
         Route::resource('users', UserController::class)->middleware('permission:manage-users');
         Route::post('users/{user}/change-membership', [UserController::class, 'changeMembership'])->name('users.change-membership')->middleware('permission:manage-users');
 
@@ -218,12 +225,10 @@ Route::prefix('admin')
         Route::post('membership-levels/bulk-change-plan', [MembershipLevelController::class, 'bulkChangePlan'])->name('membership-levels.bulk-change-plan');
     });
 
-
-
 // --- AUTH & PAYMENT ROUTES ---
-require __DIR__ . '/auth.php';
-require __DIR__ . '/settings.php'; // Note: This file seems to be required but its purpose is not clear from the context.
-require __DIR__ . '/promotional-modal.php';
+require __DIR__.'/auth.php';
+require __DIR__.'/settings.php'; // Note: This file seems to be required but its purpose is not clear from the context.
+require __DIR__.'/promotional-modal.php';
 
 // Payment Gateway Callbacks
 Route::get('/payment/success', [PaymentController::class, 'handlePaymentSuccess'])->name('payment.success');
