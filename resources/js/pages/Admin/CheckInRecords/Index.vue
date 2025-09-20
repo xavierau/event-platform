@@ -5,50 +5,47 @@ import { computed, ref, watch } from 'vue';
 import { debounce } from 'lodash-es';
 
 // Types
-interface CheckInRecord {
+interface MemberCheckInRecord {
     id: number;
-    check_in_timestamp: string;
-    status: string;
-    method: string;
-    location_description?: string;
+    scanned_at: string;
+    location?: string;
     notes?: string;
-    booking: {
-        id: number;
-        booking_number: string;
-        status: string;
-        quantity: number;
-        user: {
-            id: number;
-            name: string;
-            email: string;
-        };
-    };
-    event: {
-        id: number;
-        name: any;
-        organizer_id: number;
-    };
-    event_occurrence: {
-        id: number;
-        name: any;
-        start_at: string;
-        end_at: string;
-        venue_name?: string;
-    };
-    operator?: {
+    device_identifier?: string;
+    member: {
         id: number;
         name: string;
         email: string;
     };
-    organizer: {
+    scanner: {
         id: number;
-        name: any;
-        slug: string;
+        name: string;
+        email: string;
+    };
+    membership_data: {
+        userId: number;
+        userName: string;
+        email: string;
+        membershipLevel: string;
+        membershipStatus?: string;
+        expiresAt?: string;
+        timestamp: string;
+    };
+    event?: {
+        id: number;
+        name: string | object;
+        organizer_id: number;
+    };
+    event_occurrence?: {
+        id: number;
+        name: string | object;
+        start_at: string;
+        end_at: string;
+        venue_name?: string;
     };
 }
 
 interface PaginatedRecords {
-    data: CheckInRecord[];
+    data: MemberCheckInRecord[];
     current_page: number;
     last_page: number;
     per_page: number;
@@ -59,10 +56,9 @@ interface PaginatedRecords {
 
 interface Stats {
     total: number;
-    successful: number;
-    failed: number;
+    unique_members: number;
     today: number;
-    success_rate: number;
+    filtered_results: number;
 }
 
 interface FilterOption {
@@ -75,8 +71,8 @@ interface Props {
     stats: Stats;
     filters: {
         search?: string;
-        status?: string;
-        method?: string;
+        scanner_id?: string;
+        location?: string;
         start_date?: string;
         end_date?: string;
         organization_id?: string;
@@ -84,8 +80,8 @@ interface Props {
     };
     availableEvents: Array<{ id: number; name: any; organizer_id: number }>;
     availableOrganizers: Array<{ id: number; name: any; slug: string }>;
-    statusOptions: FilterOption[];
-    methodOptions: FilterOption[];
+    availableScanners: Array<{ id: number; name: string; email: string }>;
+    availableLocations: Array<{ value: string; label: string }>;
     user: {
         id: number;
         name: string;
@@ -102,8 +98,8 @@ const props = defineProps<Props>();
 // Reactive state
 const filtersExpanded = ref(false);
 const searchInput = ref(props.filters.search || '');
-const statusFilter = ref(props.filters.status || '');
-const methodFilter = ref(props.filters.method || '');
+const scannerFilter = ref(props.filters.scanner_id || '');
+const locationFilter = ref(props.filters.location || '');
 const startDateFilter = ref(props.filters.start_date || '');
 const endDateFilter = ref(props.filters.end_date || '');
 const organizationFilter = ref(props.filters.organization_id || '');
@@ -114,8 +110,8 @@ const exportLoading = ref(false);
 const activeFiltersCount = computed(() => {
     let count = 0;
     if (searchInput.value) count++;
-    if (statusFilter.value) count++;
-    if (methodFilter.value) count++;
+    if (scannerFilter.value) count++;
+    if (locationFilter.value) count++;
     if (startDateFilter.value) count++;
     if (endDateFilter.value) count++;
     if (organizationFilter.value && props.user.is_platform_admin) count++;
@@ -158,40 +154,42 @@ const formatDate = (dateString: string) => {
     }
 };
 
-const getStatusIcon = (status: string) => {
-    switch (status) {
-        case 'SUCCESSFUL':
-            return '✓';
-        case 'FAILED_INVALID_CODE':
-        case 'FAILED_ALREADY_USED':
-        case 'FAILED_EXPIRED':
-        case 'FAILED_NOT_STARTED':
-        case 'FAILED_CANCELLED':
+const getMembershipLevelBadgeClass = (level: string) => {
+    switch (level.toLowerCase()) {
+        case 'premium':
+            return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
+        case 'gold':
+            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+        case 'silver':
+            return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        case 'bronze':
+            return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+        case 'basic':
         default:
-            return '✗';
+            return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
     }
 };
 
-const getStatusClass = (status: string) => {
-    switch (status) {
-        case 'SUCCESSFUL':
-            return 'text-green-600 dark:text-green-400';
+const getMembershipStatusBadgeClass = (status?: string) => {
+    if (!status) return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+    switch (status.toLowerCase()) {
+        case 'active':
+            return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+        case 'expired':
+            return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+        case 'suspended':
+            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
         default:
-            return 'text-red-600 dark:text-red-400';
+            return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
     }
 };
 
-const getMethodIcon = (method: string) => {
-    switch (method) {
-        case 'QR_SCAN':
-            return '📱';
-        case 'MANUAL_ENTRY':
-            return '✋';
-        case 'API_INTEGRATION':
-            return '🔗';
-        default:
-            return '❓';
-    }
+const isExpiringSoon = (expiresAt?: string) => {
+    if (!expiresAt) return false;
+    const expireDate = new Date(expiresAt);
+    const now = new Date();
+    const thirtyDaysFromNow = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000));
+    return expireDate <= thirtyDaysFromNow && expireDate > now;
 };
 
 // Debounced search function
@@ -203,8 +201,8 @@ const debouncedSearch = debounce(() => {
 const applyFilters = () => {
     const filters: any = {
         search: searchInput.value || undefined,
-        status: statusFilter.value || undefined,
-        method: methodFilter.value || undefined,
+        scanner_id: scannerFilter.value || undefined,
+        location: locationFilter.value || undefined,
         start_date: startDateFilter.value || undefined,
         end_date: endDateFilter.value || undefined,
         event_id: eventFilter.value || undefined,
@@ -229,8 +227,8 @@ const applyFilters = () => {
 
 const clearAllFilters = () => {
     searchInput.value = '';
-    statusFilter.value = '';
-    methodFilter.value = '';
+    scannerFilter.value = '';
+    locationFilter.value = '';
     startDateFilter.value = '';
     endDateFilter.value = '';
     organizationFilter.value = '';
@@ -243,8 +241,8 @@ const exportToCsv = () => {
 
     const filters: any = {
         search: searchInput.value || undefined,
-        status: statusFilter.value || undefined,
-        method: methodFilter.value || undefined,
+        scanner_id: scannerFilter.value || undefined,
+        location: locationFilter.value || undefined,
         start_date: startDateFilter.value || undefined,
         end_date: endDateFilter.value || undefined,
         event_id: eventFilter.value || undefined,
@@ -277,7 +275,7 @@ const exportToCsv = () => {
 
 // Watchers
 watch(searchInput, debouncedSearch);
-watch([statusFilter, methodFilter, startDateFilter, endDateFilter, organizationFilter, eventFilter], applyFilters);
+watch([scannerFilter, locationFilter, startDateFilter, endDateFilter, organizationFilter, eventFilter], applyFilters);
 </script>
 
 <template>
@@ -304,31 +302,48 @@ watch([statusFilter, methodFilter, startDateFilter, endDateFilter, organizationF
                 <!-- Statistics Dashboard -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                            {{ stats.total.toLocaleString() }}
-                        </div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">Total Records</div>
-                    </div>
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                            {{ stats.success_rate }}%
-                        </div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">Success Rate</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                            {{ stats.successful }} successful, {{ stats.failed }} failed
+                        <div class="flex items-center">
+                            <div class="flex-1">
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {{ stats.total.toLocaleString() }}
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Total Member Scans</div>
+                            </div>
+                            <div class="text-2xl text-indigo-500">📊</div>
                         </div>
                     </div>
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                            {{ stats.today.toLocaleString() }}
+                        <div class="flex items-center">
+                            <div class="flex-1">
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                    {{ stats.unique_members.toLocaleString() }}
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Unique Members Scanned</div>
+                            </div>
+                            <div class="text-2xl text-green-500">👥</div>
                         </div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">Today's Check-ins</div>
                     </div>
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                            {{ records.total.toLocaleString() }}
+                        <div class="flex items-center">
+                            <div class="flex-1">
+                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                    {{ stats.today.toLocaleString() }}
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Today's Scans</div>
+                            </div>
+                            <div class="text-2xl text-blue-500">📱</div>
                         </div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">Filtered Results</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center">
+                            <div class="flex-1">
+                                <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                                    {{ records.total.toLocaleString() }}
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Filtered Results</div>
+                            </div>
+                            <div class="text-2xl text-indigo-500">🔍</div>
+                        </div>
                     </div>
                 </div>
 
@@ -358,47 +373,49 @@ watch([statusFilter, methodFilter, startDateFilter, endDateFilter, organizationF
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
                             <!-- Search -->
                             <div>
-                                <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search</label>
+                                <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search Members</label>
                                 <input
                                     id="search"
                                     v-model="searchInput"
                                     type="text"
-                                    placeholder="Attendee, email, booking, event..."
+                                    placeholder="Member name, email..."
                                     class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 />
                             </div>
 
-                            <!-- Status Filter -->
+                            <!-- Scanner Filter -->
                             <div>
-                                <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                                <label for="scanner" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Scanner</label>
                                 <select
-                                    id="status"
-                                    v-model="statusFilter"
+                                    id="scanner"
+                                    v-model="scannerFilter"
                                     class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 >
-                                    <option v-for="option in statusOptions" :key="option.value" :value="option.value">
-                                        {{ option.label }}
+                                    <option value="">All Scanners</option>
+                                    <option v-for="scanner in availableScanners" :key="scanner.id" :value="scanner.id">
+                                        {{ scanner.name }}
                                     </option>
                                 </select>
                             </div>
 
-                            <!-- Method Filter -->
+                            <!-- Location Filter -->
                             <div>
-                                <label for="method" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Method</label>
+                                <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
                                 <select
-                                    id="method"
-                                    v-model="methodFilter"
+                                    id="location"
+                                    v-model="locationFilter"
                                     class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 >
-                                    <option v-for="option in methodOptions" :key="option.value" :value="option.value">
-                                        {{ option.label }}
+                                    <option value="">All Locations</option>
+                                    <option v-for="location in availableLocations" :key="location.value" :value="location.value">
+                                        {{ location.label }}
                                     </option>
                                 </select>
                             </div>
 
                             <!-- Event Filter -->
                             <div>
-                                <label for="event" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Event</label>
+                                <label for="event" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Event Context</label>
                                 <select
                                     id="event"
                                     v-model="eventFilter"
@@ -471,7 +488,7 @@ watch([statusFilter, methodFilter, startDateFilter, endDateFilter, organizationF
                                 <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
-                                {{ exportLoading ? 'Exporting...' : `Export CSV (${records.total})` }}
+                                {{ exportLoading ? 'Exporting...' : `Export Member Scans CSV (${records.total})` }}
                             </button>
                         </div>
                     </div>
@@ -483,14 +500,14 @@ watch([statusFilter, methodFilter, startDateFilter, endDateFilter, organizationF
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Check-in Time</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Attendee</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Event</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Booking</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Method</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Operator</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Scan Time</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Member</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Membership</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Scanner</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Event Context</th>
                                     <th v-if="user.is_platform_admin" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Organization</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Notes</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -498,84 +515,128 @@ watch([statusFilter, methodFilter, startDateFilter, endDateFilter, organizationF
                                     <td :colspan="user.is_platform_admin ? 8 : 7" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">
                                         <div class="py-8">
                                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                                <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                                             </svg>
-                                            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No check-in records found</h3>
+                                            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No member scan records found</h3>
                                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ activeFiltersCount > 0 ? 'Try adjusting your filters to see more results.' : 'Check-in records will appear here once events start.' }}
+                                                {{ activeFiltersCount > 0 ? 'Try adjusting your filters to see more results.' : 'Member scan records will appear here once members start scanning their QR codes.' }}
                                             </p>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr v-for="record in records.data" :key="record.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <!-- Status -->
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <!-- Scan Time -->
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                         <div class="flex items-center">
-                                            <span :class="getStatusClass(record.status)" class="text-lg mr-2">
-                                                {{ getStatusIcon(record.status) }}
-                                            </span>
-                                            <span :class="record.status === 'SUCCESSFUL' ? 'text-green-800 bg-green-100 dark:bg-green-900 dark:text-green-300' : 'text-red-800 bg-red-100 dark:bg-red-900 dark:text-red-300'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ record.status === 'SUCCESSFUL' ? 'Success' : 'Failed' }}
-                                            </span>
+                                            <span class="text-lg mr-2">📱</span>
+                                            <div>
+                                                <div class="font-medium">{{ formatDateTime(record.scanned_at) }}</div>
+                                                <div v-if="record.device_identifier" class="text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ record.device_identifier }}
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
 
-                                    <!-- Check-in Time -->
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                        {{ formatDateTime(record.check_in_timestamp) }}
+                                    <!-- Member -->
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        {{ record.member.name.charAt(0).toUpperCase() }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ record.member.name }}
+                                                </div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ record.member.email }}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
 
-                                    <!-- Attendee -->
+                                    <!-- Membership -->
+                                    <td class="px-6 py-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center space-x-2">
+                                                <span :class="getMembershipLevelBadgeClass(record.membership_data.membershipLevel)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                                                    {{ record.membership_data.membershipLevel }}
+                                                </span>
+                                                <span v-if="record.membership_data.membershipStatus" :class="getMembershipStatusBadgeClass(record.membership_data.membershipStatus)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                                                    {{ record.membership_data.membershipStatus }}
+                                                </span>
+                                            </div>
+                                            <div v-if="record.membership_data.expiresAt" class="text-xs text-gray-500 dark:text-gray-400">
+                                                <span :class="isExpiringSoon(record.membership_data.expiresAt) ? 'text-orange-600 dark:text-orange-400 font-medium' : ''">
+                                                    Expires: {{ formatDate(record.membership_data.expiresAt) }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Scanner -->
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                            {{ record.booking.user.name }}
+                                            {{ record.scanner.name }}
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ record.booking.user.email }}
+                                            {{ record.scanner.email }}
                                         </div>
                                     </td>
 
-                                    <!-- Event -->
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white max-w-xs truncate" :title="getTranslation(record.event.name)">
-                                            {{ getTranslation(record.event.name) }}
-                                        </div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate" :title="getTranslation(record.event_occurrence.name)">
-                                            {{ getTranslation(record.event_occurrence.name) }}
-                                        </div>
-                                        <div class="text-xs text-gray-400">
-                                            {{ formatDate(record.event_occurrence.start_at) }}
-                                        </div>
-                                    </td>
-
-                                    <!-- Booking -->
+                                    <!-- Location -->
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                            {{ record.booking.booking_number }}
-                                        </div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                                            Qty: {{ record.booking.quantity }}
-                                        </div>
-                                    </td>
-
-                                    <!-- Method -->
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <span class="text-lg mr-2">{{ getMethodIcon(record.method) }}</span>
+                                        <div v-if="record.location" class="flex items-center">
+                                            <span class="text-lg mr-2">📍</span>
                                             <span class="text-sm text-gray-900 dark:text-white">
-                                                {{ record.method.replace('_', ' ') }}
+                                                {{ record.location }}
                                             </span>
                                         </div>
+                                        <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+                                            Not specified
+                                        </div>
                                     </td>
 
-                                    <!-- Operator -->
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                        {{ record.operator?.name || 'System' }}
+                                    <!-- Event Context -->
+                                    <td class="px-6 py-4">
+                                        <div v-if="record.event">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white max-w-xs truncate" :title="getTranslation(record.event.name)">
+                                                {{ getTranslation(record.event.name) }}
+                                            </div>
+                                            <div v-if="record.event_occurrence" class="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate" :title="getTranslation(record.event_occurrence.name)">
+                                                {{ getTranslation(record.event_occurrence.name) }}
+                                            </div>
+                                            <div v-if="record.event_occurrence" class="text-xs text-gray-400">
+                                                {{ formatDate(record.event_occurrence.start_at) }}
+                                            </div>
+                                        </div>
+                                        <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+                                            General access
+                                        </div>
                                     </td>
 
                                     <!-- Organization (Platform Admin Only) -->
                                     <td v-if="user.is_platform_admin" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                        {{ getTranslation(record.organizer.name) }}
+                                        <div v-if="record.event" class="text-gray-500 dark:text-gray-400">
+                                            Org ID: {{ record.event.organizer_id }}
+                                        </div>
+                                        <div v-else class="text-gray-500 dark:text-gray-400">
+                                            N/A
+                                        </div>
+                                    </td>
+
+                                    <!-- Notes -->
+                                    <td class="px-6 py-4">
+                                        <div v-if="record.notes" class="text-sm text-gray-900 dark:text-white max-w-xs truncate" :title="record.notes">
+                                            {{ record.notes }}
+                                        </div>
+                                        <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+                                            —
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
