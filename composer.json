@@ -1,7 +1,7 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel/vue-starter-kit",
-    "version": "0.14.0",
+    "version": "0.15.0",
     "type": "project",
     "description": "Laravel 12 Event Platform - DDD modular monolithic architecture for comprehensive event management with organizers, venues, ticketing, bookings, and multilingual support.",
     "keywords": [
