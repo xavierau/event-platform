@@ -71,7 +71,9 @@
       "mcp__playwright__browser_wait_for",
       "mcp__playwright__browser_network_requests",
       "mcp__playwright__browser_fill_form",
-      "mcp__playwright__browser_select_option"
+      "mcp__playwright__browser_select_option",
+      "Bash(git cherry-pick:*)",
+      "Bash(CACHE_STORE=file php artisan migrate --path=database/migrations/2025_09_09_015753_create_frontend_logs_table.php)"
     ],
     "deny": []
   },
