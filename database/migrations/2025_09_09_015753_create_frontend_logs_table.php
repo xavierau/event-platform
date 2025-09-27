@@ -23,13 +23,19 @@ return new class extends Migration
                 $table->text('user_agent');
                 $table->string('ip_address', 45)->nullable();
                 $table->string('session_id')->nullable()->index();
-                $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete()->index();
+                $table->foreignId('user_id')->nullable()->index();
                 $table->timestamps();
 
                 // Indexes for better query performance
                 $table->index(['level', 'created_at']);
                 $table->index(['component', 'created_at']);
                 $table->index(['user_id', 'created_at']);
+
+                // Add foreign key constraint with explicit naming
+                $table->foreign('user_id', 'frontend_logs_user_id_foreign')
+                    ->references('id')
+                    ->on('users')
+                    ->nullOnDelete();
             });
         } else {
             // Table exists, check if we need to add missing constraints or columns
