@@ -2,30 +2,22 @@
 
 namespace App\Models;
 
+use App\Enums\CommentConfigEnum;
+use App\Helpers\CurrencyHelper;
+use App\Traits\Commentable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Translatable\HasTranslations;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use App\Helpers\CurrencyHelper;
-use App\Models\User;
-use App\Models\Organizer;
-use App\Models\Category;
-use App\Models\EventOccurrence;
-use App\Models\Tag;
-use App\Models\Venue;
-use App\Models\MemberCheckIn;
-use App\Enums\CommentConfigEnum;
-use App\Traits\Commentable;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Translatable\HasTranslations;
 
 class Event extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, HasTranslations, InteractsWithMedia, Commentable;
+    use Commentable, HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
 
     public const EVENT_STATUSES = [
         'draft',
@@ -33,13 +25,13 @@ class Event extends Model implements HasMedia
         'published',
         'cancelled',
         'completed',
-        'past'
+        'past',
     ];
 
     public const VISIBILITIES = [
         'public',
         'private',
-        'unlisted'
+        'unlisted',
     ];
 
     public const ACTION_TYPES = [
@@ -58,6 +50,7 @@ class Event extends Model implements HasMedia
         'visibility',
         'visible_to_membership_levels',
         'action_type',
+        'redirect_url',
         'is_featured',
         'contact_email',
         'contact_phone',
@@ -131,7 +124,6 @@ class Event extends Model implements HasMedia
         return $this->hasMany(EventOccurrence::class);
     }
 
-
     // public function ticketDefinitions() // This relationship is no longer directly valid as TicketDefinition does not have event_id.
     // { // Access TicketDefinitions through EventOccurrences: $event->eventOccurrences()->with('ticketDefinitions')->get();
     //     // Or define a hasManyThrough relationship if needed for specific use cases.
@@ -162,7 +154,7 @@ class Event extends Model implements HasMedia
      */
     public function hasOrganizer(): bool
     {
-        return !is_null($this->organizer_id);
+        return ! is_null($this->organizer_id);
     }
 
     /**
@@ -178,7 +170,7 @@ class Event extends Model implements HasMedia
      */
     public function canBeEditedByUser(User $user): bool
     {
-        if (!$this->organizer) {
+        if (! $this->organizer) {
             return false;
         }
 
@@ -199,7 +191,7 @@ class Event extends Model implements HasMedia
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
     }
 
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')
             ->width(200)
@@ -218,13 +210,13 @@ class Event extends Model implements HasMedia
      * Calculate the price range for this event across all occurrences and tickets
      * Only considers tickets that are currently available within their availability window
      *
-     * @param \App\Models\User|null $user User to calculate membership pricing for
+     * @param  \App\Models\User|null  $user  User to calculate membership pricing for
      * @return string|null Formatted price range or null if no tickets available
      */
     public function getPriceRange(?\App\Models\User $user = null): ?string
     {
         // Ensure eventOccurrences and their ticketDefinitions are loaded
-        if (!$this->relationLoaded('eventOccurrences')) {
+        if (! $this->relationLoaded('eventOccurrences')) {
             $this->load('eventOccurrences.ticketDefinitions');
         }
 
@@ -233,7 +225,7 @@ class Event extends Model implements HasMedia
         // Calculate price range across all occurrences and tickets
         // Only include tickets that are currently available
         $allPrices = $this->eventOccurrences->flatMap(function ($occurrence) use ($nowUtc, $user) {
-            return $occurrence->ticketDefinitions->filter(function ($ticket) use ($nowUtc, $user) {
+            return $occurrence->ticketDefinitions->filter(function ($ticket) use ($nowUtc) {
                 // Check if ticket is currently available based on availability window
                 if ($ticket->availability_window_start_utc === null && $ticket->availability_window_end_utc === null) {
                     // No availability window set - ticket is available
@@ -264,6 +256,7 @@ class Event extends Model implements HasMedia
                             // Apply discount to the effective price (which includes price overrides)
                             if ($discount->pivot->discount_type === 'percentage') {
                                 $discountAmount = round($basePrice * ($discount->pivot->discount_value / 100));
+
                                 return max(0, $basePrice - $discountAmount);
                             } elseif ($discount->pivot->discount_type === 'fixed') {
                                 return max(0, $basePrice - $discount->pivot->discount_value);
@@ -311,7 +304,7 @@ class Event extends Model implements HasMedia
     public function getPrimaryVenue(): ?\App\Models\Venue
     {
         // Ensure eventOccurrences and their venues are loaded
-        if (!$this->relationLoaded('eventOccurrences')) {
+        if (! $this->relationLoaded('eventOccurrences')) {
             $this->load('eventOccurrences.venue');
         }
 
@@ -361,8 +354,8 @@ class Event extends Model implements HasMedia
      * - PostgreSQL: JSONB operators for exact value matching
      * - SQLite: LIKE patterns with proper escaping
      *
-     * @param string|int $identifier Event ID or slug
-     * @param array $with Relationships to eager load
+     * @param  string|int  $identifier  Event ID or slug
+     * @param  array  $with  Relationships to eager load
      * @return static|null
      */
     public static function findPublishedByIdentifier($identifier, array $with = [])
@@ -390,13 +383,13 @@ class Event extends Model implements HasMedia
         }
 
         // Non-public events require authentication
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
         // Check if user has required membership level
         $userMembership = $user->currentMembership;
-        if (!$userMembership) {
+        if (! $userMembership) {
             return false;
         }
 
@@ -433,10 +426,10 @@ class Event extends Model implements HasMedia
     public function getRequiredMembershipNames(): array
     {
         return $this->getRequiredMembershipLevels()
-            ->map(function($level) {
+            ->map(function ($level) {
                 // Handle translatable models - get the translation for current locale
-                return $level->getTranslation('name', app()->getLocale()) ?: 
-                       $level->getTranslation('name', 'en') ?: 
+                return $level->getTranslation('name', app()->getLocale()) ?:
+                       $level->getTranslation('name', 'en') ?:
                        'Unknown Level';
             })
             ->filter()
@@ -449,5 +442,21 @@ class Event extends Model implements HasMedia
     public function memberCheckIns(): HasMany
     {
         return $this->hasMany(MemberCheckIn::class);
+    }
+
+    /**
+     * Check if the event has a redirect URL configured
+     */
+    public function hasRedirectUrl(): bool
+    {
+        return ! empty($this->redirect_url);
+    }
+
+    /**
+     * Get the redirect URL for this event
+     */
+    public function getRedirectUrl(): ?string
+    {
+        return $this->redirect_url;
     }
 }
