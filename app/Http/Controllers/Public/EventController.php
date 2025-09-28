@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\Event;
 use App\Services\PublicEventDisplayService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,6 +43,24 @@ class EventController extends Controller
      */
     public function show($eventIdentifier): Response
     {
+        // First, check if this is a slug and detect the locale
+        if (!is_numeric($eventIdentifier)) {
+            // Find the event by slug to detect locale
+            $event = Event::findPublishedByIdentifier($eventIdentifier);
+
+            if ($event) {
+                $detectedLocale = $event->getLocaleBySlug($eventIdentifier);
+
+                if ($detectedLocale) {
+                    // Set the application locale
+                    app()->setLocale($detectedLocale);
+
+                    // Save to session for persistence
+                    Session::put('locale', $detectedLocale);
+                }
+            }
+        }
+
         $eventData = $this->publicEventDisplayService->getEventDetailData($eventIdentifier);
 
         return Inertia::render('Public/EventDetail', [
