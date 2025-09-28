@@ -111,7 +111,10 @@ export interface VenueData {
 // Define a basic Event type for use in Booking
 export interface Event {
     id: number;
-    name: string;
+    name: Translatable | string;
+    slug?: Translatable | string;
+    description?: Translatable | string;
+    short_summary?: Translatable | string;
     // Add other relevant event properties as needed
 }
 
@@ -179,4 +182,43 @@ export interface MembershipLevel {
     metadata: Record<string, any> | null;
     created_at?: string;
     updated_at?: string;
+}
+
+export interface EventSeo {
+    id?: number;
+    event_id: number;
+    meta_title?: Translatable | null;
+    meta_description?: Translatable | null;
+    keywords?: Translatable | null;
+    og_title?: Translatable | null;
+    og_description?: Translatable | null;
+    og_image_url?: string | null;
+    is_active: boolean;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface EventSeoData {
+    event_id: number;
+    meta_title?: Translatable | null;
+    meta_description?: Translatable | null;
+    keywords?: Translatable | null;
+    og_title?: Translatable | null;
+    og_description?: Translatable | null;
+    og_image_url?: string | null;
+    is_active: boolean;
+}
+
+export interface SeoMetaTags {
+    title?: string;
+    description?: string;
+    keywords?: string;
+    'og:title'?: string;
+    'og:description'?: string;
+    'og:image'?: string;
+    'og:type'?: string;
+}
+
+export interface EventWithSeo extends Event {
+    seo?: EventSeo | null;
 }

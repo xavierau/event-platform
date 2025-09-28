@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\Event;
-use App\Models\User;
 use App\Models\Category;
+use App\Models\Event;
 use App\Models\Organizer;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -23,7 +23,7 @@ class EventFactory extends Factory
      */
     public function definition(): array
     {
-        $nameEn = $this->faker->sentence(3);
+        $nameEn = fake()->words(3, true);
         $attributes = [
             'organizer_id' => function () {
                 // Use existing organizer or create one if none exist
@@ -31,20 +31,20 @@ class EventFactory extends Factory
             },
             'category_id' => Category::factory(),
             'name' => ['en' => $nameEn],
-            'slug' => ['en' => $this->faker->slug(3)],
-            'description' => ['en' => $this->faker->paragraph],
-            'short_summary' => ['en' => $this->faker->sentence],
+            'slug' => ['en' => fake()->slug(3)],
+            'description' => ['en' => fake()->paragraph()],
+            'short_summary' => ['en' => fake()->sentence()],
             'event_status' => 'draft',
             'visibility' => 'public',
-            'is_featured' => $this->faker->boolean,
-            'contact_email' => $this->faker->safeEmail,
-            'contact_phone' => $this->faker->phoneNumber,
-            'website_url' => $this->faker->url,
-            'cancellation_policy' => ['en' => $this->faker->sentence],
+            'is_featured' => fake()->boolean(),
+            'contact_email' => fake()->safeEmail(),
+            'contact_phone' => fake()->phoneNumber(),
+            'website_url' => fake()->url(),
+            'cancellation_policy' => ['en' => fake()->sentence()],
             'published_at' => null,
             'meta_title' => ['en' => $nameEn],
-            'meta_description' => ['en' => $this->faker->sentence],
-            'meta_keywords' => ['en' => implode(', ', $this->faker->words(3))],
+            'meta_description' => ['en' => fake()->sentence()],
+            'meta_keywords' => ['en' => implode(', ', fake()->words(3))],
             'visible_to_membership_levels' => null, // Public by default
             'action_type' => 'purchase_ticket', // Default action type
             // 'created_by' => User::factory(), // Commented out to avoid conflicts
@@ -59,7 +59,7 @@ class EventFactory extends Factory
      */
     public function forOrganizer(Organizer $organizer): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'organizer_id' => $organizer->id,
         ]);
     }
@@ -70,7 +70,7 @@ class EventFactory extends Factory
      */
     public function withOrganizerEntity(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'organizer_id' => function () {
                 // Use existing organizer or create one if none exist
                 return Organizer::inRandomOrder()->first()?->id ?? Organizer::factory()->create()->id;
@@ -86,7 +86,7 @@ class EventFactory extends Factory
      */
     public function forTesting(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'organizer_id' => function () {
                 // Use existing organizer or create one if none exist
                 return Organizer::inRandomOrder()->first()?->id ?? Organizer::factory()->create()->id;
@@ -99,9 +99,9 @@ class EventFactory extends Factory
      */
     public function published(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'event_status' => 'published',
-            'published_at' => $this->faker->dateTimeBetween('-1 month', 'now'),
+            'published_at' => fake()->dateTimeBetween('-1 month', 'now'),
         ]);
     }
 
@@ -110,7 +110,7 @@ class EventFactory extends Factory
      */
     public function featured(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'is_featured' => true,
         ]);
     }
@@ -120,7 +120,7 @@ class EventFactory extends Factory
      */
     public function draft(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'event_status' => 'draft',
             'published_at' => null,
         ]);
@@ -131,7 +131,7 @@ class EventFactory extends Factory
      */
     public function inCategory(Category $category): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'category_id' => $category->id,
         ]);
     }
@@ -141,30 +141,30 @@ class EventFactory extends Factory
      */
     public function withMultiLanguageContent(): static
     {
-        $nameEn = $this->faker->sentence(3);
+        $nameEn = fake()->words(3, true);
         $nameZhTW = $this->faker->sentence(3);
         $nameZhCN = $this->faker->sentence(3);
 
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'name' => [
                 'en' => $nameEn,
                 'zh-TW' => $nameZhTW,
                 'zh-CN' => $nameZhCN,
             ],
             'slug' => [
-                'en' => $this->faker->slug(3),
-                'zh-TW' => $this->faker->slug(3),
-                'zh-CN' => $this->faker->slug(3),
+                'en' => fake()->slug(3),
+                'zh-TW' => fake()->slug(3),
+                'zh-CN' => fake()->slug(3),
             ],
             'description' => [
-                'en' => $this->faker->paragraph,
-                'zh-TW' => $this->faker->paragraph,
-                'zh-CN' => $this->faker->paragraph,
+                'en' => fake()->paragraph(),
+                'zh-TW' => fake()->paragraph(),
+                'zh-CN' => fake()->paragraph(),
             ],
             'short_summary' => [
-                'en' => $this->faker->sentence,
-                'zh-TW' => $this->faker->sentence,
-                'zh-CN' => $this->faker->sentence,
+                'en' => fake()->sentence(),
+                'zh-TW' => fake()->sentence(),
+                'zh-CN' => fake()->sentence(),
             ],
             'meta_title' => [
                 'en' => $nameEn,
@@ -172,9 +172,9 @@ class EventFactory extends Factory
                 'zh-CN' => $nameZhCN,
             ],
             'meta_description' => [
-                'en' => $this->faker->sentence,
-                'zh-TW' => $this->faker->sentence,
-                'zh-CN' => $this->faker->sentence,
+                'en' => fake()->sentence(),
+                'zh-TW' => fake()->sentence(),
+                'zh-CN' => fake()->sentence(),
             ],
         ]);
     }
@@ -184,7 +184,7 @@ class EventFactory extends Factory
      */
     public function restrictedToMembershipLevels(array $membershipLevelIds): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'visible_to_membership_levels' => $membershipLevelIds,
         ]);
     }
@@ -194,7 +194,7 @@ class EventFactory extends Factory
      */
     public function withMemberQrAction(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'action_type' => 'show_member_qr',
         ]);
     }
@@ -204,7 +204,7 @@ class EventFactory extends Factory
      */
     public function withPurchaseTicketAction(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'action_type' => 'purchase_ticket',
         ]);
     }

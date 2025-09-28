@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { watchEffect, ref, watch } from 'vue';
+import { watchEffect, ref, watch, computed } from 'vue';
 import CommentModeration from '@/components/CommentModeration.vue';
 import RichTextEditor from '@/components/Form/RichTextEditor.vue';
 import MediaUploader from '@/components/Form/MediaUpload.vue';
@@ -156,32 +156,82 @@ const mainTabs = [
     { id: 'media', label: 'Media' },
     { id: 'comments', label: 'Comments' },
     { id: 'membership', label: 'Membership & Access' },
+    { id: 'seo', label: 'SEO Settings' },
 ];
 
 watchEffect(() => {
-    if (props.event) {
-        form.defaults({
-            ...form.data,
-            ...props.event,
-        });
-        form.reset();
+    try {
+        if (props.event && typeof props.event === 'object') {
+            // Safely merge form data with event props
+            const eventData = { ...props.event };
+            const formData = { ...form.data };
+
+            // Ensure translatable fields are objects, not null
+            const translatableFields = ['name', 'slug', 'description', 'short_summary', 'cancellation_policy', 'meta_title', 'meta_description', 'meta_keywords'];
+            translatableFields.forEach(field => {
+                if (eventData[field] === null || eventData[field] === undefined) {
+                    eventData[field] = formData[field] || {};
+                }
+            });
+
+            form.defaults({
+                ...formData,
+                ...eventData,
+            });
+            form.reset();
+        }
+    } catch (error) {
+        console.error('Error in watchEffect:', error);
+        // Don't rethrow to prevent breaking the component
     }
 });
 
 // Sync comment_config based on the checkbox values
-watch([() => form.comments_enabled, () => form.comments_require_approval], () => {
-    if (!form.comments_enabled) {
-        form.comment_config = 'disabled';
-    } else if (form.comments_require_approval) {
-        form.comment_config = 'moderated';
-    } else {
-        form.comment_config = 'enabled';
+watch([() => form?.comments_enabled, () => form?.comments_require_approval], () => {
+    try {
+        if (form && typeof form.comments_enabled !== 'undefined') {
+            if (!form.comments_enabled) {
+                form.comment_config = 'disabled';
+            } else if (form.comments_require_approval) {
+                form.comment_config = 'moderated';
+            } else {
+                form.comment_config = 'enabled';
+            }
+        }
+    } catch (error) {
+        console.error('Error in watch function:', error);
+        // Don't rethrow to prevent breaking the component
     }
-});
+}, { immediate: false });
+
+const switchTab = (tabId: string) => {
+    try {
+        if (tabId && typeof tabId === 'string') {
+            // Validate that the tabId exists in our mainTabs array
+            const validTabIds = mainTabs.map(tab => tab.id);
+            if (validTabIds.includes(tabId)) {
+                currentTab.value = tabId;
+            } else {
+                console.error('TabId not found in mainTabs:', tabId, 'Valid tabs:', validTabIds);
+            }
+        } else {
+            console.error('Invalid tabId provided:', tabId);
+        }
+    } catch (error) {
+        console.error('Error switching tab:', error);
+    }
+};
 
 const submit = () => {
     if (props.event) {
-        form.post(route('admin.events.update', props.event.id));
+        form.post(route('admin.events.update', props.event.id), {
+            onError: (errors) => {
+                console.error('Form submission error:', errors);
+            },
+            onSuccess: () => {
+                console.log('Event updated successfully');
+            }
+        });
     }
 };
 
@@ -214,6 +264,13 @@ function removeGalleryItem(mediaId: number) {
     }
 }
 
+const baseUrl = computed(() => {
+    if (typeof window !== 'undefined' && window.location) {
+        return window.location.origin;
+    }
+    return '';
+});
+
 </script>
 
 <template>
@@ -224,7 +281,7 @@ function removeGalleryItem(mediaId: number) {
             <div class="bg-white dark:bg-gray-800 shadow-lg rounded-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
                         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                        <button v-for="tab in mainTabs" :key="tab.id" @click="currentTab = tab.id"
+                        <button v-for="tab in mainTabs" :key="tab.id" @click="() => switchTab(tab.id)"
                             :class="[currentTab === tab.id ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300', 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm']">
                                 {{ tab.label }}
                             </button>
@@ -410,7 +467,7 @@ function removeGalleryItem(mediaId: number) {
                                         <label :for="tFieldName('name', locale.code)" class="block text-xs font-medium text-gray-500">
                                             {{ locale.name }} <span v-if="locale.code === 'en'" class="text-red-500">*</span>
                                         </label>
-                                        <input type="text" :id="tFieldName('name', locale.code)"
+                                        <input v-if="form.name" type="text" :id="tFieldName('name', locale.code)"
                                             v-model="form.name[locale.code]"
                                             class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500" />
                                         <div v-if="form.errors[tFieldName('name', locale.code)]"
@@ -429,7 +486,7 @@ function removeGalleryItem(mediaId: number) {
                                         <label :for="tFieldName('slug', locale.code)" class="block text-xs font-medium text-gray-500">
                                             {{ locale.name }} <span v-if="locale.code === 'en'" class="text-red-500">*</span>
                                         </label>
-                                        <input type="text" :id="tFieldName('slug', locale.code)"
+                                        <input v-if="form.slug" type="text" :id="tFieldName('slug', locale.code)"
                                             v-model="form.slug[locale.code]"
                                             class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500" />
                                         <div v-if="form.errors[tFieldName('slug', locale.code)]"
@@ -447,6 +504,7 @@ function removeGalleryItem(mediaId: number) {
                                         {{ locale.name }} <span v-if="locale.code === 'en'" class="text-red-500">*</span>
                                     </label>
                                     <RichTextEditor
+                                        v-if="form.description"
                                         :id="tFieldName('description', locale.code)"
                                         v-model="form.description[locale.code]"
                                         class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500"
@@ -464,7 +522,7 @@ function removeGalleryItem(mediaId: number) {
                                     <label :for="tFieldName('short_summary', locale.code)" class="block text-sm font-medium text-gray-500 mb-1">
                                         {{ locale.name }} <span v-if="locale.code === 'en'" class="text-red-500">*</span>
                                     </label>
-                                    <textarea :id="tFieldName('short_summary', locale.code)"
+                                    <textarea v-if="form.short_summary" :id="tFieldName('short_summary', locale.code)"
                                         v-model="form.short_summary[locale.code]" rows="3"
                                         class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500"></textarea>
                                     <div v-if="form.errors[tFieldName('short_summary', locale.code)]"
@@ -480,6 +538,7 @@ function removeGalleryItem(mediaId: number) {
                                     <label :for="tFieldName('cancellation_policy', locale.code)"
                                         class="block text-sm font-medium text-gray-500 mb-1">{{ locale.name }}</label>
                                     <RichTextEditor
+                                        v-if="form.cancellation_policy"
                                         :id="tFieldName('cancellation_policy', locale.code)"
                                         v-model="form.cancellation_policy[locale.code]"
                                         class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-2 focus:ring-3 focus:border-indigo-500"
@@ -684,6 +743,52 @@ function removeGalleryItem(mediaId: number) {
                         <div v-if="props.event && form.comments_enabled" class="mt-8 pt-6 border-t border-gray-200">
                             <h4 class="text-md font-medium text-gray-900 mb-4">Moderate Comments</h4>
                             <CommentModeration :event="props.event" />
+                        </div>
+                    </div>
+
+                    <!-- Section: SEO Settings -->
+                    <div v-if="currentTab === 'seo'" class="space-y-6">
+                        <div>
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">SEO Settings</h3>
+                            <p class="mt-1 text-sm text-gray-500">Configure search engine optimization settings for this event.</p>
+                        </div>
+
+                        <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-blue-800">Advanced SEO Configuration</h3>
+                                    <div class="mt-2 text-sm text-blue-700">
+                                        <p>For detailed SEO configuration with meta tags, Open Graph settings, and multilingual support, use the dedicated SEO page.</p>
+                                        <div class="mt-3">
+                                            <Link v-if="props.event?.id" :href="route('admin.events.seo.show', props.event.id)"
+                                                class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 active:bg-blue-700 focus:outline-none focus:border-blue-700 focus:ring focus:ring-blue-200 disabled:opacity-25 transition">
+                                                Configure SEO Settings
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick SEO Preview -->
+                        <div v-if="props.event?.id" class="border border-gray-200 rounded-md p-4">
+                            <h4 class="text-sm font-medium text-gray-900 mb-3">SEO Quick Preview</h4>
+                            <div class="space-y-2 text-sm text-gray-600">
+                                <div><strong>Page URLs:</strong></div>
+                                <div class="ml-4">
+                                    <div>English: <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{{ `${baseUrl}/events/${props.event.slug?.en || props.event.id}` }}</span></div>
+                                    <div v-if="props.event.slug?.['zh-TW']">Chinese (TW): <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{{ `${baseUrl}/zh-TW/events/${props.event.slug['zh-TW']}` }}</span></div>
+                                </div>
+                                <div class="mt-3">
+                                    <strong>Current SEO Status:</strong>
+                                    <span class="text-sm text-orange-600">Configure meta tags and Open Graph settings for better search visibility</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
