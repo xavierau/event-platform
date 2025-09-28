@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CommentConfigEnum;
 use App\Helpers\CurrencyHelper;
+use App\Modules\SocialShare\Contracts\ShareableInterface;
 use App\Traits\Commentable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
-class Event extends Model implements HasMedia
+class Event extends Model implements HasMedia, ShareableInterface
 {
     use Commentable, HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
 
@@ -567,5 +568,156 @@ class Event extends Model implements HasMedia
     public function seo(): HasOne
     {
         return $this->hasOne(EventSeo::class);
+    }
+
+    /**
+     * Get the title for sharing on social media platforms
+     *
+     * @param  string|null  $locale  The locale for the title
+     */
+    public function getShareTitle(?string $locale = null): string
+    {
+        $locale = $locale ?? app()->getLocale();
+
+        return $this->getTranslation('name', $locale) ??
+               $this->getTranslation('name', 'en') ??
+               'Event';
+    }
+
+    /**
+     * Get the description for sharing on social media platforms
+     *
+     * @param  string|null  $locale  The locale for the description
+     */
+    public function getShareDescription(?string $locale = null): string
+    {
+        $locale = $locale ?? app()->getLocale();
+
+        // Try short_summary first, then description
+        $description = $this->getTranslation('short_summary', $locale) ??
+                      $this->getTranslation('description', $locale) ??
+                      $this->getTranslation('short_summary', 'en') ??
+                      $this->getTranslation('description', 'en') ??
+                      '';
+
+        // Truncate for social media
+        if (strlen($description) > 160) {
+            $description = substr($description, 0, 157).'...';
+        }
+
+        return $description;
+    }
+
+    /**
+     * Get the URL for sharing this item
+     *
+     * @param  string|null  $locale  The locale for the URL
+     */
+    public function getShareUrl(?string $locale = null): string
+    {
+        $locale = $locale ?? app()->getLocale();
+        $slug = $this->getSlugForLocale($locale);
+
+        return route('events.show', [
+            'event' => $slug,
+            'locale' => $locale,
+        ]);
+    }
+
+    /**
+     * Get the image URL for sharing on social media platforms
+     */
+    public function getShareImage(): ?string
+    {
+        // Try to get landscape poster first, then portrait poster
+        $landscapeMedia = $this->getFirstMedia('landscape_poster');
+        if ($landscapeMedia) {
+            return $landscapeMedia->getUrl('medium');
+        }
+
+        $portraitMedia = $this->getFirstMedia('portrait_poster');
+        if ($portraitMedia) {
+            return $portraitMedia->getUrl('medium');
+        }
+
+        // Fallback to first gallery image
+        $galleryMedia = $this->getFirstMedia('gallery');
+        if ($galleryMedia) {
+            return $galleryMedia->getUrl('medium');
+        }
+
+        // Return default image or null
+        return asset('images/default-share-image.jpg');
+    }
+
+    /**
+     * Get relevant tags/hashtags for social media sharing
+     */
+    public function getShareTags(): array
+    {
+        $tags = [];
+
+        // Add category as a tag if available
+        if ($this->category) {
+            $categoryName = $this->category->getTranslation('name', app()->getLocale()) ??
+                          $this->category->getTranslation('name', 'en');
+            if ($categoryName) {
+                $tags[] = str_replace(' ', '', $categoryName);
+            }
+        }
+
+        // Add event tags if available
+        if ($this->relationLoaded('tags')) {
+            foreach ($this->tags as $tag) {
+                $tagName = $tag->getTranslation('name', app()->getLocale()) ??
+                          $tag->getTranslation('name', 'en');
+                if ($tagName) {
+                    $tags[] = str_replace(' ', '', $tagName);
+                }
+            }
+        }
+
+        // Add organizer name if available
+        if ($this->organizer) {
+            $organizerName = $this->organizer->getTranslation('name', app()->getLocale()) ??
+                           $this->organizer->getTranslation('name', 'en');
+            if ($organizerName) {
+                $tags[] = str_replace(' ', '', $organizerName);
+            }
+        }
+
+        // Add default tags
+        $tags[] = 'Event';
+        $tags[] = 'EventPlatform';
+
+        return array_unique(array_filter($tags));
+    }
+
+    /**
+     * Get polymorphic social share analytics for this event
+     */
+    public function socialShares()
+    {
+        return $this->morphMany(\App\Modules\SocialShare\Models\SocialShareAnalytic::class, 'shareable');
+    }
+
+    /**
+     * Get total share count for this event
+     */
+    public function getShareCount(): int
+    {
+        return $this->socialShares()->count();
+    }
+
+    /**
+     * Get share count by platform for this event
+     */
+    public function getShareCountByPlatform(): array
+    {
+        return $this->socialShares()
+            ->selectRaw('platform, COUNT(*) as count')
+            ->groupBy('platform')
+            ->pluck('count', 'platform')
+            ->toArray();
     }
 }

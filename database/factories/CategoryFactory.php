@@ -25,9 +25,9 @@ class CategoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => ['en' => $this->faker->words(2, true)], // Default to English for testing
+            'name' => ['en' => 'Test Category'], // Default to English for testing
             // Add other locales if needed for specific tests, e.g., 'zh-TW' => '測試分類'
-            'slug' => $this->faker->slug(2),
+            'slug' => 'test-category',
             'parent_id' => null, // Default to no parent
             // Add any other required fields for Category model
         ];

@@ -3,6 +3,7 @@ import TicketPurchaseModal from '@/components/Modals/TicketPurchaseModal.vue';
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
 import SeoHead from '@/components/Shared/SeoHead.vue';
 import WishlistButton from '@/components/Shared/WishlistButton.vue';
+import SocialShareWrapper from '@/components/SocialShare/SocialShareWrapper.vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import QRCode from 'qrcode';
 import { computed, onMounted, ref } from 'vue';
@@ -621,6 +622,11 @@ const handleCommentAdded = (newComment: Comment) => {
                             :show-text="false"
                             @wishlist-changed="handleWishlistChanged"
                             @error="handleWishlistError"
+                        />
+                        <SocialShareWrapper
+                            shareable-type="App\Models\Event"
+                            :shareable-id="Number(event.id)"
+                            class="flex-shrink-0"
                         />
                         <button
                             :class="actionButtonConfig.className"
