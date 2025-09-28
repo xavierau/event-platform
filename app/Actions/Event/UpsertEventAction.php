@@ -42,6 +42,7 @@ class UpsertEventAction
                 'visibility' => $eventData->visibility ?? 'private', // Default if not provided
                 'visible_to_membership_levels' => $eventData->visible_to_membership_levels,
                 'action_type' => $eventData->action_type ?? 'purchase_ticket', // Default matches migration
+                'redirect_url' => $eventData->redirect_url,
                 'is_featured' => $eventData->is_featured ?? false,
                 'published_at' => $eventData->published_at,
             ];

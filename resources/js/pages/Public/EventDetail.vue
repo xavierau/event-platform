@@ -51,6 +51,7 @@ interface EventDetails {
 
     // New membership and action fields
     action_type: string;
+    redirect_url?: string;
     is_public: boolean;
     visible_to_membership_levels?: number[];
     required_membership_names: string[];
@@ -296,7 +297,12 @@ async function handleActionButtonClick() {
             break;
 
         case 'purchase':
-            openPurchaseModal();
+            // Check if event has a redirect URL configured
+            if (props.event.redirect_url) {
+                window.open(props.event.redirect_url, '_blank');
+            } else {
+                openPurchaseModal();
+            }
             break;
 
         case 'none':

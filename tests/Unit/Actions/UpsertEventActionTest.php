@@ -226,8 +226,133 @@ describe('UpsertEventAction - Validation', function () {
     })->with(['purchase_ticket', 'show_member_qr']);
 });
 
+describe('UpsertEventAction - Redirect URL', function () {
+    it('creates event with redirect_url', function () {
+        $redirectUrl = 'https://external-ticketing.example.com/event/123';
+
+        $eventData = EventData::from([
+            'id' => null,
+            'organizer_id' => $this->organizer->id,
+            'category_id' => $this->category->id,
+            'name' => ['en' => 'Redirect Event', 'zh-TW' => '重定向活動'],
+            'short_summary' => ['en' => 'Redirect Summary', 'zh-TW' => '重定向摘要'],
+            'description' => ['en' => 'Redirect Description', 'zh-TW' => '重定向描述'],
+            'action_type' => 'purchase_ticket',
+            'redirect_url' => $redirectUrl,
+        ]);
+
+        $event = $this->action->execute($eventData);
+
+        expect($event)->toBeInstanceOf(Event::class)
+            ->and($event->redirect_url)->toBe($redirectUrl)
+            ->and($event->hasRedirectUrl())->toBeTrue()
+            ->and($event->getRedirectUrl())->toBe($redirectUrl);
+    });
+
+    it('creates event without redirect_url', function () {
+        $eventData = EventData::from([
+            'id' => null,
+            'organizer_id' => $this->organizer->id,
+            'category_id' => $this->category->id,
+            'name' => ['en' => 'Normal Event', 'zh-TW' => '正常活動'],
+            'short_summary' => ['en' => 'Normal Summary', 'zh-TW' => '正常摘要'],
+            'description' => ['en' => 'Normal Description', 'zh-TW' => '正常描述'],
+            'action_type' => 'purchase_ticket',
+            'redirect_url' => null,
+        ]);
+
+        $event = $this->action->execute($eventData);
+
+        expect($event->redirect_url)->toBeNull()
+            ->and($event->hasRedirectUrl())->toBeFalse()
+            ->and($event->getRedirectUrl())->toBeNull();
+    });
+
+    it('updates event to add redirect_url', function () {
+        // Create event without redirect URL
+        $existingEvent = Event::factory()->create([
+            'organizer_id' => $this->organizer->id,
+            'category_id' => $this->category->id,
+            'name' => ['en' => 'Existing Event'],
+            'short_summary' => ['en' => 'Existing Summary'],
+            'description' => ['en' => 'Existing Description'],
+            'redirect_url' => null,
+        ]);
+
+        $redirectUrl = 'https://tickets.example.com/event/456';
+
+        $eventData = EventData::from([
+            'id' => $existingEvent->id,
+            'organizer_id' => $this->organizer->id,
+            'category_id' => $this->category->id,
+            'name' => ['en' => 'Existing Event'],
+            'short_summary' => ['en' => 'Existing Summary'],
+            'description' => ['en' => 'Existing Description'],
+            'redirect_url' => $redirectUrl,
+        ]);
+
+        $event = $this->action->execute($eventData);
+
+        expect($event->id)->toBe($existingEvent->id)
+            ->and($event->redirect_url)->toBe($redirectUrl)
+            ->and($event->hasRedirectUrl())->toBeTrue();
+    });
+
+    it('updates event to remove redirect_url', function () {
+        // Create event with redirect URL
+        $existingEvent = Event::factory()->create([
+            'organizer_id' => $this->organizer->id,
+            'category_id' => $this->category->id,
+            'name' => ['en' => 'Redirect Event'],
+            'short_summary' => ['en' => 'Redirect Summary'],
+            'description' => ['en' => 'Redirect Description'],
+            'redirect_url' => 'https://external.example.com/tickets',
+        ]);
+
+        $eventData = EventData::from([
+            'id' => $existingEvent->id,
+            'organizer_id' => $this->organizer->id,
+            'category_id' => $this->category->id,
+            'name' => ['en' => 'Redirect Event'],
+            'short_summary' => ['en' => 'Redirect Summary'],
+            'description' => ['en' => 'Redirect Description'],
+            'redirect_url' => null,
+        ]);
+
+        $event = $this->action->execute($eventData);
+
+        expect($event->id)->toBe($existingEvent->id)
+            ->and($event->redirect_url)->toBeNull()
+            ->and($event->hasRedirectUrl())->toBeFalse();
+    });
+
+    it('accepts various valid redirect_url formats', function ($url) {
+        $eventData = EventData::from([
+            'id' => null,
+            'organizer_id' => $this->organizer->id,
+            'category_id' => $this->category->id,
+            'name' => ['en' => 'Valid URL Event'],
+            'short_summary' => ['en' => 'Valid URL Summary'],
+            'description' => ['en' => 'Valid URL Description'],
+            'redirect_url' => $url,
+        ]);
+
+        $event = $this->action->execute($eventData);
+
+        expect($event->redirect_url)->toBe($url);
+    })->with([
+        'https://example.com',
+        'http://localhost:3000',
+        'https://www.example.com/path/to/tickets',
+        'https://tickets.example.com/event/123?utm_source=platform',
+        'https://example.com:8080/tickets',
+    ]);
+});
+
 describe('UpsertEventAction - Database Integrity', function () {
     it('ensures all critical fields are properly saved to database', function () {
+        $redirectUrl = 'https://database-test.example.com/tickets';
+
         $eventData = EventData::from([
             'id' => null,
             'organizer_id' => $this->organizer->id,
@@ -240,6 +365,7 @@ describe('UpsertEventAction - Database Integrity', function () {
             'event_status' => 'published',
             'visibility' => 'private',
             'is_featured' => true,
+            'redirect_url' => $redirectUrl,
         ]);
 
         $event = $this->action->execute($eventData);
@@ -251,6 +377,7 @@ describe('UpsertEventAction - Database Integrity', function () {
             ->and($freshEvent->visible_to_membership_levels)->toBe([$this->membershipLevel1->id, $this->membershipLevel2->id])
             ->and($freshEvent->event_status)->toBe('published')
             ->and($freshEvent->visibility)->toBe('private')
-            ->and($freshEvent->is_featured)->toBeTrue();
+            ->and($freshEvent->is_featured)->toBeTrue()
+            ->and($freshEvent->redirect_url)->toBe($redirectUrl);
     });
 });
