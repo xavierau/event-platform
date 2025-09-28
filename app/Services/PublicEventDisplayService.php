@@ -83,7 +83,7 @@ class PublicEventDisplayService
         return [
             'id' => $event->id,
             'name' => $event->name,
-            'href' => route('events.show', $event->id),
+            'href' => route('events.show', $event->getSlugForLocale()),
             'image_url' => $this->getEventImageUrl($event),
             'price_from' => $this->calculateMinimumPrice($event, $user),
             'date_range' => $this->formatDateRange(

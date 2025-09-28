@@ -366,7 +366,17 @@ class Event extends Model implements HasMedia
                 if (is_numeric($identifier)) {
                     $query->where('id', $identifier);
                 } else {
-                    $query->whereJsonContains('slug', $identifier);
+                    // Search through all locale keys in the JSON slug
+                    $query->where(function ($subQuery) use ($identifier) {
+                        $availableLocales = array_keys(config('app.available_locales', ['en' => 'English']));
+
+                        foreach ($availableLocales as $locale) {
+                            $subQuery->orWhereRaw('JSON_UNQUOTE(JSON_EXTRACT(`slug`, ?)) = ?', ['$."' . $locale . '"', $identifier]);
+                        }
+
+                        // Also handle legacy string slugs
+                        $subQuery->orWhere('slug', $identifier);
+                    });
                 }
             })
             ->first();
@@ -458,5 +468,95 @@ class Event extends Model implements HasMedia
     public function getRedirectUrl(): ?string
     {
         return $this->redirect_url;
+    }
+
+    /**
+     * Get the slug for a specific locale with fallback handling
+     *
+     * @param  string|null  $locale  The locale to get the slug for. Defaults to current locale.
+     * @return string The slug for the locale, or English slug, or event ID as fallback
+     */
+    public function getSlugForLocale(?string $locale = null): string
+    {
+        $locale = $locale ?? app()->getLocale();
+
+        // Use getTranslations to get all locale values or try direct attribute access
+        $slugs = $this->getTranslations('slug');
+
+        // If no translations, try the direct attribute (for backward compatibility)
+        if (empty($slugs)) {
+            $directSlug = $this->getRawOriginal('slug');
+            if ($directSlug) {
+                $slugs = json_decode($directSlug, true) ?: $directSlug;
+            }
+        }
+
+        // Handle case where slug is null or empty
+        if (empty($slugs)) {
+            return (string) $this->id;
+        }
+
+        // If slug is a string (legacy), just return it
+        if (is_string($slugs)) {
+            return $slugs;
+        }
+
+        // If slug is an array (translatable)
+        if (is_array($slugs)) {
+            // If we have the requested locale slug, return it
+            if (isset($slugs[$locale]) && !empty($slugs[$locale])) {
+                return $slugs[$locale];
+            }
+
+            // Fallback to English slug
+            if (isset($slugs['en']) && !empty($slugs['en'])) {
+                return $slugs['en'];
+            }
+        }
+
+        // Final fallback to ID if no usable slugs available
+        return (string) $this->id;
+    }
+
+    /**
+     * Detect which locale a slug belongs to
+     *
+     * @param  string  $slug  The slug to check
+     * @return string|null The locale code, or null if slug not found
+     */
+    public function getLocaleBySlug(string $slug): ?string
+    {
+        // Use getTranslations to get all locale values
+        $slugs = $this->getTranslations('slug');
+
+        // If no translations, try the direct attribute (for backward compatibility)
+        if (empty($slugs)) {
+            $directSlug = $this->getRawOriginal('slug');
+            if ($directSlug) {
+                $slugs = json_decode($directSlug, true) ?: $directSlug;
+            }
+        }
+
+        // Handle case where slug is null or empty
+        if (empty($slugs)) {
+            return null;
+        }
+
+        // If slug is a string (legacy), check if it matches
+        if (is_string($slugs)) {
+            return $slugs === $slug ? 'en' : null; // Assume string slugs are English
+        }
+
+        // If slug is an array (translatable)
+        if (is_array($slugs)) {
+            // Search through all locale slugs
+            foreach ($slugs as $locale => $localeSlug) {
+                if ($localeSlug === $slug) {
+                    return $locale;
+                }
+            }
+        }
+
+        return null;
     }
 }
