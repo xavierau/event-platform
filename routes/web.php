@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\EditorUploadController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\EventOccurrenceController;
+use App\Http\Controllers\Admin\EventSeoController;
 use App\Http\Controllers\Admin\MemberScannerController;
 use App\Http\Controllers\Admin\MembershipLevelController;
 use App\Http\Controllers\Admin\OrganizerController;
@@ -130,6 +131,16 @@ Route::prefix('admin')
         Route::post('editor/image-upload', [EditorUploadController::class, 'uploadImage'])->name('editor.image.upload');
         Route::resource('events', EventController::class)->except(['show']);
         Route::resource('events.occurrences', EventOccurrenceController::class)->shallow();
+
+        // Event SEO routes
+        Route::get('events/{event}/seo', [EventSeoController::class, 'show'])->name('events.seo.show');
+        Route::get('events/{event}/seo/edit', [EventSeoController::class, 'edit'])->name('events.seo.edit');
+        Route::post('events/{event}/seo', [EventSeoController::class, 'store'])->name('events.seo.store');
+        Route::put('events/{event}/seo', [EventSeoController::class, 'update'])->name('events.seo.update');
+        Route::delete('events/{event}/seo', [EventSeoController::class, 'destroy'])->name('events.seo.destroy');
+        Route::get('events/{event}/seo/data', [EventSeoController::class, 'getSeoData'])->name('events.seo.data');
+        Route::get('events/{event}/seo/preview', [EventSeoController::class, 'preview'])->name('events.seo.preview');
+        Route::post('events/seo/validate', [EventSeoController::class, 'validateLimits'])->name('events.seo.validate');
         Route::resource('ticket-definitions', TicketDefinitionController::class);
         Route::resource('bookings', AdminBookingController::class);
 

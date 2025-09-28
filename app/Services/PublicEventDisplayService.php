@@ -104,6 +104,7 @@ class PublicEventDisplayService
         // Load the published event with all necessary relationships
         $event = Event::findPublishedByIdentifier($eventIdentifier, [
             'category',
+            'seo',
             'eventOccurrences' => function ($query) {
                 $query->orderBy('start_at_utc', 'asc');
             },
@@ -147,6 +148,9 @@ class PublicEventDisplayService
         $hasAccess = $event->isVisibleToUser($user);
         $requiredMembershipNames = ! $hasAccess ? $event->getRequiredMembershipNames() : [];
 
+        // Get current locale for SEO translations
+        $currentLocale = app()->getLocale();
+
         return [
             'id' => $event->id,
             'name' => $event->name,
@@ -176,6 +180,17 @@ class PublicEventDisplayService
                 'status' => $currentMembership->status,
                 'expires_at' => $currentMembership->expires_at,
             ] : null,
+
+            // SEO metadata
+            'seo' => [
+                'meta_title' => $event->seo?->getMetaTitleForLocale($currentLocale) ?? $event->name,
+                'meta_description' => $event->seo?->getMetaDescriptionForLocale($currentLocale) ?? \Illuminate\Support\Str::limit(strip_tags($event->description), 160),
+                'keywords' => $event->seo?->getKeywordsForLocale($currentLocale),
+                'og_title' => $event->seo?->getOgTitleForLocale($currentLocale) ?? $event->name,
+                'og_description' => $event->seo?->getOgDescriptionForLocale($currentLocale) ?? \Illuminate\Support\Str::limit(strip_tags($event->description), 160),
+                'og_image_url' => $event->seo?->og_image_url ?? $event->getFirstMediaUrl('landscape_poster'),
+                'canonical_url' => route('events.show', $event->getSlugForLocale()),
+            ],
         ];
     }
 

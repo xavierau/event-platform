@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -371,7 +372,7 @@ class Event extends Model implements HasMedia
                         $availableLocales = array_keys(config('app.available_locales', ['en' => 'English']));
 
                         foreach ($availableLocales as $locale) {
-                            $subQuery->orWhereRaw('JSON_UNQUOTE(JSON_EXTRACT(`slug`, ?)) = ?', ['$."' . $locale . '"', $identifier]);
+                            $subQuery->orWhereRaw('JSON_UNQUOTE(JSON_EXTRACT(`slug`, ?)) = ?', ['$."'.$locale.'"', $identifier]);
                         }
 
                         // Also handle legacy string slugs
@@ -504,12 +505,12 @@ class Event extends Model implements HasMedia
         // If slug is an array (translatable)
         if (is_array($slugs)) {
             // If we have the requested locale slug, return it
-            if (isset($slugs[$locale]) && !empty($slugs[$locale])) {
+            if (isset($slugs[$locale]) && ! empty($slugs[$locale])) {
                 return $slugs[$locale];
             }
 
             // Fallback to English slug
-            if (isset($slugs['en']) && !empty($slugs['en'])) {
+            if (isset($slugs['en']) && ! empty($slugs['en'])) {
                 return $slugs['en'];
             }
         }
@@ -558,5 +559,13 @@ class Event extends Model implements HasMedia
         }
 
         return null;
+    }
+
+    /**
+     * Get the SEO settings for this event
+     */
+    public function seo(): HasOne
+    {
+        return $this->hasOne(EventSeo::class);
     }
 }

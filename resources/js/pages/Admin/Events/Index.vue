@@ -65,6 +65,7 @@
                                     <TableCell>{{ formatDate(event.published_at) }}</TableCell>
                                     <TableCell class="text-right">
                                         <Link :href="route('admin.events.edit', event.id)" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-600 mr-3">{{ t('actions.edit') }}</Link>
+                                        <Link :href="route('admin.events.seo.show', event.id)" class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-600 mr-3">SEO</Link>
                                         <Link :href="route('admin.events.occurrences.index', { event: event.id })" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-600 mr-3">{{ t('events.occurrences') }}</Link>
                                         <button @click="confirmDeleteEvent(event.id, getTranslation(event.name, 'en'))" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-600">{{ t('actions.delete') }}</button>
                                     </TableCell>

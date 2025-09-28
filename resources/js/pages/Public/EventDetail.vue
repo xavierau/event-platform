@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import TicketPurchaseModal from '@/components/Modals/TicketPurchaseModal.vue';
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
+import SeoHead from '@/components/Shared/SeoHead.vue';
 import WishlistButton from '@/components/Shared/WishlistButton.vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import QRCode from 'qrcode';
@@ -14,6 +15,16 @@ import CommentList from '@/components/Comments/CommentList.vue';
 import type { Comment } from '@/types/comment';
 
 const { t } = useI18n();
+
+interface SeoData {
+    meta_title?: string;
+    meta_description?: string;
+    keywords?: string;
+    og_title?: string;
+    og_description?: string;
+    og_image_url?: string;
+    canonical_url?: string;
+}
 
 interface EventOccurrence {
     id: string | number;
@@ -62,6 +73,7 @@ interface EventDetails {
         status: string;
         expires_at: string;
     };
+    seo: SeoData;
 }
 
 // Props will be passed from the controller, containing the event details
@@ -374,6 +386,13 @@ const handleCommentAdded = (newComment: Comment) => {
 </script>
 
 <template>
+    <!-- SEO Meta Tags -->
+    <SeoHead
+        :seo="event.seo"
+        :fallback-title="event.name"
+        :fallback-description="event.description_html ? event.description_html.replace(/<[^>]*>/g, '').substring(0, 160) : ''"
+    />
+
     <CustomContainer :title="event.name" :poster_url="event.landscape_poster_url">
         <div class="min-h-screen bg-gray-100 pb-20 dark:bg-gray-900">
             <!-- padding-bottom for fixed footer -->
