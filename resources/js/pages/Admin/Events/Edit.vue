@@ -43,6 +43,7 @@ interface EventData {
     comments_enabled?: boolean;
     comment_config?: string;
     action_type?: string;
+    redirect_url?: string;
     visible_to_membership_levels?: number[];
 }
 interface BreadcrumbItem { title: string; url?: string; disabled?: boolean; }
@@ -79,6 +80,7 @@ interface EventFormData {
     comments_require_approval: boolean;
     comment_config: string;
     action_type: string;
+    redirect_url: string;
     visible_to_membership_levels: number[];
     _method: 'PUT' | 'POST';
     [key: string]: any;
@@ -134,6 +136,7 @@ const form = useForm<EventFormData>({
     comments_require_approval: props?.event?.comments_require_approval ?? false,
     comment_config: props?.event?.comment_config ?? 'enabled',
     action_type: props?.event?.action_type ?? 'purchase_ticket',
+    redirect_url: props?.event?.redirect_url ?? '',
     visible_to_membership_levels: props?.event?.visible_to_membership_levels ?? [],
     _method: 'PUT',
 });
@@ -325,6 +328,23 @@ function removeGalleryItem(mediaId: number) {
                                     Choose what action button appears on the event page for eligible users.
                                 </p>
                                 <div v-if="form.errors.action_type" class="text-sm text-red-600 mt-1">{{ form.errors.action_type }}</div>
+                            </div>
+
+                            <!-- Redirect URL -->
+                            <div v-if="form.action_type === 'purchase_ticket'">
+                                <label for="redirect_url" class="block text-sm font-medium text-gray-700">External Redirect URL (Optional)</label>
+                                <input
+                                    id="redirect_url"
+                                    v-model="form.redirect_url"
+                                    type="url"
+                                    placeholder="https://external-ticketing.example.com/event/123"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                />
+                                <p class="mt-1 text-sm text-gray-500">
+                                    When set, clicking the purchase button will redirect users to this external URL instead of opening the ticket purchase modal.
+                                    Leave empty to use the built-in ticket purchase system.
+                                </p>
+                                <div v-if="form.errors.redirect_url" class="text-sm text-red-600 mt-1">{{ form.errors.redirect_url }}</div>
                             </div>
                         </div>
 

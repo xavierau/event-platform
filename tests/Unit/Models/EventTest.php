@@ -2,15 +2,15 @@
 
 namespace Tests\Unit\Models;
 
-use Tests\TestCase;
+use App\Models\Category;
 use App\Models\Event;
 use App\Models\EventOccurrence;
 use App\Models\TicketDefinition;
-use App\Models\Category;
 use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class EventTest extends TestCase
 {
@@ -374,7 +374,7 @@ class EventTest extends TestCase
             'slug' => [
                 'en' => 'test-event',
                 'zh-TW' => '測試活動',
-                'zh-CN' => '测试活动'
+                'zh-CN' => '测试活动',
             ],
         ]);
 
@@ -690,5 +690,85 @@ class EventTest extends TestCase
 
         $this->assertNotNull($event->organizer_id);
         $this->assertInstanceOf(\App\Models\Organizer::class, $event->organizer);
+    }
+
+    // ========================================
+    // REDIRECT URL FEATURE TESTS
+    // ========================================
+
+    #[Test]
+    public function it_can_store_redirect_url()
+    {
+        $event = Event::factory()->create([
+            'redirect_url' => 'https://external-ticketing.example.com/event/123',
+        ]);
+
+        $this->assertEquals('https://external-ticketing.example.com/event/123', $event->redirect_url);
+    }
+
+    #[Test]
+    public function it_can_have_null_redirect_url()
+    {
+        $event = Event::factory()->create([
+            'redirect_url' => null,
+        ]);
+
+        $this->assertNull($event->redirect_url);
+    }
+
+    #[Test]
+    public function it_can_check_if_event_has_redirect_url()
+    {
+        $eventWithRedirect = Event::factory()->create([
+            'redirect_url' => 'https://external-ticketing.example.com/event/123',
+        ]);
+
+        $eventWithoutRedirect = Event::factory()->create([
+            'redirect_url' => null,
+        ]);
+
+        $this->assertTrue($eventWithRedirect->hasRedirectUrl());
+        $this->assertFalse($eventWithoutRedirect->hasRedirectUrl());
+    }
+
+    #[Test]
+    public function it_can_get_redirect_url()
+    {
+        $url = 'https://external-ticketing.example.com/event/123';
+        $event = Event::factory()->create([
+            'redirect_url' => $url,
+        ]);
+
+        $this->assertEquals($url, $event->getRedirectUrl());
+    }
+
+    #[Test]
+    public function it_returns_null_for_redirect_url_when_not_set()
+    {
+        $event = Event::factory()->create([
+            'redirect_url' => null,
+        ]);
+
+        $this->assertNull($event->getRedirectUrl());
+    }
+
+    #[Test]
+    public function it_allows_various_valid_url_formats()
+    {
+        $validUrls = [
+            'https://example.com',
+            'http://example.com',
+            'https://www.example.com/path/to/tickets',
+            'https://tickets.example.com/event/123?utm_source=platform',
+            'https://example.com:8080/tickets',
+        ];
+
+        foreach ($validUrls as $url) {
+            $event = Event::factory()->create([
+                'redirect_url' => $url,
+            ]);
+
+            $this->assertEquals($url, $event->redirect_url, "Failed for URL: {$url}");
+        }
     }
 }

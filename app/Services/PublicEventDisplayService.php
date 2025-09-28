@@ -4,9 +4,8 @@ namespace App\Services;
 
 use App\Models\Event;
 use App\Models\EventOccurrence;
-use Carbon\Carbon;
 use App\Models\TicketDefinition;
-use App\Enums\CommentStatusEnum;
+use Carbon\Carbon;
 
 class PublicEventDisplayService
 {
@@ -115,7 +114,7 @@ class PublicEventDisplayService
             },
         ]);
 
-        if (!$event) {
+        if (! $event) {
             throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Event not found with identifier: {$eventIdentifier}");
         }
 
@@ -127,7 +126,7 @@ class PublicEventDisplayService
         $comments = \App\Models\Comment::where('commentable_type', \App\Models\Event::class)
             ->where('commentable_id', $event->id)
             ->where('status', 'approved')
-            ->with(['user' => fn($query) => $query->select('id', 'name')])
+            ->with(['user' => fn ($query) => $query->select('id', 'name')])
             ->latest()
             ->get();
 
@@ -136,17 +135,17 @@ class PublicEventDisplayService
 
         // Get primary venue using model method
         $primaryVenue = $event->getPrimaryVenue();
-        
+
         // Refresh user relationships to ensure we have the latest membership data
         if ($user) {
             $user->refresh();
         }
-        
+
         $currentMembership = $user?->currentMembership()->with('level')->first();
-        
+
         // Determine access and button configuration
         $hasAccess = $event->isVisibleToUser($user);
-        $requiredMembershipNames = !$hasAccess ? $event->getRequiredMembershipNames() : [];
+        $requiredMembershipNames = ! $hasAccess ? $event->getRequiredMembershipNames() : [];
 
         return [
             'id' => $event->id,
@@ -163,9 +162,10 @@ class PublicEventDisplayService
             'occurrences' => $this->mapEventOccurrences($event->eventOccurrences),
             'comments' => $comments->toArray(),
             'comment_config' => $event->comment_config,
-            
+
             // New membership and action fields
             'action_type' => $event->action_type ?? 'purchase_ticket',
+            'redirect_url' => $event->redirect_url,
             'is_public' => $event->isPublic(),
             'visible_to_membership_levels' => $event->visible_to_membership_levels,
             'required_membership_names' => $requiredMembershipNames,
@@ -183,8 +183,7 @@ class PublicEventDisplayService
      * Apply ticket availability window filtering to a query.
      * This duplicates the logic from EventService to ensure consistency.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param \Carbon\Carbon|null $currentTime
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     protected function applyTicketAvailabilityFilter($query, ?\Carbon\Carbon $currentTime = null)
@@ -231,6 +230,7 @@ class PublicEventDisplayService
             // Now, explicitly map the ticket definitions using the service's own method
             // $publicData['tickets'] already contains the collection from $occurrence->ticketDefinitions
             $publicData['tickets'] = $this->mapTicketDefinitions($publicData['tickets'], $user);
+
             return $publicData;
         })->toArray();
     }
@@ -263,10 +263,10 @@ class PublicEventDisplayService
         $end = $this->carbonSafeParse($endDate);
 
         if ($start->isSameMonth($end)) {
-            return $start->translatedFormat('Y.m.d') . '-' . $end->translatedFormat('d');
+            return $start->translatedFormat('Y.m.d').'-'.$end->translatedFormat('d');
         }
 
-        return $start->translatedFormat('Y.m.d') . '-' . $end->translatedFormat('Y.m.d');
+        return $start->translatedFormat('Y.m.d').'-'.$end->translatedFormat('Y.m.d');
     }
 
     /**
@@ -278,8 +278,8 @@ class PublicEventDisplayService
             return '';
         }
 
-        return $localStartTime->format('Y.m.d') . ' ' .
-            $localStartTime->locale(app()->getLocale())->isoFormat('dddd') . ' ' .
+        return $localStartTime->format('Y.m.d').' '.
+            $localStartTime->locale(app()->getLocale())->isoFormat('dddd').' '.
             $localStartTime->format('H:i');
     }
 
@@ -296,10 +296,6 @@ class PublicEventDisplayService
     /**
      * Calculate minimum price from all event occurrences
      * Uses the Event model's getPriceRange method which applies availability filtering
-     *
-     * @param Event $event
-     * @param \App\Models\User|null $user
-     * @return int|null
      */
     protected function calculateMinimumPrice(Event $event, ?\App\Models\User $user = null): ?int
     {
@@ -313,6 +309,7 @@ class PublicEventDisplayService
         if (preg_match('/[\d,]+(?:\.\d+)?/', $priceRange, $matches)) {
             // Remove commas, convert to float, then to int (to handle cents correctly)
             $numericValue = floatval(str_replace(',', '', $matches[0]));
+
             return intval($numericValue);
         }
 

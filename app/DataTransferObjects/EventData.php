@@ -76,6 +76,8 @@ class EventData extends Data
         public readonly ?array $visible_to_membership_levels,
         #[Validation\Rule(['nullable', 'string', 'in:purchase_ticket,show_member_qr'])]
         public readonly ?string $action_type,
+        #[Validation\Rule(['nullable', 'url', 'regex:/^https?:\/\/.*/i', 'max:2048'])]
+        public readonly ?string $redirect_url,
 
         // For handling image uploads during create/update
         #[Validation\Rule(['nullable', 'image', 'max:2048'])]
