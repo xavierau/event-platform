@@ -24,12 +24,15 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
+        $categoryName = $this->faker->words(2, true);
+
         return [
-            'name' => ['en' => 'Test Category'], // Default to English for testing
-            // Add other locales if needed for specific tests, e.g., 'zh-TW' => '測試分類'
-            'slug' => 'test-category',
-            'parent_id' => null, // Default to no parent
-            // Add any other required fields for Category model
+            'name' => [
+                'en' => ucwords($categoryName),
+                'zh-TW' => $this->faker->word(),
+            ],
+            'slug' => $this->faker->unique()->slug(2),
+            'parent_id' => null,
         ];
     }
 }
