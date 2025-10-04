@@ -81,6 +81,14 @@ const isOpen = ref(false);
 const dropdownRef = ref<HTMLElement>();
 const showAbove = ref(false);
 
+// Detect mobile Safari
+const isMobileSafari = () => {
+  const ua = navigator.userAgent;
+  const iOS = /iPad|iPhone|iPod/.test(ua);
+  const webkit = /WebKit/.test(ua);
+  return iOS && webkit && !/CriOS|FxiOS|OPiOS|mercury/.test(ua);
+};
+
 const dropdownClasses = computed(() => [
   'fixed bg-white dark:bg-gray-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5',
   'z-[99999]', // Much higher z-index to appear above navigation and other elements
@@ -110,10 +118,6 @@ const checkDropdownPosition = async () => {
   const padding = 8; // py-1 = 4px top + 4px bottom
   const actualDropdownHeight = (platformCount * rowHeight) + padding;
 
-  // Always position dropdown with bottom aligned to button top + consistent offset
-  const fixedBottomOffset = -8; // Position dropdown above the button with gap
-  const dropdownBottom = buttonRect.top + fixedBottomOffset;
-
   // Calculate position coordinates - align dropdown with button
   const dropdownWidth = props.uiConfig.show_labels !== false ? 192 : 64; // w-48 = 192px, w-16 = 64px
 
@@ -124,16 +128,51 @@ const checkDropdownPosition = async () => {
   // Ensure dropdown stays within viewport bounds
   const leftPosition = Math.max(8, Math.min(dropdownLeft, window.innerWidth - dropdownWidth - 8));
 
-  // Calculate top position to grow upward from fixed bottom
-  const topPosition = dropdownBottom - actualDropdownHeight;
+  // Mobile Safari specific positioning
+  if (isMobileSafari()) {
+    // Get fixed footer height (approx 80px based on EventDetail.vue footer)
+    const fixedFooterHeight = 80;
+    const safeAreaBottom = 20; // Account for iOS home indicator
+    const gap = 8; // Gap between dropdown and button
 
-  // Ensure dropdown doesn't go above viewport
-  const finalTopPosition = Math.max(8, topPosition);
+    // Calculate available space above the button (excluding fixed footer)
+    const availableSpaceAbove = buttonRect.top - gap;
 
-  dropdownStyle.value = {
-    left: `${leftPosition}px`,
-    top: `${finalTopPosition}px`,
-  };
+    // Position dropdown to show above button with gap
+    // Use bottom positioning relative to button for mobile Safari stability
+    const bottomPosition = viewportHeight - buttonRect.top + gap;
+
+    // If dropdown doesn't fit above, position it to fit in available space
+    let finalTopPosition: number;
+    if (actualDropdownHeight <= availableSpaceAbove) {
+      // Dropdown fits above button - position with gap
+      finalTopPosition = buttonRect.top - actualDropdownHeight - gap;
+    } else {
+      // Dropdown doesn't fit - position at top with safe margin
+      finalTopPosition = 8;
+    }
+
+    dropdownStyle.value = {
+      left: `${leftPosition}px`,
+      top: `${finalTopPosition}px`,
+      maxHeight: `${Math.min(actualDropdownHeight, availableSpaceAbove - 16)}px`, // Ensure it doesn't overflow
+    };
+  } else {
+    // Desktop/non-Safari mobile positioning (original logic)
+    const fixedBottomOffset = -8; // Position dropdown above the button with gap
+    const dropdownBottom = buttonRect.top + fixedBottomOffset;
+
+    // Calculate top position to grow upward from fixed bottom
+    const topPosition = dropdownBottom - actualDropdownHeight;
+
+    // Ensure dropdown doesn't go above viewport
+    const finalTopPosition = Math.max(8, topPosition);
+
+    dropdownStyle.value = {
+      left: `${leftPosition}px`,
+      top: `${finalTopPosition}px`,
+    };
+  }
 };
 
 const toggleDropdown = async () => {
