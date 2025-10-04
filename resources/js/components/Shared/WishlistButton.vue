@@ -44,7 +44,6 @@ const isAuthenticated = computed(() => {
 onMounted(async () => {
   // Only check wishlist status if user is authenticated
 
-  console.log('isAuthenticated.value', isAuthenticated.value);
   if (isAuthenticated.value) {
     await checkWishlistStatus(props.eventId);
   }

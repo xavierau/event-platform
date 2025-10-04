@@ -210,7 +210,6 @@ const memberQrCodeUrl = ref('');
 const openPurchaseModal = () => {
     // Check if user is logged in
     if (!isAuthenticated.value) {
-        console.log('not authenticated');
 
         // If using Ziggy for named routes, route('login') is correct.
         // If not, replace with the actual path e.g., '/login'.
@@ -225,7 +224,6 @@ const openPurchaseModal = () => {
         // Optionally, handle the case where there are no tickets or no occurrence selected
         // For now, we can just prevent the modal from opening or show an alert.
         alert(t('events.alerts.no_tickets_available'));
-        console.warn('Attempted to open purchase modal without tickets or selected occurrence.', selectedOccurrence.value);
     }
 };
 
@@ -374,9 +372,7 @@ const selectedOcurrenceHasTickets = computed(() => {
     return selectedOccurrence.value?.tickets && selectedOccurrence.value?.tickets?.length > 0;
 });
 
-onMounted(() => {
-    console.log(props.event);
-});
+onMounted(() => {});
 
 const localComments = ref<Comment[]>(props.event.comments || []);
 const showCommentForm = ref(false);
