@@ -4,6 +4,8 @@ import EventListItem from '@/components/Shared/EventListItem.vue';
 import PublicHeader from '@/components/Shared/PublicHeader.vue';
 import { computed } from 'vue';
 import Footer from '@/components/Public/Footer.vue';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
+import { usePage } from '@inertiajs/vue3';
 
 interface EventItemType {
     id: number | string;
@@ -31,6 +33,7 @@ const props = defineProps({
     },
 });
 
+const page = usePage();
 const hasEvents = computed(() => props.events && props.events.length > 0);
 </script>
 
@@ -47,5 +50,7 @@ const hasEvents = computed(() => props.events && props.events.length > 0);
         </CustomContainer>
 
         <Footer ></Footer>
+
+        <ChatbotWidget v-if="page.props.chatbot_enabled" />
     </div>
 </template>

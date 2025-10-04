@@ -3,10 +3,11 @@ import './bootstrap';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createApp, h } from 'vue';
+import { createSSRApp, h } from 'vue';
 import { createI18n } from 'vue-i18n';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
+import ChatbotWidget from './components/chatbot/ChatbotWidget.vue';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -21,10 +22,11 @@ createInertiaApp({
             legacy: false, // Use Composition API
         });
 
-        createApp({ render: () => h(App, props) })
+        createSSRApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
             .use(i18n)
+            .component('ChatbotWidget', ChatbotWidget)
             .mount(el);
     },
     progress: {

@@ -7,6 +7,7 @@ import { computed, ref } from 'vue';
 import FrontendFooter from '@/components/FrontendFooter.vue'; // Define these types later
 import type { WalletBalance, WalletTransaction } from '@/types/wallet';
 import { User } from '@/types/index';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
 
 dayjs.extend(utc);
 
@@ -276,6 +277,8 @@ console.log('Wallet Page Loaded', {
         </main>
 
         <FrontendFooter />
+
+        <ChatbotWidget v-if="page.props.chatbot_enabled" />
     </div>
     <!-- </PublicLayout> -->
 </template>

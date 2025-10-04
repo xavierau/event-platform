@@ -14,6 +14,7 @@ import type { PublicTicketType } from '@/types/ticket';
 import CommentForm from '@/components/Comments/CommentForm.vue';
 import CommentList from '@/components/Comments/CommentList.vue';
 import type { Comment } from '@/types/comment';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
 
 const { t } = useI18n();
 
@@ -691,6 +692,8 @@ const handleCommentAdded = (newComment: Comment) => {
                 </div>
             </Teleport>
         </div>
+
+        <ChatbotWidget v-if="page.props.chatbot_enabled" />
     </CustomContainer>
 </template>
 

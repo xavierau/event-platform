@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\SiteSetting;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SiteSettingSeeder extends Seeder
@@ -79,6 +78,11 @@ class SiteSettingSeeder extends Seeder
                 'zh-TW' => '活動平台郵件服務',
                 'zh-CN' => '活动平台邮件服务',
             ],
+        ]);
+
+        // Chatbot Settings
+        SiteSetting::updateOrCreate(['key' => 'enable_chatbot'], [
+            'value' => ['en' => true],
         ]);
 
         // Add more settings here based on the screenshots...

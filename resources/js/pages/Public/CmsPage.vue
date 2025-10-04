@@ -2,6 +2,7 @@
 import { Head, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import PublicHeader from '@/components/Shared/PublicHeader.vue'
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue'
 
 interface CmsPage {
   id: number
@@ -22,10 +23,10 @@ const props = defineProps<{
   page: CmsPage
 }>()
 
-const inertiaPage = usePage()
+const page = usePage()
 
 // Get the current locale from Inertia shared props
-const currentLocale = computed(() => (inertiaPage.props.current_locale as string) || 'en')
+const currentLocale = computed(() => (page.props.current_locale as string) || 'en')
 
 const getTranslation = (translations: Record<string, string> | null | undefined, locale: string = 'en'): string => {
   if (!translations) return ''
@@ -109,5 +110,7 @@ const metaDescription = computed(() => getTranslation(props.page.meta_descriptio
     <footer class="bg-gray-800 dark:bg-gray-950 text-white dark:text-gray-300 p-6 text-center border-t dark:border-gray-700 mt-auto">
       <p>&copy; {{ new Date().getFullYear() }} Showeasy. All rights reserved. Made with ❤️</p>
     </footer>
+
+    <ChatbotWidget v-if="page.props.chatbot_enabled" />
   </div>
 </template>

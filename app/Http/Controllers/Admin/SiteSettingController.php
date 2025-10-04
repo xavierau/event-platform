@@ -75,7 +75,8 @@ class SiteSettingController extends Controller
             'allow_offline_payment_customer',
             'disable_booking_cancellation',
             'disable_ticket_download',
-            'disable_google_calendar'
+            'disable_google_calendar',
+            'enable_chatbot',
         ];
 
         $settingValuesFromDb = [];
@@ -100,7 +101,7 @@ class SiteSettingController extends Controller
                 }
                 $initialFormValues[$key] = $translations;
             } elseif (in_array($key, $booleanKeys)) {
-                $initialFormValues[$key] = isset($dbValueArray[$fallbackLocale]) ? (bool)$dbValueArray[$fallbackLocale] : false;
+                $initialFormValues[$key] = isset($dbValueArray[$fallbackLocale]) ? (bool) $dbValueArray[$fallbackLocale] : false;
             } else { // Assumed non-translatable single string/number (e.g. API keys, simple text, numbers)
                 $initialFormValues[$key] = $dbValueArray[$fallbackLocale] ?? '';
             }
@@ -110,7 +111,7 @@ class SiteSettingController extends Controller
             'pageTitle' => 'Site Settings',
             'breadcrumbs' => [
                 ['text' => 'Admin', 'href' => route('admin.dashboard')], // Assuming you have an admin.dashboard route
-                ['text' => 'Site Settings']
+                ['text' => 'Site Settings'],
             ],
             'initialSettings' => $initialFormValues,
             'locales' => $locales,
@@ -168,15 +169,16 @@ class SiteSettingController extends Controller
                 'site_name',
                 'site_slogan',
                 'extra_footer_credits',
+                'enable_chatbot',
                 // 'site_logo_path', 'site_favicon_path', // File uploads handled separately
             ],
-            'SEO' => ['meta_title', /* 'meta_description', 'meta_keywords' */],
+            'SEO' => ['meta_title'/* 'meta_description', 'meta_keywords' */],
             'Regional' => [
                 'timezone',
                 'currency_code',
                 'date_format',
                 'time_format',
-                'timezone_conversion'
+                'timezone_conversion',
             ],
             'Booking' => [
                 /* 'pre_booking_time', 'pre_cancellation_time', 'max_ticket_qty_limit', */
@@ -185,13 +187,13 @@ class SiteSettingController extends Controller
                 'allow_offline_payment_customer',
                 'disable_booking_cancellation',
                 'disable_ticket_download',
-                'disable_google_calendar'
+                'disable_google_calendar',
             ],
             'MultiVendor' => [
                 'multi_organisation_mode', /* 'admin_commission_percentage', */
                 'verify_email_before_login',
                 'publish_event_after_admin_approval',
-                'manually_approve_organizer'
+                'manually_approve_organizer',
             ],
             'Mail' => [
                 'mail_sender_email',

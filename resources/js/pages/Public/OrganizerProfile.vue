@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
 import CommentList from '@/components/Comments/CommentList.vue';
 import CommentForm from '@/components/Comments/CommentForm.vue';
 import type { Comment } from '@/types/comment';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
 
 interface Event {
   id: number;
@@ -35,6 +36,7 @@ const props = defineProps<{
   organizer: Organizer;
 }>();
 
+const page = usePage();
 const localComments = ref<Comment[]>(props.organizer.comments || []);
 const showCommentForm = ref(false);
 
@@ -190,6 +192,8 @@ const handleCommentPosted = (newComment: Comment) => {
       <!-- Footer Spacer -->
       <div class="h-20"></div>
     </div>
+
+    <ChatbotWidget v-if="page.props.chatbot_enabled" />
   </CustomContainer>
 </template>
 

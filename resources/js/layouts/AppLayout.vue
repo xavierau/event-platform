@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import InnerAppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
-import type { BreadcrumbItemType } from '@/types/index.d';
-import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
 import Toast from '@/components/Shared/Toast.vue';
 import { toastMessage, toastType, toastVisible } from '@/composables/useToast';
-
+import InnerAppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
+import type { BreadcrumbItemType } from '@/types/index.d';
+import { computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 
 // Props that this AppLayout component itself might receive if nested or used with direct props.
 // These are less likely to be used for pageTitle/breadcrumbs if this is always the root layout for a page.
@@ -32,7 +31,6 @@ const currentPageTitle = computed(() => {
     const pageSharedTitle = page.props.pageTitle as string | undefined;
     return pageSharedTitle || explicitProps.pageTitle || ''; // Fallback to props passed directly to AppLayout
 });
-
 </script>
 
 <template>

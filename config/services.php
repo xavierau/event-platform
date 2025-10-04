@@ -49,4 +49,9 @@ return [
         'analytics_id' => env('GOOGLE_ANALYTICS_ID'),
     ],
 
+    'chatbot' => [
+        'url' => env('CHATBOT_API_URL'),
+        'key' => env('CHATBOT_API_KEY'),
+    ],
+
 ];

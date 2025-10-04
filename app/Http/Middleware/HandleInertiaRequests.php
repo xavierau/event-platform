@@ -2,12 +2,13 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\RoleNameEnum;
+use App\Helpers\CurrencyHelper;
+use App\Models\SiteSetting;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
-use App\Enums\RoleNameEnum;
-use App\Helpers\CurrencyHelper;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -45,10 +46,12 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
+            'chatbot_enabled' => SiteSetting::get('enable_chatbot', true),
             'auth' => function () use ($request) {
                 $user = $request->user();
                 if ($user) {
                     $user->loadMissing('roles', 'activeOrganizers');
+
                     return [
                         'user' => array_merge($user->toArray(), [
                             'permissions' => $user->getAllPermissions()->pluck('name'),
@@ -58,15 +61,16 @@ class HandleInertiaRequests extends Middleware
                         ]),
                     ];
                 }
+
                 return ['user' => null];
             },
-            'ziggy' => fn() => [
+            'ziggy' => fn () => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'app_enums' => [
-                'roles' => collect(RoleNameEnum::cases())->mapWithKeys(fn($case) => [$case->name => $case->value])->all(),
+                'roles' => collect(RoleNameEnum::cases())->mapWithKeys(fn ($case) => [$case->name => $case->value])->all(),
             ],
             'currencySymbols' => CurrencyHelper::getAllSymbols(),
             'available_locales' => config('app.available_locales'),
@@ -83,6 +87,7 @@ class HandleInertiaRequests extends Middleware
                         : [];
                     $translations[$locale] = array_merge($phpTranslations, $jsonTranslations);
                 }
+
                 return $translations;
             },
         ];

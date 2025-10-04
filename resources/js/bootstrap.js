@@ -1,12 +1,16 @@
 import axios from 'axios';
-window.axios = axios;
 
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+// Only run axios setup in browser context (not SSR)
+if (typeof window !== 'undefined') {
+    window.axios = axios;
 
-let token = document.head.querySelector('meta[name="csrf-token"]');
+    window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-if (token) {
-    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
-} else {
-    console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
+    let token = document.head.querySelector('meta[name="csrf-token"]');
+
+    if (token) {
+        window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+    } else {
+        console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
+    }
 }

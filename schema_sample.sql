@@ -25,6 +25,7 @@ DROP TABLE IF EXISTS `admin_audit_logs`;
 CREATE TABLE `admin_audit_logs` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `admin_user_id` bigint unsigned NOT NULL,
+
   `target_user_id` bigint unsigned NOT NULL,
   `action_type` enum('create_user','change_membership','block_commenting','unblock_commenting','email_verification_change') COLLATE utf8mb4_unicode_ci NOT NULL,
   `action_details` json DEFAULT NULL,

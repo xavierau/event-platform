@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import QRCode from 'qrcode';
 import FrontendFooter from '@/components/FrontendFooter.vue';
 import { useI18n } from 'vue-i18n';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
 
 const { t } = useI18n();
+const page = usePage();
 
 // Access the global route function
 declare const route: any;
@@ -530,6 +532,8 @@ function hasPinRedemption(coupon: UserCoupon): boolean {
         </div>
       </div>
   </div>
+
+  <ChatbotWidget v-if="page.props.chatbot_enabled" />
 </div>
 </template>
 

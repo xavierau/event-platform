@@ -14,6 +14,10 @@ withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
     pageTitle: '',
 });
+
+const page = usePage();
+
+console.log(page)
 </script>
 
 <template>
