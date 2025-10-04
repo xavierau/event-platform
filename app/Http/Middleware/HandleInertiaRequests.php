@@ -82,19 +82,9 @@ class HandleInertiaRequests extends Middleware
             'available_locales' => config('app.available_locales'),
             'locale' => app()->getLocale(),
             'translations' => function () {
-                // Load only the current locale's translations to reduce payload size
-                // This prevents HTTP/2 protocol errors from oversized responses
-                $locale = app()->getLocale();
-
-                $jsonTranslations = file_exists(lang_path("{$locale}.json"))
-                    ? json_decode(file_get_contents(lang_path("{$locale}.json")), true)
-                    : [];
-
-                $phpTranslations = file_exists(lang_path("{$locale}/messages.php"))
-                    ? require lang_path("{$locale}/messages.php")
-                    : [];
-
-                return array_merge($phpTranslations, $jsonTranslations);
+                // Return empty array - translations will be loaded client-side via separate endpoint
+                // This reduces initial SSR payload from ~71KB to near-zero
+                return [];
             },
         ];
     }

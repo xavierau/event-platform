@@ -14,17 +14,20 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob('./pages/**/*.vue')) as any,
-    setup({ el, App, props, plugin }) {
+    async setup({ el, App, props, plugin }) {
         const locale = props.initialPage.props.locale as string;
+
+        // Load translations from API endpoint to reduce SSR payload
+        const translationsResponse = await fetch('/api/translations');
+        const translationsData = await translationsResponse.json();
 
         const i18n = createI18n({
             locale,
             fallbackLocale: 'en',
-            // Wrap single locale translations in locale key for vue-i18n
             messages: {
-                [locale]: props.initialPage.props.translations as Record<string, any>
+                [locale]: translationsData.translations || {}
             },
-            legacy: false, // Use Composition API
+            legacy: false,
         });
 
         createSSRApp({ render: () => h(App, props) })

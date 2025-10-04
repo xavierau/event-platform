@@ -50,6 +50,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // --- PUBLIC ROUTES ---
+Route::get('/api/translations', [App\Http\Controllers\TranslationController::class, 'index'])->name('translations.index');
 Route::post('/locale/switch', [LocaleController::class, 'switch'])->name('locale.switch');
 Route::get('/', HomeController::class)->name('home');
 Route::get('/events/{event}', [PublicEventController::class, 'show'])->name('events.show');

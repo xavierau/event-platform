@@ -12,41 +12,43 @@ import ChatbotWidget from './components/chatbot/ChatbotWidget.vue';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-createServer(
-    (page) => {
-        // Log payload size for debugging
-        const pageSize = JSON.stringify(page).length;
-        console.log(`[SSR] Rendering ${page.component} (payload: ${pageSize} bytes)`);
+createServer(async (page) => {
+    // Load translations for SSR (not included in page props anymore)
+    const locale = page.props.locale as string;
+    let translations = {};
 
-        return createInertiaApp({
-            page,
-            render: renderToString,
-            title: (title) => `${title} - ${appName}`,
-            resolve: (name) =>
-                resolvePageComponent(`./pages/${name}.vue`, import.meta.glob('./pages/**/*.vue')) as any,
-            setup({ App, props, plugin }) {
-                const locale = props.initialPage.props.locale as string;
+    try {
+        const response = await fetch(`http://127.0.0.1/api/translations`);
+        const data = await response.json();
+        translations = data.translations || {};
+    } catch (error) {
+        console.error('[SSR] Failed to load translations:', error);
+    }
 
-                const i18n = createI18n({
-                    locale,
-                    fallbackLocale: 'en',
-                    // Wrap single locale translations in locale key for vue-i18n
-                    messages: {
-                        [locale]: props.initialPage.props.translations as Record<string, any>
-                    },
-                    legacy: false,
-                });
+    return createInertiaApp({
+        page,
+        render: renderToString,
+        title: (title) => `${title} - ${appName}`,
+        resolve: (name) =>
+            resolvePageComponent(`./pages/${name}.vue`, import.meta.glob('./pages/**/*.vue')) as any,
+        setup({ App, props, plugin }) {
+            const i18n = createI18n({
+                locale,
+                fallbackLocale: 'en',
+                messages: {
+                    [locale]: translations
+                },
+                legacy: false,
+            });
 
-                return createSSRApp({ render: () => h(App, props) })
-                    .use(plugin)
-                    .use(ZiggyVue, {
-                        ...props.initialPage.props.ziggy,
-                        location: new URL(props.initialPage.props.ziggy.location),
-                    })
-                    .use(i18n)
-                    .component('ChatbotWidget', ChatbotWidget);
-            },
-        });
-    },
-    13714, // port
-);
+            return createSSRApp({ render: () => h(App, props) })
+                .use(plugin)
+                .use(ZiggyVue, {
+                    ...props.initialPage.props.ziggy,
+                    location: new URL(props.initialPage.props.ziggy.location),
+                })
+                .use(i18n)
+                .component('ChatbotWidget', ChatbotWidget);
+        },
+    });
+});
