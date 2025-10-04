@@ -40,12 +40,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        // Use session-based quote to ensure consistency between SSR and client hydration
+        $quoteKey = 'daily_quote_'.now()->format('Y-m-d');
+
+        if (! session()->has($quoteKey)) {
+            [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+            session()->put($quoteKey, ['message' => trim($message), 'author' => trim($author)]);
+        }
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
+            'quote' => session()->get($quoteKey),
             'chatbot_enabled' => SiteSetting::get('enable_chatbot', true),
             'auth' => function () use ($request) {
                 $user = $request->user();
@@ -76,19 +82,19 @@ class HandleInertiaRequests extends Middleware
             'available_locales' => config('app.available_locales'),
             'locale' => app()->getLocale(),
             'translations' => function () {
-                $locales = config('app.available_locales', ['en' => 'Eng']);
-                $translations = [];
-                foreach (array_keys($locales) as $locale) {
-                    $jsonTranslations = file_exists(lang_path("{$locale}.json"))
-                        ? json_decode(file_get_contents(lang_path("{$locale}.json")), true)
-                        : [];
-                    $phpTranslations = file_exists(lang_path("{$locale}/messages.php"))
-                        ? require lang_path("{$locale}/messages.php")
-                        : [];
-                    $translations[$locale] = array_merge($phpTranslations, $jsonTranslations);
-                }
+                // Load only the current locale's translations to reduce payload size
+                // This prevents HTTP/2 protocol errors from oversized responses
+                $locale = app()->getLocale();
 
-                return $translations;
+                $jsonTranslations = file_exists(lang_path("{$locale}.json"))
+                    ? json_decode(file_get_contents(lang_path("{$locale}.json")), true)
+                    : [];
+
+                $phpTranslations = file_exists(lang_path("{$locale}/messages.php"))
+                    ? require lang_path("{$locale}/messages.php")
+                    : [];
+
+                return array_merge($phpTranslations, $jsonTranslations);
             },
         ];
     }

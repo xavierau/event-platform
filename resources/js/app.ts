@@ -15,24 +15,32 @@ createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob('./pages/**/*.vue')) as any,
     setup({ el, App, props, plugin }) {
+        const locale = props.initialPage.props.locale as string;
+
         const i18n = createI18n({
-            locale: props.initialPage.props.locale as string,
+            locale,
             fallbackLocale: 'en',
-            messages: props.initialPage.props.translations as Record<string, any>,
+            // Wrap single locale translations in locale key for vue-i18n
+            messages: {
+                [locale]: props.initialPage.props.translations as Record<string, any>
+            },
             legacy: false, // Use Composition API
         });
 
         createSSRApp({ render: () => h(App, props) })
             .use(plugin)
-            .use(ZiggyVue)
+            .use(ZiggyVue, {
+                ...props.initialPage.props.ziggy,
+                location: new URL(props.initialPage.props.ziggy.location),
+            })
             .use(i18n)
             .component('ChatbotWidget', ChatbotWidget)
             .mount(el);
+
+        // Initialize theme AFTER mount to avoid hydration mismatch
+        initializeTheme();
     },
     progress: {
         color: '#4B5563',
     },
 });
-
-// This will set light / dark mode on page load...
-initializeTheme();

@@ -20,10 +20,15 @@ createServer((page) =>
         resolve: (name) =>
             resolvePageComponent(`./pages/${name}.vue`, import.meta.glob('./pages/**/*.vue')) as any,
         setup({ App, props, plugin }) {
+            const locale = props.initialPage.props.locale as string;
+
             const i18n = createI18n({
-                locale: props.initialPage.props.locale as string,
+                locale,
                 fallbackLocale: 'en',
-                messages: props.initialPage.props.translations as Record<string, any>,
+                // Wrap single locale translations in locale key for vue-i18n
+                messages: {
+                    [locale]: props.initialPage.props.translations as Record<string, any>
+                },
                 legacy: false,
             });
 
