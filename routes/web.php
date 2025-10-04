@@ -202,7 +202,7 @@ Route::prefix('admin')
 // --- PLATFORM ADMIN ONLY ROUTES ---
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', 'role:'.RoleNameEnum::ADMIN->value])
+    ->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value])
     ->group(function () {
         // Site-wide settings and management
         Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
@@ -237,9 +237,9 @@ Route::prefix('admin')
     });
 
 // --- AUTH & PAYMENT ROUTES ---
-require __DIR__.'/auth.php';
-require __DIR__.'/settings.php'; // Note: This file seems to be required but its purpose is not clear from the context.
-require __DIR__.'/promotional-modal.php';
+require __DIR__ . '/auth.php';
+require __DIR__ . '/settings.php'; // Note: This file seems to be required but its purpose is not clear from the context.
+require __DIR__ . '/promotional-modal.php';
 
 // Payment Gateway Callbacks
 Route::get('/payment/success', [PaymentController::class, 'handlePaymentSuccess'])->name('payment.success');
