@@ -18,7 +18,9 @@ createServer(async (page) => {
     let translations = {};
 
     try {
-        const response = await fetch(`http://127.0.0.1/api/translations`);
+        // Use the Ziggy location to determine the app URL
+        const appUrl = new URL(page.props.ziggy.location).origin;
+        const response = await fetch(`${appUrl}/api/translations`);
         const data = await response.json();
         translations = data.translations || {};
     } catch (error) {
