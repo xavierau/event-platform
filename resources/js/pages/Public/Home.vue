@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 
 import CategoryLink from '@/components/LandingPage/CategoryLink.vue';
 import EventPreviewCard from '@/components/Shared/EventPreviewCard.vue';
@@ -16,10 +16,13 @@ import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 import type { EventItem, Promotion } from '@/types';
 import Footer from '@/components/Public/Footer.vue';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
 
 dayjs.extend(utc);
 
 const { t } = useI18n();
+
+const page = usePage();
 
 interface Category {
     id: number | string;
@@ -122,7 +125,7 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
     <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
         <!-- Header Section (FE-LP-002) -->
         <PublicHeader />
-        
+
         <!-- Promotional Modals -->
         <PromotionalDisplay page="home" />
 
@@ -212,7 +215,10 @@ function onDateRangeSelected([start, end]: [Date | null, Date | null]) {
             </section>
         </main>
 
+
         <Footer></Footer>
+
+        <ChatbotWidget v-if="page.props.chatbot_enabled" />
     </div>
 
     <div

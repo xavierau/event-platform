@@ -6,4 +6,5 @@ return [
     App\Providers\InertiaServiceProvider::class,
     App\Providers\PromotionalModalServiceProvider::class,
     App\Providers\TelescopeServiceProvider::class,
+    App\Modules\SocialShare\SocialShareServiceProvider::class,
 ];

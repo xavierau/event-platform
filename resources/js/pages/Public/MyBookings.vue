@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
 import dayjs from 'dayjs';
@@ -10,10 +10,12 @@ import type { BookingItem } from '@/types/booking';
 import FrontendFooter from '@/components/FrontendFooter.vue';
 // @ts-expect-error - vue-i18n has no type definitions
 import { useI18n } from 'vue-i18n';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
 
 dayjs.extend(utc);
 
 const { t } = useI18n();
+const page = usePage();
 
 const props = defineProps({
   bookings: {
@@ -240,6 +242,8 @@ function refreshBookings() {
       @close="closeDetailsModal"
       @refresh-bookings="refreshBookings"
     />
+
+    <ChatbotWidget v-if="page.props.chatbot_enabled" />
   </div>
 </template>
 

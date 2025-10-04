@@ -18,8 +18,9 @@ return new class extends Migration
             // In testing environment, skip if admin role doesn't exist yet
             if (app()->environment('testing')) {
                 return;
+            }else{
+                $adminRole = Role::create(['name'=>'admin','guard'=>"web"]);
             }
-            throw new Exception('Admin role not found. Please ensure the admin role exists before running this migration.');
         }
 
         // Get all permissions

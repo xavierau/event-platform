@@ -5,11 +5,13 @@ import EventListItem from '@/components/Shared/EventListItem.vue';
 import PublicHeader from '@/components/Shared/PublicHeader.vue';
 import { useWishlist } from '@/composables/useWishlist';
 import type { EventItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
 
 const { t } = useI18n();
+const page = usePage();
 
 const { isLoading, error, wishlistItems, wishlistCount, getUserWishlist, clearWishlist, clearError } = useWishlist();
 
@@ -140,8 +142,10 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
-        
+
             <FrontendFooter />
         </CustomContainer>
+
+        <ChatbotWidget v-if="page.props.chatbot_enabled" />
     </div>
 </template>

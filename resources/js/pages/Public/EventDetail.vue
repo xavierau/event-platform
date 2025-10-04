@@ -3,6 +3,7 @@ import TicketPurchaseModal from '@/components/Modals/TicketPurchaseModal.vue';
 import CustomContainer from '@/components/Shared/CustomContainer.vue';
 import SeoHead from '@/components/Shared/SeoHead.vue';
 import WishlistButton from '@/components/Shared/WishlistButton.vue';
+import SocialShareWrapper from '@/components/SocialShare/SocialShareWrapper.vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import QRCode from 'qrcode';
 import { computed, onMounted, ref } from 'vue';
@@ -13,6 +14,7 @@ import type { PublicTicketType } from '@/types/ticket';
 import CommentForm from '@/components/Comments/CommentForm.vue';
 import CommentList from '@/components/Comments/CommentList.vue';
 import type { Comment } from '@/types/comment';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
 
 const { t } = useI18n();
 
@@ -622,6 +624,11 @@ const handleCommentAdded = (newComment: Comment) => {
                             @wishlist-changed="handleWishlistChanged"
                             @error="handleWishlistError"
                         />
+                        <SocialShareWrapper
+                            shareable-type="App\Models\Event"
+                            :shareable-id="Number(event.id)"
+                            class="flex-shrink-0"
+                        />
                         <button
                             :class="actionButtonConfig.className"
                             :disabled="actionButtonConfig.disabled"
@@ -685,6 +692,8 @@ const handleCommentAdded = (newComment: Comment) => {
                 </div>
             </Teleport>
         </div>
+
+        <ChatbotWidget v-if="page.props.chatbot_enabled" />
     </CustomContainer>
 </template>
 
