@@ -57,9 +57,13 @@ class GenerateShareUrlAction
 
         foreach ($platforms as $platform) {
             try {
+                // Get base share URL and append UTM parameters if enabled
+                $baseUrl = $shareable->getShareUrl($locale);
+                $urlWithUtm = $this->appendUtmParameters($baseUrl, $platform, $shareable);
+
                 $platformData = SocialPlatformData::from([
                     'name' => $platform,
-                    'url' => $shareable->getShareUrl($locale),
+                    'url' => $urlWithUtm,
                     'title' => $shareable->getShareTitle($locale),
                     'description' => $shareable->getShareDescription($locale),
                     'hashtags' => $shareable->getShareTags(),
@@ -205,6 +209,65 @@ class GenerateShareUrlAction
         ];
 
         return $mappings[$paramKey] ?? $paramKey;
+    }
+
+    /**
+     * Append UTM parameters to URL for analytics tracking
+     */
+    private function appendUtmParameters(string $url, string $platform, ShareableInterface $shareable): string
+    {
+        // Check if UTM tracking is enabled
+        if (! config('social-share.analytics.utm.enabled', true)) {
+            return $url;
+        }
+
+        // Parse URL to handle existing query parameters
+        $parsedUrl = parse_url($url);
+        $queryParams = [];
+
+        // Extract existing query parameters
+        if (isset($parsedUrl['query'])) {
+            parse_str($parsedUrl['query'], $queryParams);
+        }
+
+        // Build UTM parameters
+        $utmParams = $this->buildUtmParameters($platform, $shareable);
+
+        // Merge with existing parameters (UTM params take precedence)
+        $queryParams = array_merge($queryParams, $utmParams);
+
+        // Rebuild URL with all parameters
+        $baseUrl = $parsedUrl['scheme'].'://'.$parsedUrl['host'];
+        if (isset($parsedUrl['path'])) {
+            $baseUrl .= $parsedUrl['path'];
+        }
+
+        $queryString = http_build_query($queryParams);
+
+        return $queryString ? $baseUrl.'?'.$queryString : $baseUrl;
+    }
+
+    /**
+     * Build UTM parameters for Google Analytics tracking
+     */
+    private function buildUtmParameters(string $platform, ShareableInterface $shareable): array
+    {
+        $utmMedium = config('social-share.analytics.utm.utm_medium', 'social');
+
+        // Get campaign name from shareable model
+        $utmCampaign = $shareable->getUtmCampaign();
+
+        // Get shareable ID for content tracking
+        $utmContent = $shareable instanceof \Illuminate\Database\Eloquent\Model
+            ? $shareable->id
+            : '';
+
+        return [
+            'utm_source' => $platform,
+            'utm_medium' => $utmMedium,
+            'utm_campaign' => $utmCampaign,
+            'utm_content' => $utmContent,
+        ];
     }
 
     /**

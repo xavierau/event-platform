@@ -694,6 +694,20 @@ class Event extends Model implements HasMedia, ShareableInterface
     }
 
     /**
+     * Get the UTM campaign name for analytics tracking
+     */
+    public function getUtmCampaign(): string
+    {
+        // Use event slug (English version) and ID for campaign tracking
+        $slug = $this->getTranslation('slug', 'en') ?? $this->getTranslation('slug', app()->getLocale());
+
+        // Clean the slug and combine with event type prefix
+        $cleanSlug = str_replace('-', '_', $slug);
+
+        return "event_{$cleanSlug}";
+    }
+
+    /**
      * Get polymorphic social share analytics for this event
      */
     public function socialShares()

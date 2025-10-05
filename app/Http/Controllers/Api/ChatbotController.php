@@ -39,7 +39,7 @@ class ChatbotController extends Controller
                 'session_id' => $sessionId,
             ]);
 
-            Log::info("messages: ", [$response->json()]);
+            Log::info('messages: ', [$response->json()]);
 
             if ($response->failed()) {
                 Log::error('Failed to fetch chatbot messages', [
@@ -83,8 +83,8 @@ class ChatbotController extends Controller
             $chatbotKey = config('services.chatbot.key');
             $sessionId = $request->input('session_id');
 
-            Log::info("Chatbot message received:", [$sanitizedMessage]);
-            Log::info("Chatbot URL: ", [$chatbotUrl]);
+            Log::info('Chatbot message received:', [$sanitizedMessage]);
+            Log::info('Chatbot URL: ', [$chatbotUrl]);
             // Validate that chatbot URL is configured
             if (empty($chatbotUrl)) {
                 Log::error('Chatbot API URL is not configured');
@@ -102,12 +102,12 @@ class ChatbotController extends Controller
 
             $response = $httpRequest->post($chatbotUrl, [
                 'user_input' => $sanitizedMessage,
-                'user_id' => null,
+                'user_id' => $request->user()?->id,
                 'session_id' => $sessionId,
                 'current_url' => $request->input('current_url'),
             ]);
 
-            Log::info("Response from server,", [$response]);
+            Log::info('Response from server,', [$response]);
 
             if ($response->failed()) {
                 Log::error('Chatbot API request failed', [

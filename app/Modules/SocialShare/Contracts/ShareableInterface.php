@@ -34,4 +34,9 @@ interface ShareableInterface
      * Get relevant tags/hashtags for social media sharing
      */
     public function getShareTags(): array;
+
+    /**
+     * Get the UTM campaign name for analytics tracking
+     */
+    public function getUtmCampaign(): string;
 }

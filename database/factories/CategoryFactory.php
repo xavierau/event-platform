@@ -24,14 +24,14 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
-        $categoryName = $this->faker->words(2, true);
+        $categoryName = 'Category '.mt_rand(1000, 9999);
 
         return [
             'name' => [
-                'en' => ucwords($categoryName),
-                'zh-TW' => $this->faker->word(),
+                'en' => $categoryName,
+                'zh-TW' => '類別 '.mt_rand(1000, 9999),
             ],
-            'slug' => $this->faker->unique()->slug(2),
+            'slug' => 'category-'.mt_rand(1000, 9999).'-'.time(),
             'parent_id' => null,
         ];
     }

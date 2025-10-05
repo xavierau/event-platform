@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { useGoogleAnalytics } from './useGoogleAnalytics';
 
 interface ShareConfig {
     url: string;
@@ -47,6 +48,9 @@ export function useSocialShare() {
     const isLoading = ref(false);
     const isSharing = ref(false);
     const shareSuccess = ref(false);
+
+    // Initialize Google Analytics tracking
+    const { trackEvent } = useGoogleAnalytics();
 
     const displayMode = computed(() => {
         if (uiConfig.value.display_mode !== 'auto') {
@@ -200,6 +204,13 @@ export function useSocialShare() {
             // Track the share if analytics is enabled
             if (uiConfig.value.track_analytics) {
                 await trackShare(shareableType, shareableId, platform);
+
+                // Track share event in Google Analytics
+                trackEvent('share', {
+                    method: platform,
+                    content_type: shareableType,
+                    item_id: shareableId,
+                });
             }
 
             shareSuccess.value = true;

@@ -8,24 +8,32 @@ use function Pest\Laravel\postJson;
 uses(RefreshDatabase::class);
 
 it('validates required message field', function () {
+    config(['services.chatbot.url' => 'https://api.chatbot.test/chat']);
+
     postJson('/api/chatbot', [])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['message']);
 });
 
 it('validates message is a string', function () {
+    config(['services.chatbot.url' => 'https://api.chatbot.test/chat']);
+
     postJson('/api/chatbot', ['message' => 123])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['message']);
 });
 
 it('validates message has minimum length', function () {
+    config(['services.chatbot.url' => 'https://api.chatbot.test/chat']);
+
     postJson('/api/chatbot', ['message' => ''])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['message']);
 });
 
 it('validates message has maximum length', function () {
+    config(['services.chatbot.url' => 'https://api.chatbot.test/chat']);
+
     $longMessage = str_repeat('a', 1001);
 
     postJson('/api/chatbot', ['message' => $longMessage])
@@ -108,7 +116,7 @@ it('sanitizes user message before sending to remote API', function () {
         ->assertOk();
 
     Http::assertSent(function ($request) {
-        return ! str_contains($request['message'], '<script>');
+        return ! str_contains($request['user_input'], '<script>');
     });
 });
 
@@ -131,6 +139,56 @@ it('forwards request to configured remote API endpoint', function () {
     Http::assertSent(function ($request) {
         return $request->url() === 'https://api.chatbot.example.com/chat'
             && $request->hasHeader('Authorization', 'Bearer test-api-key')
-            && $request['message'] === 'Test message';
+            && $request['user_input'] === 'Test message';
+    });
+});
+
+it('includes authenticated user id in chatbot request', function () {
+    config(['services.chatbot.url' => 'https://api.chatbot.test/chat']);
+
+    $user = \App\Models\User::factory()->create();
+
+    Http::fake([
+        '*' => Http::response([
+            'message' => 'Response',
+            'timestamp' => now()->toISOString(),
+        ], 200),
+    ]);
+
+    $this->actingAs($user)->postJson('/api/chatbot', [
+        'message' => 'Hello',
+        'session_id' => 'test-session-123',
+        'current_url' => 'https://example.com',
+    ])
+        ->assertOk();
+
+    Http::assertSent(function ($request) use ($user) {
+        return $request['user_id'] === $user->id
+            && $request['user_input'] !== null
+            && $request['session_id'] === 'test-session-123'
+            && $request['current_url'] === 'https://example.com';
+    });
+});
+
+it('sends null user id for guest users in chatbot request', function () {
+    config(['services.chatbot.url' => 'https://api.chatbot.test/chat']);
+
+    Http::fake([
+        '*' => Http::response([
+            'message' => 'Response',
+            'timestamp' => now()->toISOString(),
+        ], 200),
+    ]);
+
+    postJson('/api/chatbot', [
+        'message' => 'Hello',
+        'session_id' => 'test-session-456',
+    ])
+        ->assertOk();
+
+    Http::assertSent(function ($request) {
+        return $request['user_id'] === null
+            && $request['user_input'] !== null
+            && $request['session_id'] === 'test-session-456';
     });
 });
