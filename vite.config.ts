@@ -26,6 +26,23 @@ export default defineConfig({
             'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
         },
     },
+    ssr: {
+        target: 'node',
+        noExternal: ['@inertiajs/vue3'],
+    },
+    build: {
+        target: 'esnext',
+        rollupOptions: {
+            output: {
+                // SSR bundle should use ES2019 (supports Node 12+)
+                format: 'esm',
+            },
+        },
+    },
+    // Configure esbuild to transpile SSR bundle for older Node
+    esbuild: {
+        target: 'es2019', // ES2019 = Node 12+ (no nullish coalescing)
+    },
     server: {
         hmr: {
             host: 'EventPlatform.test',

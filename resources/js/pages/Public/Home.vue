@@ -84,11 +84,7 @@ const displayedEvents = computed(() => {
 // Placeholder data for more events - this would also come from props eventually
 const moreEventsData = ref(props.moreEvents);
 
-onMounted(() => {
-    console.log('Today events:', props.todayEvents);
-    console.log('Upcoming events:', props.upcomingEvents);
-    console.log('More events:', moreEventsData.value);
-});
+onMounted(() => {});
 
 function showUpcomingEvents() {
     activeFilter.value = 'upcoming';

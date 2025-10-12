@@ -209,4 +209,146 @@ describe('GenerateShareUrlAction', function () {
             expect($shareUrls)->not()->toHaveKey('invalid');
         });
     });
+
+    describe('UTM parameter tracking', function () {
+        it('appends UTM parameters to share URLs when analytics enabled', function () {
+            config(['social-share.analytics.utm.enabled' => true]);
+
+            $platformData = SocialPlatformData::from([
+                'name' => 'facebook',
+                'url' => 'https://example.com/event?id=123',
+                'title' => 'Test Event',
+            ]);
+
+            $shareUrl = $this->action->execute($platformData);
+
+            // UTM parameters should be in the URL parameter
+            $decodedUrl = urldecode($shareUrl);
+            expect($decodedUrl)->toContain('utm_source=facebook');
+            expect($decodedUrl)->toContain('utm_medium=social');
+        });
+
+        it('generates correct UTM source for each platform', function () {
+            config(['social-share.analytics.utm.enabled' => true]);
+
+            $platforms = ['facebook', 'twitter', 'whatsapp'];
+
+            foreach ($platforms as $platform) {
+                $platformData = SocialPlatformData::from([
+                    'name' => $platform,
+                    'url' => 'https://example.com/event',
+                    'title' => 'Test Event',
+                ]);
+
+                $shareUrl = $this->action->execute($platformData);
+                $decodedUrl = urldecode($shareUrl);
+
+                expect($decodedUrl)->toContain("utm_source={$platform}");
+            }
+        });
+
+        it('includes utm_campaign from shareable model', function () {
+            config(['social-share.analytics.utm.enabled' => true]);
+
+            $shareUrls = $this->action->generateForShareable($this->event, ['facebook'], 'en');
+            $decodedUrl = urldecode($shareUrls['facebook']);
+
+            expect($decodedUrl)->toContain('utm_campaign=');
+            expect($decodedUrl)->toContain($this->event->getUtmCampaign());
+        });
+
+        it('includes utm_content with shareable ID', function () {
+            config(['social-share.analytics.utm.enabled' => true]);
+
+            $shareUrls = $this->action->generateForShareable($this->event, ['facebook'], 'en');
+            $decodedUrl = urldecode($shareUrls['facebook']);
+
+            expect($decodedUrl)->toContain("utm_content={$this->event->id}");
+        });
+
+        it('properly encodes UTM parameters with special characters', function () {
+            config(['social-share.analytics.utm.enabled' => true]);
+
+            $event = Event::factory()->create([
+                'name' => ['en' => 'Test & Special Event!'],
+                'slug' => ['en' => 'test-special-event'],
+                'event_status' => 'published',
+            ]);
+
+            $shareUrls = $this->action->generateForShareable($event, ['facebook'], 'en');
+
+            // URL should be properly encoded
+            expect($shareUrls['facebook'])->toContain('%26'); // & character encoded
+        });
+
+        it('does not append UTM parameters when analytics disabled', function () {
+            config(['social-share.analytics.utm.enabled' => false]);
+
+            $platformData = SocialPlatformData::from([
+                'name' => 'facebook',
+                'url' => 'https://example.com/event',
+                'title' => 'Test Event',
+            ]);
+
+            $shareUrl = $this->action->execute($platformData);
+            $decodedUrl = urldecode($shareUrl);
+
+            expect($decodedUrl)->not()->toContain('utm_source');
+            expect($decodedUrl)->not()->toContain('utm_medium');
+            expect($decodedUrl)->not()->toContain('utm_campaign');
+        });
+
+        it('preserves existing query parameters when adding UTM', function () {
+            config(['social-share.analytics.utm.enabled' => true]);
+
+            $platformData = SocialPlatformData::from([
+                'name' => 'facebook',
+                'url' => 'https://example.com/event?id=123&ref=promo',
+                'title' => 'Test Event',
+            ]);
+
+            $shareUrl = $this->action->execute($platformData);
+            $decodedUrl = urldecode($shareUrl);
+
+            expect($decodedUrl)->toContain('id=123');
+            expect($decodedUrl)->toContain('ref=promo');
+            expect($decodedUrl)->toContain('utm_source=facebook');
+        });
+
+        it('uses custom UTM medium from config', function () {
+            config([
+                'social-share.analytics.utm.enabled' => true,
+                'social-share.analytics.utm.utm_medium' => 'social_share',
+            ]);
+
+            $platformData = SocialPlatformData::from([
+                'name' => 'facebook',
+                'url' => 'https://example.com/event',
+                'title' => 'Test Event',
+            ]);
+
+            $shareUrl = $this->action->execute($platformData);
+            $decodedUrl = urldecode($shareUrl);
+
+            expect($decodedUrl)->toContain('utm_medium=social_share');
+        });
+
+        it('handles email platform UTM parameters correctly', function () {
+            config(['social-share.analytics.utm.enabled' => true]);
+
+            $platformData = SocialPlatformData::from([
+                'name' => 'email',
+                'url' => 'https://example.com/event',
+                'title' => 'Test Event',
+                'description' => 'Test Description',
+            ]);
+
+            $shareUrl = $this->action->execute($platformData);
+
+            // Email should include UTM in the URL within the body
+            expect($shareUrl)->toContain('mailto:');
+            $decodedUrl = urldecode($shareUrl);
+            expect($decodedUrl)->toContain('utm_source=email');
+        });
+    });
 });

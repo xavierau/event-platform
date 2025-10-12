@@ -215,6 +215,22 @@ return [
         'track_user_agent' => true,
         'track_referrer' => true,
         'retention_days' => 365, // How long to keep analytics data
+
+        /*
+        |--------------------------------------------------------------------------
+        | UTM Parameters Configuration
+        |--------------------------------------------------------------------------
+        |
+        | Configure UTM tracking parameters for Google Analytics integration.
+        | These parameters help track which social platforms drive traffic.
+        |
+        */
+        'utm' => [
+            'enabled' => env('SOCIAL_SHARE_UTM_ENABLED', true),
+            'utm_medium' => 'social',
+            'utm_campaign_format' => '{type}_{slug}', // e.g., 'event_summer_festival'
+            'utm_content_format' => '{id}',
+        ],
     ],
 
     /*

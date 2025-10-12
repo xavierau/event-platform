@@ -12,8 +12,22 @@ import ChatbotWidget from './components/chatbot/ChatbotWidget.vue';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-createServer((page) =>
-    createInertiaApp({
+createServer(async (page) => {
+    // Load translations for SSR (not included in page props anymore)
+    const locale = page.props.locale as string;
+    let translations = {};
+
+    try {
+        // Use the Ziggy location to determine the app URL
+        const appUrl = new URL(page.props.ziggy.location).origin;
+        const response = await fetch(`${appUrl}/api/translations`);
+        const data = await response.json();
+        translations = data.translations || {};
+    } catch (error) {
+        console.error('[SSR] Failed to load translations:', error);
+    }
+
+    return createInertiaApp({
         page,
         render: renderToString,
         title: (title) => `${title} - ${appName}`,
@@ -21,9 +35,11 @@ createServer((page) =>
             resolvePageComponent(`./pages/${name}.vue`, import.meta.glob('./pages/**/*.vue')) as any,
         setup({ App, props, plugin }) {
             const i18n = createI18n({
-                locale: props.initialPage.props.locale as string,
+                locale,
                 fallbackLocale: 'en',
-                messages: props.initialPage.props.translations as Record<string, any>,
+                messages: {
+                    [locale]: translations
+                },
                 legacy: false,
             });
 
@@ -36,5 +52,5 @@ createServer((page) =>
                 .use(i18n)
                 .component('ChatbotWidget', ChatbotWidget);
         },
-    }),
-);
+    });
+});
