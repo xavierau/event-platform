@@ -82,6 +82,12 @@ class QrScannerController extends Controller
      */
     public function validateQrCode(Request $request)
     {
+        Log::channel('qr_scanner')->info('[VALIDATION] Request received', [
+            'qr_code' => $request->input('qr_code'),
+            'event_id' => $request->input('event_id'),
+            'user_id' => Auth::id(),
+        ]);
+
         $request->validate([
             'qr_code' => 'required|string',
             'event_id' => 'nullable|integer|exists:events,id',
@@ -232,14 +238,32 @@ class QrScannerController extends Controller
      */
     private function canAccessBooking($booking, $user, $eventId = null): bool
     {
+        Log::channel('qr_scanner')->info('[AUTH] Checking access for booking', [
+            'user_id' => $user->id,
+            'booking_id' => $booking->id,
+            'booking_event_organizer_id' => $booking->event->organizer_id,
+        ]);
+
         // Platform admins can access any booking
         if ($user->hasRole(RoleNameEnum::ADMIN)) {
+            Log::channel('qr_scanner')->info('[AUTH] Access granted: User is Platform Admin', [
+                'user_id' => $user->id,
+            ]);
             return true;
         }
 
         // Users with organizer entity memberships can access bookings for events from organizer entities they belong to
         $userOrganizerIds = $user->activeOrganizers()->pluck('organizers.id');
 
-        return $userOrganizerIds->contains($booking->event->organizer_id);
+        $canAccess = $userOrganizerIds->contains($booking->event->organizer_id);
+
+        Log::channel('qr_scanner')->info('[AUTH] Organizer access check result', [
+            'user_id' => $user->id,
+            'user_organizer_ids' => $userOrganizerIds->toArray(),
+            'booking_event_organizer_id' => $booking->event->organizer_id,
+            'can_access' => $canAccess,
+        ]);
+
+        return $canAccess;
     }
 }
