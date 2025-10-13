@@ -3,7 +3,6 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "build:ssr": "vite build && vite build --ssr",
         "dev": "vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
@@ -12,7 +11,6 @@
     "devDependencies": {
         "@eslint/js": "^9.19.0",
         "@playwright/test": "^1.54.2",
-        "@stagewise/toolbar-vue": "^0.1.2",
         "@tailwindcss/forms": "^0.5.10",
         "@tailwindcss/postcss": "^4.1.10",
         "@types/dompurify": "^3.0.5",
