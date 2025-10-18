@@ -182,6 +182,7 @@
         "reserve": "预约",
         "scan": "扫描",
         "scan_qr": "扫描二维码",
+        "search": "搜索",
         "generate": "生成",
         "load_more": "加载更多",
         "show_more": "显示更多",
@@ -413,6 +414,7 @@
         "cancelled": "已取消",
         "completed": "已完成",
         "in_progress": "进行中",
+        "expired": "已过期",
         "on_hold": "暂停",
         "confirmed": "已确认",
         "unconfirmed": "未确认",
@@ -831,6 +833,7 @@
             "regular": "常规价格",
             "save": "节省",
             "off": "折扣",
+            "from_suffix": "起",
             "member_benefits_applied": "已应用会员优惠",
             "member_price_applied": "已应用会员价格",
             "members_save_hint": "会员可享受此活动最高25%的优惠。",
@@ -848,6 +851,7 @@
         "booking_details": "预订详情",
         "booking_information": "预订信息",
         "booking_number": "预订号",
+        "booked_on": "预订于",
         "booking_date": "预订日期",
         "booking_status": "预订状态",
         "payment_status": "支付状态",
@@ -1257,6 +1261,7 @@
     },
     "coupons": {
         "title": "优惠券",
+        "subtitle": "管理和使用优惠券以获取折扣。",
         "my_coupons": "我的优惠券",
         "available_coupons": "可用优惠券",
         "expired_coupons": "已过期优惠券",
@@ -1297,6 +1302,56 @@
             "fixed_amount": "固定金额抵扣",
             "buy_one_get_one": "买一送一",
             "free_shipping": "免运费"
+        },
+        "fields": {
+            "code": "优惠码",
+            "usage": "使用次数限制",
+            "uses": "已使用次数",
+            "expires": "到期日"
+        },
+        "stats": {
+            "total_coupons": "总优惠券数",
+            "fully_used": "已用完"
+        },
+        "status": {
+            "fully_used": "已用完"
+        },
+        "usage": {
+            "recent_usage": "最近使用",
+            "uses": "次使用",
+            "at": "于"
+        },
+        "actions": {
+            "redeem_by_pin": "使用PIN码兑换",
+            "show_qr_code": "显示二维码",
+            "redeem_coupon": "兑换优惠券"
+        },
+        "filters": {
+            "all_coupons": "所有优惠券",
+            "fully_used": "已用完"
+        },
+        "empty": {
+            "no_coupons_found": "未找到优惠券",
+            "no_coupons_yet": "您目前还没有任何优惠券。请稍后查看可用的优惠券！",
+            "try_adjusting": "请尝试调整您的搜索条件或筛选器。"
+        },
+        "errors": {
+            "pin_length": "PIN码必须是6位数字",
+            "invalid_pin": "无效的PIN码",
+            "generic_error": "处理您的请求时发生错误"
+        },
+        "modals": {
+            "qr_title": "二维码",
+            "qr_alt_text": "优惠券二维码",
+            "generating_qr": "正在生成二维码...",
+            "qr_instruction": "向商家展示此二维码以兑换您的优惠券。",
+            "pin_title": "使用PIN码兑换",
+            "pin_process_title": "使用方法",
+            "pin_step_1": "1. 告诉商家您要使用优惠券",
+            "pin_step_2": "2. 他们会提供您一个6位数PIN码",
+            "pin_step_3": "3. 在下方输入PIN码以兑换优惠券",
+            "merchant_pin_label": "6位数商家PIN码",
+            "pin_placeholder": "123456"
         }
     },
     "membership": {
@@ -1313,9 +1368,13 @@
         "member_pricing": "会员价",
         "priority_booking": "优先预订",
         "free_tickets": "免费票券",
-        "no_active_membership": "无有效会员资格",
-        "no_membership_message": "您没有有效的会员资格。",
-        "join_now": "立即加入",
+        "current_membership": "当前会员资格",
+        "available_plans": "可用方案",
+        "no_active_membership": {
+            "title": "无有效会员资格",
+            "description": "您目前没有任何有效的会员资格。",
+            "join_now": "立即加入会员"
+        },
         "become_member": "成为会员",
         "membership_since": "会员始于 {date}",
         "renewal_date": "续订日期",
@@ -1328,6 +1387,10 @@
         "trial_period": "试用期",
         "free_trial": "免费试用",
         "days_remaining": "剩余 {days} 天",
+        "fields": {
+            "plan": "方案",
+            "expires_on": "到期日"
+        },
         "levels": {
             "basic": "基础",
             "silver": "白银",
@@ -1349,9 +1412,16 @@
         "share_wishlist": "分享心愿单",
         "clear_wishlist": "清空心愿单",
         "items_in_wishlist": "心愿单中有 {count} 个项目",
+        "event_count": "{count} 场活动",
+        "clear_all": "全部清除",
         "price_drop_alert": "降价提醒",
         "back_in_stock": "到货通知",
-        "notify_me": "通知我"
+        "notify_me": "通知我",
+        "empty": {
+            "title": "您的心愿单是空的",
+            "description": "开始探索活动并将它们加入您的心愿单，以便追踪您喜欢的活动。",
+            "browse_events": "浏览活动"
+        }
     },
     "categories": {
         "title": "分类",
@@ -1414,6 +1484,8 @@
         "title": "评论",
         "leave_comment": "发表评论",
         "post_comment": "发布评论",
+        "submit_comment": "提交评论",
+        "cancel": "取消",
         "reply": "回复",
         "replies": "条回复",
         "show_replies": "显示回复",
@@ -1422,17 +1494,24 @@
         "delete_comment": "删除评论",
         "report_comment": "举报评论",
         "no_comments": "暂无评论",
-        "be_first_comment": "成为第一个评论的人",
+        "be_first_comment": "成为第一个分享想法的人！",
         "comment_deleted": "评论已删除",
         "comment_reported": "评论已举报",
-        "comment_placeholder": "写下您的评论...",
+        "comment_placeholder": "分享您的想法...",
         "commenting_disabled": "评论功能已禁用",
         "comments_closed": "评论已关闭",
         "moderation_pending": "您的评论正在等待审核",
         "sort_by": "排序方式",
         "newest_first": "最新优先",
         "oldest_first": "最旧优先",
-        "most_liked": "最多点赞"
+        "most_liked": "最多点赞",
+        "characters": "{count}/10000 字符",
+        "please_login": "请登录以发表评论",
+        "login_to_comment": "登录以评论",
+        "login_to_reply": "登录以回复",
+        "submitting": "提交中...",
+        "load_more": "加载更多评论",
+        "loading": "加载中..."
     },
     "search": {
         "title": "搜索",

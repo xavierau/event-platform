@@ -1,20 +1,36 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import 'dayjs/locale/zh-cn';
+import 'dayjs/locale/zh-tw';
+import 'dayjs/locale/zh-hk';
 import QRCode from 'qrcode';
 import FrontendFooter from '@/components/FrontendFooter.vue';
 import { useI18n } from 'vue-i18n';
 import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const page = usePage();
 
 // Access the global route function
 declare const route: any;
 
 dayjs.extend(utc);
+dayjs.extend(localizedFormat);
+
+// Set dayjs locale based on app locale
+const dayjsLocale = computed(() => {
+  const appLocale = page.props.locale as string || locale.value;
+  if (appLocale === 'zh-TW') return 'zh-tw';
+  if (appLocale === 'zh-CN') return 'zh-cn';
+  if (appLocale === 'zh-HK') return 'zh-hk';
+  return 'en';
+});
+
+dayjs.locale(dayjsLocale.value);
 
 interface CouponUsageLog {
   id: number;
@@ -206,7 +222,7 @@ function getStatusText(coupon: UserCoupon): string {
 }
 
 function formatDate(dateString: string): string {
-  return dayjs(dateString).format('MMM D, YYYY h:mm A');
+  return dayjs(dateString).locale(dayjsLocale.value).format('lll');
 }
 
 function getUsageText(coupon: UserCoupon): string {
