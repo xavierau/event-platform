@@ -84,7 +84,8 @@
         "date_tbd": "Date TBD",
         "event_date": "Event Date",
         "dismiss": "Dismiss",
-        "welcome_title": "Welcome to ShowEasy"
+        "welcome_title": "Welcome to ShowEasy",
+        "status": "Status"
     },
     "actions": {
         "save": "Save",

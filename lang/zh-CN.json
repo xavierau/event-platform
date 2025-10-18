@@ -80,7 +80,8 @@
         "no_membership": "无会员资格",
         "months": "个月",
         "select_option": "选择一个选项",
-        "saved": "已保存！"
+        "saved": "已保存！",
+        "status": "状态"
     },
     "actions": {
         "save": "保存",
