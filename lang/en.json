@@ -856,6 +856,23 @@
             "member_price_applied": "Member price applied",
             "members_save_hint": "Members save up to 25% on this event.",
             "learn_more": "Learn more"
+        },
+        "actions": {
+            "show_qr": "Show QR Code"
+        },
+        "qr": {
+            "modal": {
+                "title": "Member QR Code",
+                "alt_text": "Member QR Code",
+                "instruction": "Present this QR code at the venue for entry"
+            },
+            "error_generating": "Error generating QR code. Please try again."
+        },
+        "alerts": {
+            "no_tickets_available": "No tickets available for this event"
+        },
+        "price": {
+            "free": "Free"
         }
     },
     "bookings": {
@@ -1410,6 +1427,8 @@
         "trial_period": "Trial Period",
         "free_trial": "Free Trial",
         "days_remaining": "{days} days remaining",
+        "member": "Member",
+        "member_default": "Standard Member",
         "fields": {
             "plan": "Plan",
             "expires_on": "Expires On"

@@ -838,6 +838,29 @@
             "member_price_applied": "已应用会员价格",
             "members_save_hint": "会员可享受此活动最高25%的优惠。",
             "learn_more": "了解更多"
+        },
+        "actions": {
+            "show_qr": "显示二维码"
+        },
+        "qr": {
+            "modal": {
+                "title": "会员二维码",
+                "alt_text": "会员二维码",
+                "instruction": "在场馆入口出示此二维码"
+            },
+            "error_generating": "生成二维码时发生错误，请重试。"
+        },
+        "alerts": {
+            "no_tickets_available": "此活动目前没有可用票券"
+        },
+        "price": {
+            "free": "免费"
+        },
+        "venue": {
+            "view_map": "查看地图"
+        },
+        "description": {
+            "title": "活动描述"
         }
     },
     "bookings": {
@@ -1387,6 +1410,8 @@
         "trial_period": "试用期",
         "free_trial": "免费试用",
         "days_remaining": "剩余 {days} 天",
+        "member": "会员",
+        "member_default": "标准会员",
         "fields": {
             "plan": "方案",
             "expires_on": "到期日"
