@@ -84,7 +84,8 @@
         "date_tbd": "日期待定",
         "event_date": "活動日期",
         "dismiss": "關閉",
-        "welcome_title": "歡迎來到 ShowEasy"
+        "welcome_title": "歡迎來到 ShowEasy",
+        "status": "狀態"
     },
     "actions": {
         "save": "儲存",
