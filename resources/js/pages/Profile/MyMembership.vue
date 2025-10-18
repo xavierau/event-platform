@@ -10,6 +10,7 @@ import BottomNavbar from '../../components/Public/BottomNavbar.vue';
 import { User } from '@/types/index';
 import { useI18n } from 'vue-i18n';
 import FrontendFooter from '@/components/FrontendFooter.vue';
+import { getTranslation, currentLocale } from '@/Utils/i18n';
 
 dayjs.extend(localizedFormat);
 
@@ -76,7 +77,7 @@ onMounted(() => {
                 <div v-if="hasMembership" class="space-y-3">
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('membership.fields.plan') }}:</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ membership.level?.name || 'N/A' }}</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ getTranslation(membership.level?.name, currentLocale) || 'N/A' }}</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('common.status') }}:</span>
