@@ -843,7 +843,9 @@
         },
         "membership": {
             "required": "需要會員資格",
-            "info": "此活動僅限會員參加。"
+            "info": "此活動僅限會員參加。",
+            "tooltip": "此活動僅限 {levels} 會員參加。",
+            "single_required": "此活動僅限 {level} 會員參加。"
         },
         "pricing": {
             "member_price": "會員價格",
@@ -855,6 +857,23 @@
             "member_price_applied": "已應用會員價格",
             "members_save_hint": "會員可享此活動最高25%優惠。",
             "learn_more": "了解更多"
+        },
+        "actions": {
+            "show_qr": "顯示 QR 碼"
+        },
+        "qr": {
+            "modal": {
+                "title": "會員 QR 碼",
+                "alt_text": "會員 QR 碼",
+                "instruction": "在場地入口出示此 QR 碼"
+            },
+            "error_generating": "產生 QR 碼時發生錯誤，請再試一次。"
+        },
+        "alerts": {
+            "no_tickets_available": "此活動目前沒有可用票券"
+        },
+        "price": {
+            "free": "免費"
         }
     },
     "bookings": {
@@ -1409,6 +1428,8 @@
         "trial_period": "試用期",
         "free_trial": "免費試用",
         "days_remaining": "剩餘 {days} 天",
+        "member": "會員",
+        "member_default": "標準會員",
         "fields": {
             "plan": "方案",
             "expires_on": "到期日"

@@ -181,7 +181,7 @@ const toggleReplies = () => {
       <div class="flex items-start justify-between mb-3">
         <div class="flex items-center space-x-3">
           <img
-            :src="comment.user?.avatar_url || '/images/default-avatar.png'"
+            :src="comment.user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user?.name || 'User')}&background=random`"
             alt="User Avatar"
             class="w-8 h-8 rounded-full flex-shrink-0"
           >
