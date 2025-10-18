@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import CommentItem from './CommentItem.vue';
 import CommentForm from './CommentForm.vue';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { PropType } from 'vue';
 import type { Comment } from '@/types/comment';
+
+const { t } = useI18n();
 
 interface Props {
   commentableType: string;
@@ -81,7 +84,7 @@ onMounted(() => {
   <div class="mt-8">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
-        Comments
+        {{ t('comments.title') }}
         <span v-if="totalComments > 0" class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
           ({{ totalComments }})
         </span>
@@ -114,8 +117,8 @@ onMounted(() => {
           :disabled="loading"
           class="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
         >
-          <span v-if="loading">Loading...</span>
-          <span v-else>Load more comments</span>
+          <span v-if="loading">{{ t('comments.loading') }}</span>
+          <span v-else>{{ t('comments.load_more') }}</span>
         </button>
       </div>
     </div>
@@ -123,7 +126,7 @@ onMounted(() => {
     <!-- Empty State -->
     <div v-else-if="!loading" class="text-center py-8 px-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
       <p class="text-gray-500 dark:text-gray-400">
-        No comments yet. Be the first to share your thoughts!
+        {{ t('comments.be_first_comment') }}
       </p>
     </div>
 

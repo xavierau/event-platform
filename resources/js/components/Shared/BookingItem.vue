@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import { useCurrency } from '@/composables/useCurrency';
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import 'dayjs/locale/zh-cn';
+import 'dayjs/locale/zh-tw';
+import 'dayjs/locale/zh-hk';
 import type { BookingItem } from '@/types/booking';
 import { getBookingStatusColor, getBookingStatusText } from '@/Utils/booking';
 import { QrCodeIcon } from '@heroicons/vue/24/outline';
+import { usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+import { computed } from 'vue';
+
+dayjs.extend(localizedFormat);
+
+const { t } = useI18n();
+const page = usePage();
 
 const props = defineProps<{
   booking: BookingItem;
@@ -14,6 +26,15 @@ const emit = defineEmits<{
 }>();
 
 const { formatPrice } = useCurrency();
+
+// Set dayjs locale based on app locale
+const dayjsLocale = computed(() => {
+  const appLocale = page.props.locale as string;
+  if (appLocale === 'zh-TW') return 'zh-tw';
+  if (appLocale === 'zh-CN') return 'zh-cn';
+  if (appLocale === 'zh-HK') return 'zh-hk';
+  return 'en';
+});
 
 function formatBookingPrice(totalPrice: number, currency: string): string {
   if (totalPrice === 0) return 'Free';
@@ -47,12 +68,12 @@ function handleClick() {
         </div>
         <div class="space-y-2">
           <p class="text-sm text-gray-600 dark:text-gray-400 break-all">
-            <span class="font-medium dark:text-gray-300">Booking #:</span>
+            <span class="font-medium dark:text-gray-300">{{ t('bookings.booking_number') }}:</span>
             <span class="ml-1">{{ booking.booking_number }}</span>
           </p>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            <span class="font-medium dark:text-gray-300">Booked on:</span>
-            <span class="ml-1">{{ dayjs(booking.created_at).format('MMM DD, YYYY') }}</span>
+            <span class="font-medium dark:text-gray-300">{{ t('bookings.booked_on') }}:</span>
+            <span class="ml-1">{{ dayjs(booking.created_at).locale(dayjsLocale).format('ll') }}</span>
           </p>
         </div>
       </div>
