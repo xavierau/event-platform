@@ -4,6 +4,10 @@ import { ref, computed } from 'vue';
 
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import 'dayjs/locale/zh-cn';
+import 'dayjs/locale/zh-tw';
+import 'dayjs/locale/zh-hk';
 import BookingItemComponent from '@/components/Shared/BookingItem.vue';
 import BookingDetailsModal from '@/components/Modals/BookingDetailsModal.vue';
 import type { BookingItem } from '@/types/booking';
@@ -13,9 +17,19 @@ import { useI18n } from 'vue-i18n';
 import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue';
 
 dayjs.extend(utc);
+dayjs.extend(localizedFormat);
 
 const { t } = useI18n();
 const page = usePage();
+
+// Set dayjs locale based on app locale
+const dayjsLocale = computed(() => {
+  const appLocale = page.props.locale as string;
+  if (appLocale === 'zh-TW') return 'zh-tw';
+  if (appLocale === 'zh-CN') return 'zh-cn';
+  if (appLocale === 'zh-HK') return 'zh-hk';
+  return 'en';
+});
 
 const props = defineProps({
   bookings: {
@@ -82,14 +96,14 @@ function setFilter(filter: string) {
 function formatEventDate(startAt?: string, endAt?: string): string {
   if (!startAt) return t('common.date_tbd');
 
-  const start = dayjs(startAt);
-  const end = endAt ? dayjs(endAt) : null;
+  const start = dayjs(startAt).locale(dayjsLocale.value);
+  const end = endAt ? dayjs(endAt).locale(dayjsLocale.value) : null;
 
   if (end && !start.isSame(end, 'day')) {
-    return `${start.format('MMM DD')} - ${end.format('MMM DD, YYYY')}`;
+    return `${start.format('ll')} - ${end.format('ll')}`;
   }
 
-  return start.format('MMM DD, YYYY • h:mm A');
+  return start.format('lll');
 }
 
 function showTicketDetails(booking: BookingItem) {

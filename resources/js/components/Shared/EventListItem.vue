@@ -2,6 +2,9 @@
 import { Link } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency';
 import WishlistButton from '@/components/Shared/WishlistButton.vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   event: {
@@ -30,7 +33,7 @@ const emit = defineEmits(['wishlistChanged', 'error']);
 const { formatPrice: formatCurrency, formatPriceRange } = useCurrency();
 
 const formatPrice = (priceFrom: number, priceTo?: number, currency: string = 'USD') => {
-  if (priceFrom === 0) return 'Free';
+  if (priceFrom === 0) return t('common.free');
 
   // Backend already sends prices in currency units (divided by 100)
   // Convert back to cents for the currency formatter
@@ -41,7 +44,7 @@ const formatPrice = (priceFrom: number, priceTo?: number, currency: string = 'US
     return `${formatPriceRange(priceFromCents, priceToCents, currency)}`;
   }
 
-  return `${formatCurrency(priceFromCents, currency)}起`;
+  return `${formatCurrency(priceFromCents, currency)}${t('events.pricing.from_suffix')}`;
 };
 
 </script>

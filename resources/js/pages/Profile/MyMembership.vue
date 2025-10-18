@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
+import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import 'dayjs/locale/zh-cn';
+import 'dayjs/locale/zh-tw';
+import 'dayjs/locale/zh-hk';
 import BottomNavbar from '../../components/Public/BottomNavbar.vue';
 import { User } from '@/types/index';
 import { useI18n } from 'vue-i18n';
 import FrontendFooter from '@/components/FrontendFooter.vue';
+
+dayjs.extend(localizedFormat);
 
 const { t } = useI18n();
 
@@ -18,8 +25,25 @@ const props = defineProps({
 const page = usePage()
 const auth = computed(() => page.props.auth as { user?: User });
 
+// Set dayjs locale based on app locale
+const dayjsLocale = computed(() => {
+  const appLocale = page.props.locale as string;
+  if (appLocale === 'zh-TW') return 'zh-tw';
+  if (appLocale === 'zh-CN') return 'zh-cn';
+  if (appLocale === 'zh-HK') return 'zh-hk';
+  return 'en';
+});
+
 const stripePricingTable = ref<HTMLElement | null>(null);
 const hasMembership = computed(() => props.membership && Object.keys(props.membership).length > 0);
+
+function formatDate(dateString: string): string {
+  return dayjs(dateString).locale(dayjsLocale.value).format('ll');
+}
+
+function getStatusText(status: string): string {
+  return t(`status.${status}`) || status;
+}
 
 onMounted(() => {
     if (!stripePricingTable.value) {
@@ -52,15 +76,15 @@ onMounted(() => {
                 <div v-if="hasMembership" class="space-y-3">
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('membership.fields.plan') }}:</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ membership.level?.name?.en || 'N/A' }}</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ membership.level?.name || 'N/A' }}</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('status.label') }}:</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ membership.status }}</span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('common.status') }}:</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ getStatusText(membership.status) }}</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('membership.fields.expires_on') }}:</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ new Date(membership.expires_at).toLocaleDateString() }}</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ formatDate(membership.expires_at) }}</span>
                     </div>
                 </div>
                 <div v-else class="text-center py-8">
