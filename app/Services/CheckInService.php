@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DataTransferObjects\CheckInData;
 use App\Enums\BookingStatusEnum;
 use App\Enums\CheckInStatus;
+use App\Enums\RoleNameEnum;
 use App\Models\Booking;
 use App\Models\CheckInLog;
 use App\Models\EventOccurrence;
