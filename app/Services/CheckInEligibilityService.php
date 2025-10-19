@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Enums\RoleNameEnum;
 use App\Models\Booking;
 use App\Models\User;
+use App\Traits\CheckInLoggable;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Models\Organizer;
 
 class CheckInEligibilityService
 {
+    use CheckInLoggable;
 
 
     /**
@@ -187,47 +189,141 @@ class CheckInEligibilityService
      */
     public function validateEligibilityForOccurrence(Booking $booking, $eventOccurrence, $operator = null): array
     {
+        $this->logMethodEntry('BOOKING_CHECKIN', __METHOD__, [
+            'booking_id' => $booking->id,
+            'event_occurrence_id' => $eventOccurrence?->id,
+            'has_operator' => $operator !== null,
+        ]);
+
         $errors = [];
 
         // Load relationships if not already loaded
+        $this->logDatabaseOperation('BOOKING_CHECKIN', 'Loading booking relationships', [
+            'booking_id' => $booking->id,
+        ]);
+
         $booking->load(['event', 'checkInLogs', 'ticketDefinition.eventOccurrences']);
 
+        $this->logDatabaseOperation('BOOKING_CHECKIN', 'Relationships loaded', [
+            'has_event' => $booking->event !== null,
+            'check_in_logs_count' => $booking->checkInLogs->count(),
+            'has_ticket_definition' => $booking->ticketDefinition !== null,
+        ]);
+
         // 1. Check that the event occurrence belongs to the same event as the booking
+        $this->logBusinessLogic('BOOKING_CHECKIN', 'Validating event occurrence match', [
+            'booking_event_id' => $booking->event_id,
+            'occurrence_event_id' => $eventOccurrence?->event_id,
+        ]);
+
         if ($eventOccurrence && $booking->event_id !== $eventOccurrence->event_id) {
-            $errors[] = 'The event occurrence does not belong to the same event as this booking';
+            $error = 'The event occurrence does not belong to the same event as this booking';
+            $errors[] = $error;
+
+            $this->logValidation('BOOKING_CHECKIN', 'Event occurrence mismatch', [
+                'booking_event_id' => $booking->event_id,
+                'occurrence_event_id' => $eventOccurrence->event_id,
+            ], false);
         }
 
         // 2. Check that the ticket is valid for this specific occurrence
         if ($eventOccurrence && $booking->ticketDefinition) {
+            $this->logBusinessLogic('BOOKING_CHECKIN', 'Validating ticket-occurrence relationship', [
+                'ticket_definition_id' => $booking->ticketDefinition->id,
+                'event_occurrence_id' => $eventOccurrence->id,
+            ]);
+
             $ticketOccurrenceError = $this->validateTicketOccurrenceRelationship($booking, $eventOccurrence);
             if ($ticketOccurrenceError) {
                 $errors[] = $ticketOccurrenceError;
+
+                $this->logValidation('BOOKING_CHECKIN', 'Ticket-occurrence validation failed', [
+                    'error' => $ticketOccurrenceError,
+                    'ticket_definition_id' => $booking->ticketDefinition->id,
+                    'valid_occurrence_ids' => $booking->ticketDefinition->eventOccurrences->pluck('id')->toArray(),
+                ], false);
+            } else {
+                $this->logValidation('BOOKING_CHECKIN', 'Ticket-occurrence validation passed', [
+                    'ticket_definition_id' => $booking->ticketDefinition->id,
+                ]);
             }
         }
 
         // 3. Check operator authorization
         if ($operator) {
+            $this->logAuthorization('BOOKING_CHECKIN', 'Validating operator authorization', [
+                'operator_id' => $operator->id,
+                'operator_email' => $operator->email,
+                'booking_event_id' => $booking->event_id,
+                'booking_organizer_id' => $booking->event->organizer_id,
+            ]);
+
             $operatorError = $this->validateOperatorAuthorization($operator, $booking);
             if ($operatorError) {
                 $errors[] = $operatorError;
+
+                $this->logAuthorization('BOOKING_CHECKIN', 'Operator authorization failed', [
+                    'operator_id' => $operator->id,
+                    'error' => $operatorError,
+                ], false);
+            } else {
+                $this->logAuthorization('BOOKING_CHECKIN', 'Operator authorization passed', [
+                    'operator_id' => $operator->id,
+                ], true);
             }
         }
 
         // 4. Check booking status
+        $this->logBusinessLogic('BOOKING_CHECKIN', 'Validating booking status', [
+            'booking_status' => $booking->status->value,
+            'valid_statuses' => self::VALID_BOOKING_STATUSES,
+        ]);
+
         if (!in_array($booking->status->value, self::VALID_BOOKING_STATUSES)) {
-            $errors[] = "Booking status is not valid for check-in (current status: {$booking->status->value})";
+            $error = "Booking status is not valid for check-in (current status: {$booking->status->value})";
+            $errors[] = $error;
+
+            $this->logValidation('BOOKING_CHECKIN', 'Booking status invalid', [
+                'current_status' => $booking->status->value,
+                'valid_statuses' => self::VALID_BOOKING_STATUSES,
+            ], false);
+        } else {
+            $this->logValidation('BOOKING_CHECKIN', 'Booking status valid', [
+                'status' => $booking->status->value,
+            ]);
         }
 
         // 5. Check max allowed check-ins
+        $this->logBusinessLogic('BOOKING_CHECKIN', 'Validating check-in count', [
+            'successful_check_ins' => $booking->successful_check_ins_count,
+            'max_allowed_check_ins' => $booking->max_allowed_check_ins,
+        ]);
+
         $checkInCountError = $this->validateCheckInCount($booking);
         if ($checkInCountError) {
             $errors[] = $checkInCountError;
+
+            $this->logValidation('BOOKING_CHECKIN', 'Check-in count limit reached', [
+                'successful_check_ins' => $booking->successful_check_ins_count,
+                'max_allowed_check_ins' => $booking->max_allowed_check_ins,
+            ], false);
+        } else {
+            $this->logValidation('BOOKING_CHECKIN', 'Check-in count within limit', [
+                'successful_check_ins' => $booking->successful_check_ins_count,
+                'max_allowed_check_ins' => $booking->max_allowed_check_ins,
+                'remaining' => $booking->max_allowed_check_ins - $booking->successful_check_ins_count,
+            ]);
         }
 
         $isEligible = empty($errors);
 
         // Log the validation result
         $this->logValidationResultForOccurrence($booking, $eventOccurrence, $isEligible, $errors);
+
+        $this->logMethodExit('BOOKING_CHECKIN', __METHOD__, [
+            'is_eligible' => $isEligible,
+            'errors_count' => count($errors),
+        ]);
 
         return [
             'is_eligible' => $isEligible,
