@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\EventOccurrence;
 use App\Services\CheckInService;
 use App\Services\QrCodeValidationService;
+use App\Traits\CheckInLoggable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +18,7 @@ use Inertia\Response;
 
 class QrScannerController extends Controller
 {
+    use CheckInLoggable;
     public function __construct(
         private QrCodeValidationService $qrCodeValidationService,
         private CheckInService $checkInService
@@ -169,18 +171,67 @@ class QrScannerController extends Controller
      */
     public function checkIn(Request $request)
     {
+        $this->logMethodEntry('BOOKING_CHECKIN', __METHOD__, [
+            'request_data' => $request->except(['password', 'token']),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
         try {
             $checkInData = CheckInData::from($request->all());
 
+            $this->logValidation('BOOKING_CHECKIN', 'CheckInData DTO created successfully', [
+                'qr_code_identifier' => $checkInData->qr_code_identifier,
+                'event_occurrence_id' => $checkInData->event_occurrence_id,
+                'method' => $checkInData->method->value,
+                'device_identifier' => $checkInData->device_identifier,
+            ]);
+
             // Additional validation: ensure user has permission
+            $this->logDatabaseOperation('BOOKING_CHECKIN', 'Looking up booking by QR code', [
+                'qr_code_identifier' => $checkInData->qr_code_identifier,
+            ]);
+
             $booking = \App\Models\Booking::byQrCode($checkInData->qr_code_identifier)->first();
 
             // If not found by qr_code_identifier, try booking_number (for legacy QR codes)
             if (! $booking) {
+                $this->logBusinessLogic('BOOKING_CHECKIN', 'Booking not found by QR code, trying booking number', [
+                    'identifier' => $checkInData->qr_code_identifier,
+                ]);
+
                 $booking = \App\Models\Booking::where('booking_number', $checkInData->qr_code_identifier)->first();
             }
 
-            if (! $booking || ! $this->canAccessBooking($booking, Auth::user())) {
+            if (! $booking) {
+                $this->logValidation('BOOKING_CHECKIN', 'Booking not found', [
+                    'qr_code_identifier' => $checkInData->qr_code_identifier,
+                ], false);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking not found',
+                ], 404);
+            }
+
+            $this->logDatabaseOperation('BOOKING_CHECKIN', 'Booking found', [
+                'booking_id' => $booking->id,
+                'booking_number' => $booking->booking_number,
+                'booking_status' => $booking->status->value,
+                'event_id' => $booking->event_id,
+                'organizer_id' => $booking->event->organizer_id,
+            ]);
+
+            $user = Auth::user();
+            $canAccess = $this->canAccessBooking($booking, $user);
+
+            $this->logAuthorization('BOOKING_CHECKIN', 'Booking access check completed', [
+                'user_id' => $user->id,
+                'booking_id' => $booking->id,
+                'can_access' => $canAccess,
+            ], $canAccess);
+
+            if (! $canAccess) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You do not have permission to check in this booking',
@@ -188,12 +239,29 @@ class QrScannerController extends Controller
             }
 
             // Process the check-in using the CheckInService
+            $this->logBusinessLogic('BOOKING_CHECKIN', 'Calling CheckInService to process check-in', [
+                'service' => CheckInService::class,
+                'booking_id' => $booking->id,
+            ]);
+
             $result = $this->checkInService->processCheckIn($checkInData);
 
             if ($result['success']) {
+                $this->logMethodExit('BOOKING_CHECKIN', __METHOD__, [
+                    'status' => 'success',
+                    'booking_id' => $booking->id,
+                    'check_in_status' => $result['status']->value ?? null,
+                ]);
+
                 // Return 204 No Content for successful check-in as requested
                 return response()->noContent();
             } else {
+                $this->logBusinessLogic('BOOKING_CHECKIN', 'Check-in failed', [
+                    'booking_id' => $booking->id,
+                    'failure_message' => $result['message'],
+                    'status' => $result['status']->value ?? null,
+                ]);
+
                 return response()->json([
                     'success' => false,
                     'message' => $result['message'],
@@ -201,6 +269,10 @@ class QrScannerController extends Controller
                 ], 400);
             }
         } catch (\Exception $e) {
+            $this->logCheckInError('BOOKING_CHECKIN', 'Exception during check-in', $e, [
+                'request_data' => $request->except(['password', 'token']),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid check-in data',
