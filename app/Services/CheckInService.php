@@ -9,12 +9,14 @@ use App\Models\Booking;
 use App\Models\CheckInLog;
 use App\Models\EventOccurrence;
 use App\Models\User;
+use App\Traits\CheckInLoggable;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CheckInService
 {
+    use CheckInLoggable;
     public function __construct(
         private CheckInEligibilityService $eligibilityService
     ) {}
@@ -24,33 +26,94 @@ class CheckInService
      */
     public function processCheckIn(CheckInData $checkInData): array
     {
+        $this->logMethodEntry('BOOKING_CHECKIN', __METHOD__, [
+            'qr_code_identifier' => $checkInData->qr_code_identifier,
+            'event_occurrence_id' => $checkInData->event_occurrence_id,
+            'method' => $checkInData->method->value,
+            'operator_user_id' => $checkInData->operator_user_id,
+        ]);
+
         return DB::transaction(function () use ($checkInData) {
+            $this->logDatabaseOperation('BOOKING_CHECKIN', 'Starting database transaction');
+
             // 1. Find the booking
+            $this->logDatabaseOperation('BOOKING_CHECKIN', 'Looking up booking by QR code', [
+                'qr_code_identifier' => $checkInData->qr_code_identifier,
+            ]);
+
             $booking = Booking::with(['event', 'user', 'ticketDefinition'])
                 ->byQrCode($checkInData->qr_code_identifier)
                 ->first();
 
             // If not found by qr_code_identifier, try booking_number (for legacy QR codes)
             if (! $booking) {
+                $this->logBusinessLogic('BOOKING_CHECKIN', 'Booking not found by QR code, trying booking number', [
+                    'identifier' => $checkInData->qr_code_identifier,
+                ]);
+
                 $booking = Booking::with(['event', 'user', 'ticketDefinition'])
                     ->where('booking_number', $checkInData->qr_code_identifier)
                     ->first();
             }
 
             if (! $booking) {
+                $this->logValidation('BOOKING_CHECKIN', 'Booking not found', [
+                    'qr_code_identifier' => $checkInData->qr_code_identifier,
+                ], false);
+
                 return $this->createFailureResponse('Booking not found', CheckInStatus::FAILED_INVALID_CODE);
             }
 
+            $this->logDatabaseOperation('BOOKING_CHECKIN', 'Booking found', [
+                'booking_id' => $booking->id,
+                'booking_number' => $booking->booking_number,
+                'booking_status' => $booking->status->value,
+                'event_id' => $booking->event_id,
+                'user_id' => $booking->user_id,
+                'quantity' => $booking->quantity,
+                'successful_check_ins_count' => $booking->successful_check_ins_count,
+            ]);
+
             // 2. Find the event occurrence
+            $this->logDatabaseOperation('BOOKING_CHECKIN', 'Looking up event occurrence', [
+                'event_occurrence_id' => $checkInData->event_occurrence_id,
+            ]);
+
             $eventOccurrence = EventOccurrence::find($checkInData->event_occurrence_id);
             if (! $eventOccurrence) {
+                $this->logValidation('BOOKING_CHECKIN', 'Event occurrence not found', [
+                    'event_occurrence_id' => $checkInData->event_occurrence_id,
+                ], false);
+
                 return $this->createFailureResponse('Event occurrence not found', CheckInStatus::FAILED_INVALID_CODE);
             }
+
+            $this->logDatabaseOperation('BOOKING_CHECKIN', 'Event occurrence found', [
+                'event_occurrence_id' => $eventOccurrence->id,
+                'event_id' => $eventOccurrence->event_id,
+                'name' => $eventOccurrence->name,
+                'start_at' => $eventOccurrence->start_at,
+                'end_at' => $eventOccurrence->end_at,
+            ]);
 
             // 3. Find the operator
             $operator = $checkInData->operator_user_id ? User::find($checkInData->operator_user_id) : null;
 
+            if ($checkInData->operator_user_id) {
+                $this->logAuthorization('BOOKING_CHECKIN', 'Operator lookup', [
+                    'operator_user_id' => $checkInData->operator_user_id,
+                    'operator_found' => $operator !== null,
+                    'operator_name' => $operator?->name,
+                ], $operator !== null);
+            }
+
             // 4. Validate eligibility
+            $this->logBusinessLogic('BOOKING_CHECKIN', 'Validating check-in eligibility', [
+                'booking_id' => $booking->id,
+                'event_occurrence_id' => $eventOccurrence->id,
+                'has_operator' => $operator !== null,
+            ]);
+
             $eligibilityResult = $this->eligibilityService->validateEligibilityForOccurrence(
                 $booking,
                 $eventOccurrence,
@@ -59,6 +122,11 @@ class CheckInService
 
             if (! $eligibilityResult['is_eligible']) {
                 $status = $this->determineFailureStatus($eligibilityResult['errors']);
+
+                $this->logBusinessLogic('BOOKING_CHECKIN', 'Eligibility check failed', [
+                    'errors' => $eligibilityResult['errors'],
+                    'failure_status' => $status->value,
+                ]);
 
                 return $this->createFailureResponse(
                     implode('; ', $eligibilityResult['errors']),
@@ -69,10 +137,25 @@ class CheckInService
                 );
             }
 
+            $this->logBusinessLogic('BOOKING_CHECKIN', 'Eligibility check passed', [
+                'booking_id' => $booking->id,
+            ]);
+
             // 5. Check if this will be the first successful check-in
             $isFirstCheckIn = $booking->successful_check_ins_count === 0;
 
+            $this->logBusinessLogic('BOOKING_CHECKIN', 'First check-in status', [
+                'is_first_check_in' => $isFirstCheckIn,
+                'current_check_ins_count' => $booking->successful_check_ins_count,
+            ]);
+
             // 6. Create successful check-in log
+            $this->logDatabaseOperation('BOOKING_CHECKIN', 'Creating check-in log record', [
+                'booking_id' => $booking->id,
+                'event_occurrence_id' => $eventOccurrence->id,
+                'status' => CheckInStatus::SUCCESSFUL->value,
+            ]);
+
             $checkInLog = $this->createCheckInLog(
                 $booking,
                 $eventOccurrence,
@@ -80,9 +163,23 @@ class CheckInService
                 CheckInStatus::SUCCESSFUL
             );
 
+            $this->logDatabaseOperation('BOOKING_CHECKIN', 'Check-in log created', [
+                'check_in_log_id' => $checkInLog->id,
+            ]);
+
             // 7. Update booking status if this is the first successful check-in
             if ($isFirstCheckIn) {
+                $this->logDatabaseOperation('BOOKING_CHECKIN', 'Updating booking status to USED', [
+                    'booking_id' => $booking->id,
+                    'old_status' => $booking->status->value,
+                    'new_status' => BookingStatusEnum::USED->value,
+                ]);
+
                 $booking->update(['status' => BookingStatusEnum::USED]);
+
+                $this->logDatabaseOperation('BOOKING_CHECKIN', 'Booking status updated', [
+                    'booking_id' => $booking->id,
+                ]);
             }
 
             // 8. Log success
@@ -94,12 +191,23 @@ class CheckInService
                 'method' => $checkInData->method->value,
             ]);
 
+            $freshBooking = $booking->fresh(['checkInLogs']);
+            $remainingCheckIns = $this->eligibilityService->getRemainingCheckIns($freshBooking);
+
+            $this->logMethodExit('BOOKING_CHECKIN', __METHOD__, [
+                'success' => true,
+                'check_in_log_id' => $checkInLog->id,
+                'booking_id' => $booking->id,
+                'remaining_check_ins' => $remainingCheckIns,
+            ]);
+
             return [
                 'success' => true,
                 'message' => 'Check-in successful',
+                'status' => CheckInStatus::SUCCESSFUL,
                 'check_in_log' => $checkInLog,
-                'booking' => $booking->fresh(['checkInLogs']),
-                'remaining_check_ins' => $this->eligibilityService->getRemainingCheckIns($booking->fresh()),
+                'booking' => $freshBooking,
+                'remaining_check_ins' => $remainingCheckIns,
             ];
         });
     }
@@ -193,8 +301,24 @@ class CheckInService
     ): array {
         // Log the failed attempt if we have enough information
         if ($booking && $eventOccurrence && $checkInData) {
+            $this->logDatabaseOperation('BOOKING_CHECKIN', 'Creating failed check-in log', [
+                'booking_id' => $booking->id,
+                'event_occurrence_id' => $eventOccurrence->id,
+                'failure_status' => $status->value,
+                'failure_message' => $message,
+            ]);
+
             $this->createCheckInLog($booking, $eventOccurrence, $checkInData, $status);
         }
+
+        $this->logBusinessLogic('BOOKING_CHECKIN', 'Check-in failed - creating failure response', [
+            'message' => $message,
+            'status' => $status->value,
+            'booking_id' => $booking?->id,
+            'booking_number' => $booking?->booking_number,
+            'event_occurrence_id' => $eventOccurrence?->id,
+            'qr_code_identifier' => $checkInData?->qr_code_identifier,
+        ]);
 
         Log::warning('Check-in failed', [
             'message' => $message,
