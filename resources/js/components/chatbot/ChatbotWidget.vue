@@ -7,6 +7,7 @@ import { usePage } from '@inertiajs/vue3';
 import type { Message, ChatbotResponse } from '@/types/chatbot';
 import { MessageCircle, Send, X, Loader2 } from 'lucide-vue-next';
 import { cn } from '@/lib/utils';
+import { usePageContent } from '@/composables/usePageContent';
 
 const isOpen = ref(false);
 const messages = ref<Message[]>([]);
@@ -18,6 +19,9 @@ const sessionId = ref<string>('');
 // Get auth data from Inertia
 const page = usePage();
 const auth = computed(() => page.props.auth);
+
+// Page content extraction
+const { extractPageContent } = usePageContent();
 
 // Get or create session ID
 const getSessionId = (): string => {
@@ -96,6 +100,7 @@ const sendMessage = async () => {
             user_id: auth.value?.user?.id ?? null,
             session_id: sessionId.value,
             current_url: window.location.href,
+            page_content: extractPageContent(),
         });
 
         const botMessage: Message = {

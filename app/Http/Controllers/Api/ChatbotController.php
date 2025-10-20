@@ -105,6 +105,7 @@ class ChatbotController extends Controller
                 'user_id' => $request->user()?->id,
                 'session_id' => $sessionId,
                 'current_url' => $request->input('current_url'),
+                'page_content' => $request->input('page_content'),
             ]);
 
             Log::info('Response from server,', [$response]);
