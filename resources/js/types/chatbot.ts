@@ -7,6 +7,10 @@ export interface Message {
 
 export interface ChatbotRequest {
     message: string;
+    user_id?: number | null;
+    session_id: string;
+    current_url: string;
+    page_content?: string | null;
 }
 
 export interface ChatbotResponse {

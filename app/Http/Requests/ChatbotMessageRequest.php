@@ -21,7 +21,12 @@ class ChatbotMessageRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [];
+        return [
+            'message' => 'required|string|max:5000',
+            'session_id' => 'required|string',
+            'current_url' => 'nullable|url',
+            'page_content' => 'nullable|string|max:50000',
+        ];
     }
 
     /**
