@@ -452,7 +452,7 @@ onUnmounted(() => {
         <div class="py-12">
             <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
                 <div class="bg-white p-6 shadow-sm sm:rounded-lg dark:bg-gray-800">
-                    <div v-if="isAdmin && props.events.length > 0" class="mb-6">
+                    <div v-if="props.events.length > 1" class="mb-6">
                         <label for="event-select" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Select Event to Scan For:
                         </label>
@@ -468,8 +468,8 @@ onUnmounted(() => {
                                 {{ eventItem.name }}
                             </option>
                         </select>
-                        <p v-if="!selectedEventId && isAdmin && !isPlatformAdmin" class="mt-1 text-sm text-yellow-600">
-                            Admins: Please select an event to enable the scanner.
+                        <p v-if="!selectedEventId && !isPlatformAdmin" class="mt-1 text-sm text-yellow-600">
+                            Please select an event to enable the scanner.
                         </p>
                         <p v-if="isPlatformAdmin" class="mt-1 text-sm text-blue-600">
                             Platform Admin: You can scan QR codes for any event. Optionally select a specific event to filter results.
