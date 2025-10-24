@@ -279,17 +279,6 @@ const resetScannerState = async () => {
     checkInForm.device_identifier = null;
     checkInForm.location_description = null;
     checkInForm.notes = null;
-
-    // For platform admins, don't require event selection
-    if (isPlatformAdmin.value) {
-        return;
-    }
-
-    if (isAdmin.value && props.events.length > 0 && !selectedEventId.value) {
-        // Regular admin still needs to select event
-    } else if (!isAdmin.value) {
-        selectedEventId.value = props.events.length === 1 ? props.events[0].id : null;
-    }
 };
 
 const handleCheckIn = async () => {
