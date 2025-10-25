@@ -259,14 +259,14 @@ const handleKeyPress = (event: KeyboardEvent) => {
     <button
         type="button"
         @click="toggleChat"
-        class="fixed bottom-20 right-4 z-[1000] flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg transition-all hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:bottom-4 dark:bg-gray-800"
+        class="fixed bottom-20 right-4 z-[1000] flex h-14 w-14 items-center justify-center rounded-full bg-transparent transition-all hover:scale-110 focus:outline-none md:bottom-4"
         :aria-expanded="isOpen"
         aria-label="Toggle chat"
     >
         <img
             src="/images/showeasy-avatar.png"
             alt="Chat Assistant"
-            class="h-12 w-12 object-contain"
+            class="h-12 w-12 object-contain drop-shadow-md"
         />
     </button>
 </template>
