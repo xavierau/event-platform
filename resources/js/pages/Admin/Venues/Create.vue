@@ -36,37 +36,11 @@ const form = useForm({
 });
 
 const submit = () => {
-    // Clean up empty string values in translatable fields to avoid validation issues
-    const cleanTranslatableField = (field: any) => {
-        if (!field || typeof field !== 'object') return field;
-        const cleaned: any = {};
-        for (const [locale, value] of Object.entries(field)) {
-            if (value && typeof value === 'string' && value.trim() !== '') {
-                cleaned[locale] = value;
-            }
-        }
-        return Object.keys(cleaned).length > 0 ? cleaned : field;
-    };
-
-    const dataToSubmit = {
-        ...form.data(),
-        // Clean translatable fields
-        name: cleanTranslatableField(form.name),
-        description: cleanTranslatableField(form.description),
-        address_line_1: cleanTranslatableField(form.address_line_1),
-        address_line_2: cleanTranslatableField(form.address_line_2),
-        city: cleanTranslatableField(form.city),
-        // Handle media fields
-        uploaded_main_image: form.uploaded_main_image || undefined,
-        uploaded_gallery_images: form.uploaded_gallery_images.length > 0 ? form.uploaded_gallery_images : undefined,
-    };
-
-    form.transform(() => dataToSubmit)
-        .post(route('admin.venues.store'), {
-            onError: (errors) => {
-                console.error('Validation errors:', errors);
-            },
-        });
+    form.post(route('admin.venues.store'), {
+        onError: (errors) => {
+            console.error('Validation errors:', errors);
+        },
+    });
 };
 
 // Use props data for dropdowns
