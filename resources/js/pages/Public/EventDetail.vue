@@ -546,6 +546,7 @@ const handleCommentAdded = (newComment: Comment) => {
                             <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">{{ currentVenueAddress }}</p>
                         </div>
                         <a
+                            v-if="currentVenueAddress"
                             :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentVenueAddress)}`"
                             target="_blank"
                             class="w-1/5 text-right text-sm text-indigo-600 hover:underline dark:text-indigo-400"
