@@ -30,6 +30,9 @@ createInertiaApp({
             legacy: false,
         });
 
+        // Expose i18n instance globally for locale switching
+        (window as any).__VUE_I18N__ = i18n;
+
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue, {
