@@ -5,6 +5,8 @@
 **Severity**: High
 **Resolution Time**: ~30 minutes
 
+**Update**: Additional fix for page refresh caching issue (see "Follow-up Issue" section below)
+
 ---
 
 ## Problem Description
@@ -233,3 +235,43 @@ Consulted vue-i18n documentation on lazy loading locales:
 
 - [Vue-i18n Lazy Loading Guide](https://vue-i18n.intlify.dev/guide/advanced/lazy.html)
 - [Vue-i18n setLocaleMessage API](https://vue-i18n.intlify.dev/api/general.html#setlocalemessage)
+
+---
+
+## Follow-up Issue: Page Refresh Shows Wrong Locale
+
+### Problem
+After implementing the initial fix, a new issue was discovered:
+- User switches to Simplified Chinese (zh-CN)
+- User refreshes the page
+- Page always loads with zh-CN translations even if session locale is different
+
+### Root Cause
+The `/api/translations` endpoint was cached by the browser with a 1-hour cache header:
+```php
+return response()->json([...])->header('Cache-Control', 'public, max-age=3600');
+```
+
+In `app.ts`, the initial fetch didn't include the locale parameter:
+```typescript
+// Before fix - no locale parameter, browser could serve cached response
+const translationsResponse = await fetch('/api/translations');
+```
+
+When switching to `zh-CN`, the LocaleSwitcher fetched `/api/translations?locale=zh-CN` and the browser cached this response. On page refresh, `app.ts` fetched `/api/translations` (without locale param) and the browser potentially served the cached zh-CN response.
+
+### Fix
+Pass the locale explicitly in `app.ts` to ensure the correct translations are always fetched:
+
+```typescript
+// After fix - explicit locale prevents cache confusion
+const translationsResponse = await fetch(`/api/translations?locale=${locale}`);
+```
+
+This ensures:
+1. Each locale has its own cached response (`?locale=en`, `?locale=zh-CN`, etc.)
+2. The correct translations are always fetched based on Inertia's `locale` prop
+3. Browser caching still works efficiently per-locale
+
+### File Changed
+- `resources/js/app.ts:21-22`
