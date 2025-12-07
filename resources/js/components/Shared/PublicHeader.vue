@@ -69,6 +69,11 @@ const isAuthenticated = computed(() => !!auth.value?.user);
               {{ t('navigation.login') }}
             </Link>
           </Button>
+          <Button variant="default" as-child>
+            <Link :href="route('register')" class="text-sm font-medium">
+              {{ t('navigation.register') }}
+            </Link>
+          </Button>
         </template>
 
         <!-- Authenticated: User menu -->
