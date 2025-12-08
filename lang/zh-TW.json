@@ -1447,6 +1447,11 @@
             "title": "沒有有效的會員資格",
             "description": "您目前沒有任何有效的會員資格。",
             "join_now": "立即加入會員"
+        },
+        "duration": {
+            "one_month": "1 個月",
+            "one_year": "1 年",
+            "months": "{count} 個月"
         }
     },
     "wishlist": {
@@ -1827,6 +1832,15 @@
             "invalid_plan": "所選方案已不再可用。",
             "general": "註冊失敗。請檢查您的詳細資訊並重試。",
             "server_error": "伺服器錯誤。請稍後重試。"
+        }
+    },
+    "temporary_registration": {
+        "remaining_slots": "剩餘 {count} 個名額",
+        "unavailable": {
+            "title": "註冊不可用",
+            "description": "此註冊頁面目前不可用。",
+            "register_normally": "正常註冊",
+            "go_home": "返回首頁"
         }
     },
     "platform": {

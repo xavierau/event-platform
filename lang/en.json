@@ -1446,6 +1446,11 @@
             "title": "No Active Membership",
             "description": "You do not have an active membership. Join now to enjoy exclusive benefits and offers.",
             "join_now": "Join Now"
+        },
+        "duration": {
+            "one_month": "1 month",
+            "one_year": "1 year",
+            "months": "{count} months"
         }
     },
     "wishlist": {
@@ -1826,6 +1831,15 @@
             "invalid_plan": "The selected plan is no longer available.",
             "general": "Registration failed. Please check your details and try again.",
             "server_error": "Server error occurred. Please try again later."
+        }
+    },
+    "temporary_registration": {
+        "remaining_slots": "{count} spots remaining",
+        "unavailable": {
+            "title": "Registration Unavailable",
+            "description": "This registration page is currently not available.",
+            "register_normally": "Register Normally",
+            "go_home": "Go to Home"
         }
     },
     "platform": {

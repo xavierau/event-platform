@@ -36,6 +36,8 @@ use App\Http\Controllers\Public\MyCouponsController;
 use App\Http\Controllers\Public\MyWalletController;
 use App\Http\Controllers\Public\MyWishlistController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Modules\TemporaryRegistration\Controllers\AdminTemporaryRegistrationController;
+use App\Modules\TemporaryRegistration\Controllers\TemporaryRegistrationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -70,6 +72,14 @@ Route::get('/invitation/accept', [\App\Http\Controllers\InvitationController::cl
     ->name('invitation.accept');
 Route::post('/invitation/complete-registration', [\App\Http\Controllers\InvitationController::class, 'completeRegistration'])
     ->name('invitation.complete-registration');
+
+// Temporary Registration Pages (Public)
+Route::middleware('guest')->group(function () {
+    Route::get('register/{identifier}', [TemporaryRegistrationController::class, 'show'])
+        ->name('register.temporary');
+    Route::post('register/{identifier}', [TemporaryRegistrationController::class, 'store'])
+        ->name('register.temporary.store');
+});
 
 // --- AUTHENTICATED USER ROUTES (Basic Features) ---
 Route::middleware(['auth'])->group(function () {
@@ -235,6 +245,13 @@ Route::prefix('admin')
         Route::post('membership-levels/sync-all-stripe', [MembershipLevelController::class, 'syncWithStripe'])->name('membership-levels.sync-all-stripe');
         Route::post('users/{user}/change-plan', [MembershipLevelController::class, 'changeUserPlan'])->name('admin.users.change-plan');
         Route::post('membership-levels/bulk-change-plan', [MembershipLevelController::class, 'bulkChangePlan'])->name('membership-levels.bulk-change-plan');
+
+        // Temporary Registration Pages
+        Route::resource('temporary-registration', AdminTemporaryRegistrationController::class);
+        Route::patch('temporary-registration/{temporary_registration}/toggle-active', [AdminTemporaryRegistrationController::class, 'toggleActive'])
+            ->name('temporary-registration.toggle-active');
+        Route::post('temporary-registration/{temporary_registration}/regenerate-token', [AdminTemporaryRegistrationController::class, 'regenerateToken'])
+            ->name('temporary-registration.regenerate-token');
     });
 
 // --- AUTH & PAYMENT ROUTES ---
