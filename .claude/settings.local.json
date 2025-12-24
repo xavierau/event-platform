@@ -72,10 +72,8 @@
       "mcp__playwright__browser_network_requests",
       "mcp__playwright__browser_fill_form",
       "mcp__playwright__browser_select_option",
-<<<<<<< HEAD
       "Bash(git cherry-pick:*)",
-      "Bash(CACHE_STORE=file php artisan migrate --path=database/migrations/2025_09_09_015753_create_frontend_logs_table.php)"
-=======
+      "Bash(CACHE_STORE=file php artisan migrate --path=database/migrations/2025_09_09_015753_create_frontend_logs_table.php)",
       "Bash(sqlite3:*)",
       "mcp__chrome-devtools__list_pages",
       "mcp__chrome-devtools__navigate_page",
@@ -89,7 +87,6 @@
       "mcp__chrome-devtools__handle_dialog",
       "mcp__chrome-devtools__select_page",
       "mcp__chrome-devtools__take_screenshot"
->>>>>>> release/0.16.0
     ],
     "deny": []
   },
