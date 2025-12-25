@@ -1761,5 +1761,43 @@
         "tagline": "发现精彩活动",
         "welcome_title": "欢迎来到 ShowEasy",
         "welcome_message": "寻找并预订您的下一次体验"
+    },
+    "purchase_link": {
+        "page_title": "购买门票 - {event}",
+        "exclusive_pricing": "专属优惠价格",
+        "select_tickets": "选择门票",
+        "order_summary": "订单摘要",
+        "subtotal": "小计",
+        "total": "总计",
+        "you_save": "您节省",
+        "item": "项目",
+        "items": "项目",
+        "no_items_selected": "尚未选择项目",
+        "no_tickets_available": "此链接无可用门票",
+        "available_count": "剩余 {count} 张",
+        "save_percent": "省 {percent}%",
+        "free": "免费",
+        "login_to_purchase": "登录购买",
+        "complete_purchase": "完成购买",
+        "cannot_purchase": "无法购买",
+        "select_tickets_error": "请至少选择一张门票",
+        "processing": "处理中...",
+        "secure_checkout": "安全结账",
+        "link_not_usable": "此链接已失效",
+        "user_not_authorized": "此链接仅限特定用户使用",
+        "user_not_authorized_description": "此专属购买链接是为特定用户创建的。如果您认为这是错误，请联系活动主办方。",
+        "view_event": "查看活动详情",
+        "expires_at": "此链接将于 {date} 过期",
+        "processing_error": "无法处理您的购买，请重试。",
+        "unexpected_error": "发生意外错误，请重试。",
+        "error": {
+            "expired": "此购买链接已过期。",
+            "revoked": "此购买链接已被撤销。",
+            "exhausted": "此链接的所有门票已售罄。",
+            "hold_inactive": "这些门票已不再可用。",
+            "user_not_authorized": "此链接仅限其他用户使用。",
+            "sold_out": "所有门票已售罄。",
+            "unknown": "此链接不可用。"
+        }
     }
 }

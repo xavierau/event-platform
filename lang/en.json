@@ -1847,5 +1847,43 @@
         "tagline": "Discover Amazing Events",
         "welcome_title": "Welcome to ShowEasy",
         "welcome_message": "Find and book your next experience"
+    },
+    "purchase_link": {
+        "page_title": "Purchase Tickets - {event}",
+        "exclusive_pricing": "Exclusive Pricing",
+        "select_tickets": "Select Tickets",
+        "order_summary": "Order Summary",
+        "subtotal": "Subtotal",
+        "total": "Total",
+        "you_save": "You Save",
+        "item": "item",
+        "items": "items",
+        "no_items_selected": "No items selected",
+        "no_tickets_available": "No tickets available for this link",
+        "available_count": "{count} available",
+        "save_percent": "Save {percent}%",
+        "free": "FREE",
+        "login_to_purchase": "Login to Purchase",
+        "complete_purchase": "Complete Purchase",
+        "cannot_purchase": "Cannot Purchase",
+        "select_tickets_error": "Please select at least one ticket",
+        "processing": "Processing...",
+        "secure_checkout": "Secure Checkout",
+        "link_not_usable": "This link is no longer available",
+        "user_not_authorized": "This link is for another user",
+        "user_not_authorized_description": "This exclusive purchase link was created for a specific user. Please contact the event organizer if you believe this is an error.",
+        "view_event": "View Event Details",
+        "expires_at": "This link expires on {date}",
+        "processing_error": "Could not process your purchase. Please try again.",
+        "unexpected_error": "An unexpected error occurred. Please try again.",
+        "error": {
+            "expired": "This purchase link has expired.",
+            "revoked": "This purchase link has been revoked.",
+            "exhausted": "All tickets from this link have been purchased.",
+            "hold_inactive": "These tickets are no longer available.",
+            "user_not_authorized": "This link is for another user.",
+            "sold_out": "All tickets have been sold out.",
+            "unknown": "This link is not available."
+        }
     }
 }

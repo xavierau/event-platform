@@ -55,3 +55,6 @@ export interface EventItem {
     created_at?: string;
     updated_at?: string;
 }
+
+// Re-export module types
+export * from './ticket-hold';
