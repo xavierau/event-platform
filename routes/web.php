@@ -36,6 +36,10 @@ use App\Http\Controllers\Public\MyCouponsController;
 use App\Http\Controllers\Public\MyWalletController;
 use App\Http\Controllers\Public\MyWishlistController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Modules\TicketHold\Controllers\Admin\HoldAnalyticsController;
+use App\Modules\TicketHold\Controllers\Admin\PurchaseLinkController as AdminPurchaseLinkController;
+use App\Modules\TicketHold\Controllers\Admin\TicketHoldController;
+use App\Modules\TicketHold\Controllers\Public\PurchaseLinkController as PublicPurchaseLinkController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -70,6 +74,18 @@ Route::get('/invitation/accept', [\App\Http\Controllers\InvitationController::cl
     ->name('invitation.accept');
 Route::post('/invitation/complete-registration', [\App\Http\Controllers\InvitationController::class, 'completeRegistration'])
     ->name('invitation.complete-registration');
+
+// Public Purchase Links (for ticket holds)
+Route::prefix('reserve')->name('purchase-link.')->group(function () {
+    // Rate limit: 60 requests per minute to prevent link code enumeration attacks
+    Route::get('/{code}', [PublicPurchaseLinkController::class, 'show'])
+        ->name('show')
+        ->middleware('throttle:purchase-link-show');
+    // Rate limit: 10 requests per minute per user to prevent purchase abuse
+    Route::post('/{code}/purchase', [PublicPurchaseLinkController::class, 'purchase'])
+        ->name('purchase')
+        ->middleware(['auth', 'throttle:purchase-link-purchase']);
+});
 
 // --- AUTHENTICATED USER ROUTES (Basic Features) ---
 Route::middleware(['auth'])->group(function () {
@@ -198,12 +214,38 @@ Route::prefix('admin')
             Route::get('/', [CheckInRecordsController::class, 'index'])->name('index');
             Route::get('/export', [CheckInRecordsController::class, 'export'])->name('export');
         });
+
+        // Ticket Holds Management
+        Route::resource('ticket-holds', TicketHoldController::class);
+        Route::post('ticket-holds/{ticketHold}/release', [TicketHoldController::class, 'release'])
+            ->name('ticket-holds.release');
+
+        // Purchase Links (nested under ticket holds)
+        Route::resource('ticket-holds.purchase-links', AdminPurchaseLinkController::class)
+            ->shallow()
+            ->only(['store']);
+        Route::resource('purchase-links', AdminPurchaseLinkController::class)
+            ->only(['show', 'update', 'destroy']);
+        Route::post('purchase-links/{purchaseLink}/revoke', [AdminPurchaseLinkController::class, 'revoke'])
+            ->name('purchase-links.revoke');
+
+        // Ticket Hold Analytics
+        Route::get('ticket-holds/{ticketHold}/analytics', [HoldAnalyticsController::class, 'show'])
+            ->name('ticket-holds.analytics');
+
+        // Ticket Hold API endpoints
+        Route::prefix('api/ticket-holds')->name('api.ticket-holds.')->group(function () {
+            Route::get('available-tickets/{occurrence}', [TicketHoldController::class, 'availableTickets'])
+                ->name('available-tickets');
+            Route::post('search-users', [AdminPurchaseLinkController::class, 'searchUsers'])
+                ->name('search-users');
+        });
     });
 
 // --- PLATFORM ADMIN ONLY ROUTES ---
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', 'role:' . RoleNameEnum::ADMIN->value])
+    ->middleware(['auth', 'role:'.RoleNameEnum::ADMIN->value])
     ->group(function () {
         // Site-wide settings and management
         Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
@@ -238,9 +280,9 @@ Route::prefix('admin')
     });
 
 // --- AUTH & PAYMENT ROUTES ---
-require __DIR__ . '/auth.php';
-require __DIR__ . '/settings.php'; // Note: This file seems to be required but its purpose is not clear from the context.
-require __DIR__ . '/promotional-modal.php';
+require __DIR__.'/auth.php';
+require __DIR__.'/settings.php'; // Note: This file seems to be required but its purpose is not clear from the context.
+require __DIR__.'/promotional-modal.php';
 
 // Payment Gateway Callbacks
 Route::get('/payment/success', [PaymentController::class, 'handlePaymentSuccess'])->name('payment.success');
