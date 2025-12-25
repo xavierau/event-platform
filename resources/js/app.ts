@@ -18,7 +18,8 @@ createInertiaApp({
         const locale = props.initialPage.props.locale as string;
 
         // Load translations from API endpoint to reduce SSR payload
-        const translationsResponse = await fetch('/api/translations');
+        // Pass locale explicitly to ensure correct translations are fetched (avoids cache issues)
+        const translationsResponse = await fetch(`/api/translations?locale=${locale}`);
         const translationsData = await translationsResponse.json();
 
         const i18n = createI18n({
@@ -29,6 +30,9 @@ createInertiaApp({
             },
             legacy: false,
         });
+
+        // Expose i18n instance globally for locale switching
+        (window as any).__VUE_I18N__ = i18n;
 
         createApp({ render: () => h(App, props) })
             .use(plugin)

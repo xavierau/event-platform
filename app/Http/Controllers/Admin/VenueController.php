@@ -23,7 +23,7 @@ class VenueController extends Controller
         $this->middleware('can:viewAny,App\Models\Venue')->only(['index']);
         $this->middleware('can:view,venue')->only(['show']);
         $this->middleware('can:create,App\Models\Venue')->only(['create', 'store']);
-        $this->middleware('can:update,venue')->only(['edit', 'update']);
+        $this->middleware('can:update,venue')->only(['edit']);
         $this->middleware('can:delete,venue')->only(['destroy']);
     }
 
@@ -127,12 +127,10 @@ class VenueController extends Controller
 
     public function update(Request $request, VenueData $venueData): RedirectResponse
     {
-        try {
-            // The DTO will handle validation based on its rules.
-            // Data is sourced from $request->all(), which merges query, post, and file data.
-            // For multipart/form-data, Laravel handles parsing of fields like name[en] into nested arrays if accessed directly via $request->input('name').
-            // Spatie/laravel-data should correctly map these if the DTO expects an array for 'name'.
+        $venue = Venue::findOrFail($venueData->id);
+        $this->authorize('update', $venue);
 
+        try {
             $venue = $this->venueService->updateVenue($venueData->id, $venueData);
 
             // Handle media uploads if present

@@ -321,12 +321,38 @@ class SyncStripeSubscriptionsCommand extends Command
     private function findMembershipLevelForSubscription(object $subscription): ?MembershipLevel
     {
         if (empty($subscription->items->data)) {
+            Log::warning('[SyncStripeSubscriptionsCommand] Subscription has no items', [
+                'subscription_id' => $subscription->id,
+            ]);
             return null;
         }
 
         $priceId = $subscription->items->data[0]->price->id;
-        
-        return MembershipLevel::whereJsonContains('metadata->stripe_price_id', $priceId)->first();
+
+        // Primary lookup: Use the dedicated stripe_price_id column
+        $level = MembershipLevel::where('stripe_price_id', $priceId)->first();
+
+        if ($level) {
+            return $level;
+        }
+
+        // Fallback: Check metadata->stripe_price_id for backward compatibility
+        $level = MembershipLevel::whereJsonContains('metadata->stripe_price_id', $priceId)->first();
+
+        if ($level) {
+            Log::info('[SyncStripeSubscriptionsCommand] Found membership level via metadata fallback', [
+                'price_id' => $priceId,
+                'membership_level_id' => $level->id,
+            ]);
+            return $level;
+        }
+
+        Log::warning('[SyncStripeSubscriptionsCommand] No membership level found for price', [
+            'price_id' => $priceId,
+            'subscription_id' => $subscription->id,
+        ]);
+
+        return null;
     }
 
     private function handleApiError(ApiErrorException $e, string $context): void

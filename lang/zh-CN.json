@@ -1424,6 +1424,11 @@
             "platinum": "白金",
             "vip": "VIP",
             "premium": "高级"
+        },
+        "duration": {
+            "one_month": "1 个月",
+            "one_year": "1 年",
+            "months": "{count} 个月"
         }
     },
     "wishlist": {
@@ -1741,6 +1746,15 @@
         "logged_out": "您已成功登出。",
         "session_expired": "您的会话已过期，请重新登录。",
         "have_account": "已经有账户了？"
+    },
+    "temporary_registration": {
+        "remaining_slots": "剩余 {count} 个名额",
+        "unavailable": {
+            "title": "注册不可用",
+            "description": "此注册页面目前不可用。",
+            "register_normally": "正常注册",
+            "go_home": "返回首页"
+        }
     },
     "platform": {
         "app_name": "ShowEasy",

@@ -18,43 +18,93 @@ class StripeSubscriptionSyncService
      */
     public function handleSubscriptionCreated(object $subscription): ?UserMembership
     {
-        Log::info('[StripeSubscriptionSyncService] Processing subscription.created', [
+        Log::info('[StripeSubscriptionSyncService] ════════════════════════════════════════════════════════');
+        Log::info('[StripeSubscriptionSyncService] 🎯 STEP 1: Webhook Received - Processing subscription.created', [
             'subscription_id' => $subscription->id,
             'customer_id' => $subscription->customer,
-            'status' => $subscription->status
+            'status' => $subscription->status,
+            'items_count' => count($subscription->items->data ?? []),
+            'price_id' => $subscription->items->data[0]->price->id ?? 'unknown',
+            'product_id' => $subscription->items->data[0]->price->product ?? 'unknown',
         ]);
 
         return DB::transaction(function () use ($subscription) {
+            // STEP 2: Find User
+            Log::info('[StripeSubscriptionSyncService] 👤 STEP 2: Finding user by Stripe customer ID', [
+                'customer_id' => $subscription->customer,
+            ]);
+
             $user = $this->findUserByStripeCustomer($subscription->customer);
             if (!$user) {
-                Log::error('[StripeSubscriptionSyncService] User not found for subscription.created', [
+                Log::error('[StripeSubscriptionSyncService] ❌ STEP 2 FAILED: User not found for subscription.created', [
                     'subscription_id' => $subscription->id,
-                    'customer_id' => $subscription->customer
+                    'customer_id' => $subscription->customer,
+                    'flow_status' => 'ABORTED - No user found',
                 ]);
+                Log::info('[StripeSubscriptionSyncService] ════════════════════════════════════════════════════════');
                 return null;
             }
+
+            Log::info('[StripeSubscriptionSyncService] ✅ STEP 2 SUCCESS: User found', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'user_stripe_id' => $user->stripe_id,
+            ]);
+
+            // STEP 3: Find Membership Level
+            Log::info('[StripeSubscriptionSyncService] 🏷️ STEP 3: Finding membership level by Stripe price', [
+                'subscription_id' => $subscription->id,
+                'price_id' => $subscription->items->data[0]->price->id ?? 'unknown',
+            ]);
 
             $membershipLevel = $this->findMembershipLevelByStripePrice($subscription);
             if (!$membershipLevel) {
-                Log::error('[StripeSubscriptionSyncService] Membership level not found for subscription', [
+                Log::error('[StripeSubscriptionSyncService] ❌ STEP 3 FAILED: Membership level not found for subscription', [
                     'subscription_id' => $subscription->id,
-                    'price_id' => $subscription->items->data[0]->price->id ?? 'unknown'
+                    'price_id' => $subscription->items->data[0]->price->id ?? 'unknown',
+                    'user_id' => $user->id,
+                    'flow_status' => 'ABORTED - No membership level matches price ID',
                 ]);
+                Log::info('[StripeSubscriptionSyncService] ════════════════════════════════════════════════════════');
                 return null;
             }
 
-            // Check if membership already exists for this subscription
+            Log::info('[StripeSubscriptionSyncService] ✅ STEP 3 SUCCESS: Membership level found', [
+                'membership_level_id' => $membershipLevel->id,
+                'membership_level_name' => $membershipLevel->name,
+                'membership_level_stripe_price_id' => $membershipLevel->stripe_price_id,
+            ]);
+
+            // STEP 4: Check for existing membership or create new one
+            Log::info('[StripeSubscriptionSyncService] 📋 STEP 4: Checking for existing membership', [
+                'subscription_id' => $subscription->id,
+            ]);
+
             $existing = UserMembership::findByStripeSubscription($subscription->id);
             if ($existing) {
-                Log::info('[StripeSubscriptionSyncService] Updating existing membership for subscription.created', [
+                Log::info('[StripeSubscriptionSyncService] ♻️ STEP 4: Found existing membership - updating', [
                     'membership_id' => $existing->id,
-                    'subscription_id' => $subscription->id
+                    'subscription_id' => $subscription->id,
+                    'current_status' => $existing->status,
                 ]);
                 $existing->updateFromStripeSubscription($subscription);
+
+                Log::info('[StripeSubscriptionSyncService] ✅ FLOW COMPLETE: Existing membership updated', [
+                    'membership_id' => $existing->id,
+                    'user_id' => $existing->user_id,
+                    'status' => $existing->status,
+                ]);
+                Log::info('[StripeSubscriptionSyncService] ════════════════════════════════════════════════════════');
                 return $existing;
             }
 
             // Create new membership
+            Log::info('[StripeSubscriptionSyncService] 🆕 STEP 4: No existing membership - creating new one', [
+                'user_id' => $user->id,
+                'membership_level_id' => $membershipLevel->id,
+                'stripe_status' => $subscription->status,
+            ]);
+
             $membership = UserMembership::create([
                 'user_id' => $user->id,
                 'membership_level_id' => $membershipLevel->id,
@@ -73,11 +123,17 @@ class StripeSubscriptionSyncService
                 'auto_renew' => !$subscription->cancel_at_period_end,
             ]);
 
-            Log::info('[StripeSubscriptionSyncService] Created new membership for subscription', [
+            Log::info('[StripeSubscriptionSyncService] ✅ FLOW COMPLETE: New membership created successfully', [
                 'membership_id' => $membership->id,
                 'subscription_id' => $subscription->id,
-                'user_id' => $user->id
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'membership_level' => $membershipLevel->name,
+                'status' => $membership->status->value ?? $membership->status,
+                'started_at' => $membership->started_at,
+                'expires_at' => $membership->expires_at,
             ]);
+            Log::info('[StripeSubscriptionSyncService] ════════════════════════════════════════════════════════');
 
             return $membership;
         });
@@ -382,15 +438,79 @@ class StripeSubscriptionSyncService
      */
     private function findMembershipLevelByStripePrice(object $subscription): ?MembershipLevel
     {
+        Log::info('[StripeSubscriptionSyncService] 🔍 Finding membership level by Stripe price', [
+            'subscription_id' => $subscription->id,
+            'has_items' => !empty($subscription->items->data),
+            'items_count' => count($subscription->items->data ?? []),
+        ]);
+
         if (empty($subscription->items->data)) {
+            Log::warning('[StripeSubscriptionSyncService] ❌ Subscription has no items', [
+                'subscription_id' => $subscription->id,
+            ]);
             return null;
         }
 
         $priceId = $subscription->items->data[0]->price->id;
-        
-        // This assumes you store Stripe price IDs in membership levels metadata
-        // You might need to adjust this based on your actual implementation
-        return MembershipLevel::whereJsonContains('metadata->stripe_price_id', $priceId)->first();
+        $productId = $subscription->items->data[0]->price->product ?? null;
+
+        Log::info('[StripeSubscriptionSyncService] 🏷️ Extracted Stripe identifiers from subscription', [
+            'subscription_id' => $subscription->id,
+            'price_id' => $priceId,
+            'product_id' => $productId,
+        ]);
+
+        // Primary lookup: Use the dedicated stripe_price_id column
+        $level = MembershipLevel::where('stripe_price_id', $priceId)->first();
+
+        if ($level) {
+            Log::info('[StripeSubscriptionSyncService] ✅ Found membership level by stripe_price_id column', [
+                'subscription_id' => $subscription->id,
+                'price_id' => $priceId,
+                'membership_level_id' => $level->id,
+                'membership_level_name' => $level->name,
+            ]);
+            return $level;
+        }
+
+        Log::debug('[StripeSubscriptionSyncService] 🔄 stripe_price_id column lookup failed, trying metadata fallback', [
+            'subscription_id' => $subscription->id,
+            'price_id' => $priceId,
+        ]);
+
+        // Fallback: Check metadata->stripe_price_id for backward compatibility
+        $level = MembershipLevel::whereJsonContains('metadata->stripe_price_id', $priceId)->first();
+
+        if ($level) {
+            Log::info('[StripeSubscriptionSyncService] ✅ Found membership level by metadata->stripe_price_id', [
+                'subscription_id' => $subscription->id,
+                'price_id' => $priceId,
+                'membership_level_id' => $level->id,
+                'membership_level_name' => $level->name,
+            ]);
+            return $level;
+        }
+
+        // Log all available membership levels for debugging
+        $allLevels = MembershipLevel::select('id', 'name', 'stripe_price_id', 'stripe_product_id', 'metadata')
+            ->get()
+            ->map(fn($l) => [
+                'id' => $l->id,
+                'name' => $l->name,
+                'stripe_price_id' => $l->stripe_price_id,
+                'stripe_product_id' => $l->stripe_product_id,
+                'metadata_stripe_price_id' => $l->metadata['stripe_price_id'] ?? null,
+            ]);
+
+        Log::error('[StripeSubscriptionSyncService] ❌ No membership level found for Stripe price', [
+            'subscription_id' => $subscription->id,
+            'searched_price_id' => $priceId,
+            'searched_product_id' => $productId,
+            'available_membership_levels' => $allLevels->toArray(),
+            'hint' => 'Ensure MembershipLevel.stripe_price_id matches the Stripe price ID',
+        ]);
+
+        return null;
     }
 
     /**

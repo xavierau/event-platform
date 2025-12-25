@@ -40,22 +40,44 @@ const currentLocaleName = computed(() => {
   return availableLocales.value[currentLocale.value] || 'Eng';
 });
 
-const switchLocale = (locale: string) => {
+const switchLocale = async (locale: string) => {
   if (locale === currentLocale.value) {
     isOpen.value = false;
     return;
   }
 
-  // Update vue-i18n locale immediately for reactive UI updates
-  i18nLocale.value = locale;
+  try {
+    // Fetch translations for the new locale from the API
+    const response = await fetch(`/api/translations?locale=${locale}`);
+    const data = await response.json();
 
-  // Use Inertia to make a POST request to switch locale
-  router.post('/locale/switch', { locale }, {
-    preserveScroll: true,
-    onSuccess: () => {
-      isOpen.value = false;
+    // Get the global i18n instance and set the new locale messages
+    const i18n = (window as any).__VUE_I18N__;
+    if (i18n && data.translations) {
+      i18n.global.setLocaleMessage(locale, data.translations);
     }
-  });
+
+    // Now update the locale value
+    i18nLocale.value = locale;
+
+    // Update backend session via Inertia
+    router.post('/locale/switch', { locale }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        isOpen.value = false;
+      }
+    });
+  } catch (error) {
+    console.error('Failed to load translations:', error);
+    // Fall back to just switching locale without new translations
+    i18nLocale.value = locale;
+    router.post('/locale/switch', { locale }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        isOpen.value = false;
+      }
+    });
+  }
 };
 
 // Close dropdown when clicking outside

@@ -279,8 +279,8 @@ class UserController extends Controller
             ->map(function ($level) {
                 return [
                     'id' => $level->id,
-                    'name' => $level->name,
-                    'description' => $level->description,
+                    'name' => $level->getTranslations('name'),
+                    'description' => $level->getTranslations('description'),
                     'duration_months' => $level->duration_months,
                 ];
             });
