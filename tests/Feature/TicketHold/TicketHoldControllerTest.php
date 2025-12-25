@@ -130,7 +130,7 @@ describe('TicketHoldController Create', function () {
         $response->assertInertia(fn ($page) => $page
             ->component('Admin/TicketHolds/Create')
             ->has('organizers')
-            ->has('eventOccurrences')
+            ->has('occurrences')
             ->has('pricingModes')
         );
     });
