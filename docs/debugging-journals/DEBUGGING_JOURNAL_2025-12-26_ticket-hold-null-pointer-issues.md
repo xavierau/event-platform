@@ -1,9 +1,9 @@
-# Debugging Journal: TicketHold Module Null Pointer Issues
+# Debugging Journal: TicketHold Module Production Issues
 
 **Date:** 2025-12-26
 **Module:** TicketHold, PromotionalModals
 **Severity:** Production Outage
-**Time to Resolution:** ~30 minutes across 3 hotfixes
+**Time to Resolution:** ~60 minutes across 6 hotfixes
 
 ---
 
@@ -28,6 +28,18 @@ Call to a member function toIso8601String() on null
 at TicketHoldController.php:228
 ```
 
+### Error 4: Prop Name Mismatch (per_page undefined)
+```
+TypeError: Cannot read properties of undefined (reading 'per_page')
+at Index-B9mSfVht.js
+```
+
+### Error 5: Organizer Dropdown Empty
+Organizer dropdown only showed "No organizer (Admin hold)" - actual organizers not displayed.
+
+### Error 6: Event Occurrence Dropdown Empty
+Event Occurrence dropdown only showed "Select an event occurrence" - no occurrences listed.
+
 ---
 
 ## 2. Root Cause Analysis
@@ -40,6 +52,9 @@ at TicketHoldController.php:228
 | Null event relationships | Events deleted without cascade deleting occurrences | **Missing Database Constraints** |
 | Null start_at values | EventOccurrence allows null start_at | **Missing Data Validation** |
 | No defensive coding | Controller assumes all relationships exist | **Missing Null Safety** |
+| Prop name mismatch | Controller sends `holds`, Vue expects `ticketHolds` | **Backend-Frontend Contract Violation** |
+| Translatable field issue | `->get(['id', 'name'])` returns raw JSON, not translated | **ORM Misuse** |
+| Data structure mismatch | Controller sends `value/label`, Vue expects `id/event.name` | **Backend-Frontend Contract Violation** |
 
 ### Why This Kept Happening
 
@@ -47,6 +62,9 @@ at TicketHoldController.php:228
 2. **Missing Foreign Key Constraints**: Database allows orphaned records
 3. **No Null Safety in Queries**: Code assumes relationships always exist
 4. **Insufficient Test Coverage**: Tests use factories that always create valid data
+5. **No Backend-Frontend Contract Validation**: Prop names and data structures not verified between controller and Vue
+6. **ORM Misuse**: Using `->get(['columns'])` with translatable fields breaks Spatie's translation trait
+7. **Copy-Paste Errors**: Similar code patterns copied without verifying Vue component expectations
 
 ---
 
