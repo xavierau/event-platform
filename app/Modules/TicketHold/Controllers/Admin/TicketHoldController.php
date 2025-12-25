@@ -60,7 +60,7 @@ class TicketHoldController extends Controller
             'pageTitle' => 'Create Ticket Hold',
             'breadcrumbs' => $this->getBreadcrumbs('Create'),
             'organizers' => $this->getOrganizersForSelect(),
-            'eventOccurrences' => $this->getOccurrencesForSelect(),
+            'occurrences' => $this->getOccurrencesForSelect(),
             'pricingModes' => $this->getPricingModeOptions(),
         ]);
     }
@@ -243,10 +243,13 @@ class TicketHoldController extends Controller
             ->orderBy('start_at', 'asc')
             ->get()
             ->map(fn ($occ) => [
-                'value' => $occ->id,
-                'label' => $occ->event->getTranslation('name', app()->getLocale()).' - '.$occ->start_at->format('Y-m-d H:i'),
-                'event_id' => $occ->event_id,
-                'organizer_id' => $occ->event->organizer_id,
+                'id' => $occ->id,
+                'event' => [
+                    'id' => $occ->event_id,
+                    'name' => $occ->event->getTranslations('name'),
+                    'organizer_id' => $occ->event->organizer_id,
+                ],
+                'start_at' => $occ->start_at->toIso8601String(),
             ])
             ->toArray();
     }
