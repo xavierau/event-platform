@@ -155,7 +155,7 @@ class TicketHoldController extends Controller
             'occurrence' => [
                 'id' => $occurrence->id,
                 'event_name' => $eventName,
-                'start_at' => $occurrence->start_at->toIso8601String(),
+                'start_at' => $occurrence->start_at?->toIso8601String(),
             ],
         ]);
     }
@@ -248,7 +248,8 @@ class TicketHoldController extends Controller
     private function buildOccurrencesQuery()
     {
         $query = EventOccurrence::with('event')
-            ->whereHas('event'); // Filter out orphaned occurrences
+            ->whereHas('event') // Filter out orphaned occurrences
+            ->whereNotNull('start_at'); // Filter out occurrences with null start_at
         $user = auth()->user();
 
         if (! $user->hasRole(RoleNameEnum::ADMIN)) {
@@ -263,7 +264,7 @@ class TicketHoldController extends Controller
     {
         $occ = $ticketHold->eventOccurrence;
 
-        if (! $occ || ! $occ->event) {
+        if (! $occ || ! $occ->event || ! $occ->start_at) {
             return [];
         }
 
