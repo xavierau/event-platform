@@ -146,11 +146,15 @@ class TicketHoldController extends Controller
     {
         $this->authorize('viewAny', TicketHold::class);
 
+        $eventName = $occurrence->event
+            ? $occurrence->event->getTranslation('name', app()->getLocale())
+            : 'Unknown Event';
+
         return response()->json([
             'ticket_definitions' => $this->getTicketDefinitionsForOccurrence($occurrence),
             'occurrence' => [
                 'id' => $occurrence->id,
-                'event_name' => $occurrence->event->getTranslation('name', app()->getLocale()),
+                'event_name' => $eventName,
                 'start_at' => $occurrence->start_at->toIso8601String(),
             ],
         ]);
@@ -243,7 +247,8 @@ class TicketHoldController extends Controller
 
     private function buildOccurrencesQuery()
     {
-        $query = EventOccurrence::with('event');
+        $query = EventOccurrence::with('event')
+            ->whereHas('event'); // Filter out orphaned occurrences
         $user = auth()->user();
 
         if (! $user->hasRole(RoleNameEnum::ADMIN)) {
@@ -257,6 +262,10 @@ class TicketHoldController extends Controller
     private function getOccurrenceForEdit(TicketHold $ticketHold): array
     {
         $occ = $ticketHold->eventOccurrence;
+
+        if (! $occ || ! $occ->event) {
+            return [];
+        }
 
         return [[
             'id' => $occ->id,
