@@ -70,9 +70,9 @@ describe('TicketHoldController Index', function () {
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Admin/TicketHolds/Index')
-            ->has('holds')
+            ->has('ticketHolds')
             ->has('organizers')
-            ->has('eventOccurrences')
+            ->has('occurrences')
             ->has('statusOptions')
         );
     });
@@ -102,8 +102,8 @@ describe('TicketHoldController Index', function () {
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Admin/TicketHolds/Index')
-            ->has('holds.data', 1)
-            ->where('holds.data.0.id', $ownHold->id)
+            ->has('ticketHolds.data', 1)
+            ->where('ticketHolds.data.0.id', $ownHold->id)
         );
     });
 

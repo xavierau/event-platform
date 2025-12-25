@@ -261,7 +261,7 @@ const filterForm = useForm({
     organizer_id: props.filters?.organizer_id || '',
     occurrence_id: props.filters?.occurrence_id || '',
     status: props.filters?.status || '',
-    per_page: props.ticketHolds.per_page || 15,
+    per_page: props.ticketHolds?.per_page || 15,
 });
 
 const showReleaseModal = ref(false);

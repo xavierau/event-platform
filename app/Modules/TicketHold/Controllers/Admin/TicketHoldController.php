@@ -46,9 +46,9 @@ class TicketHoldController extends Controller
         return Inertia::render('Admin/TicketHolds/Index', [
             'pageTitle' => 'Ticket Holds',
             'breadcrumbs' => $this->getBreadcrumbs(),
-            'holds' => TicketHoldResource::collection($holds),
+            'ticketHolds' => TicketHoldResource::collection($holds),
             'organizers' => $this->getOrganizersForFilter(),
-            'eventOccurrences' => $this->getOccurrencesForFilter(),
+            'occurrences' => $this->getOccurrencesForFilter(),
             'statusOptions' => $this->getStatusOptions(),
             'filters' => $request->only(['occurrence_id', 'organizer_id', 'status', 'search']),
         ]);
