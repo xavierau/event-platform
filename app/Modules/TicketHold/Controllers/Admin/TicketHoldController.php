@@ -191,26 +191,32 @@ class TicketHoldController extends Controller
     private function getFilteredOrganizers()
     {
         $user = auth()->user();
-        $query = Organizer::orderBy('name');
+        $query = Organizer::query();
 
         if (! $user->hasRole(RoleNameEnum::ADMIN)) {
             $query->whereIn('id', $user->organizers->pluck('id'));
         }
 
-        return $query->get(['id', 'name']);
+        return $query->orderBy('name')->get();
     }
 
     private function getOrganizersForFilter(): array
     {
         return $this->getFilteredOrganizers()
-            ->map(fn ($org) => ['id' => $org->id, 'name' => $org->name])
+            ->map(fn ($org) => [
+                'id' => $org->id,
+                'name' => $org->getTranslations('name'),
+            ])
             ->toArray();
     }
 
     private function getOrganizersForSelect(): array
     {
         return $this->getFilteredOrganizers()
-            ->map(fn ($org) => ['value' => $org->id, 'label' => $org->name])
+            ->map(fn ($org) => [
+                'id' => $org->id,
+                'name' => $org->getTranslations('name'),
+            ])
             ->toArray();
     }
 
