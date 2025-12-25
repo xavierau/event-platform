@@ -276,7 +276,20 @@ class WebPromotionalModalController extends Controller
     public function showAnalytics(PromotionalModal $promotionalModal): Response
     {
         return Inertia::render('Admin/PromotionalModals/ShowAnalytics', [
-            'promotionalModal' => $promotionalModal
+            'promotionalModal' => [
+                'id' => $promotionalModal->id,
+                'title' => $promotionalModal->title,
+                'type' => $promotionalModal->type,
+                'pages' => $promotionalModal->pages,
+                'display_frequency' => $promotionalModal->display_frequency,
+                'priority' => $promotionalModal->priority,
+                'is_active' => $promotionalModal->is_active,
+                'start_at' => $promotionalModal->start_at?->toISOString(),
+                'end_at' => $promotionalModal->end_at?->toISOString(),
+                'impressions_count' => $promotionalModal->impressions()->count(),
+                'clicks_count' => $promotionalModal->impressions()->where('action', 'click')->count(),
+                'conversion_rate' => $this->calculateConversionRate($promotionalModal),
+            ]
         ]);
     }
 
