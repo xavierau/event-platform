@@ -205,6 +205,54 @@ class TicketDefinition extends Model
             }
         }
 
+        // Include ALL membership prices for public display (allows non-members to see potential savings)
+        $publicData['all_membership_prices'] = $this->getAllMembershipPrices($effectivePrice);
+
         return $publicData;
+    }
+
+    /**
+     * Get all membership level prices for this ticket.
+     * This allows non-members to see potential savings by joining membership.
+     */
+    protected function getAllMembershipPrices(int $effectivePrice): array
+    {
+        // Eager load membership discounts if not already loaded
+        if (! $this->relationLoaded('membershipDiscounts')) {
+            $this->load('membershipDiscounts');
+        }
+
+        $membershipPrices = [];
+
+        foreach ($this->membershipDiscounts as $membershipLevel) {
+            $discountType = $membershipLevel->pivot->discount_type;
+            $discountValue = $membershipLevel->pivot->discount_value;
+
+            $discountedPrice = $this->applyDiscount($effectivePrice, $discountType, $discountValue);
+
+            // Only include if there's actual savings
+            if ($discountedPrice < $effectivePrice) {
+                $savingsAmount = $effectivePrice - $discountedPrice;
+                $savingsPercentage = round(($savingsAmount / $effectivePrice) * 100);
+
+                $membershipPrices[] = [
+                    'membership_level_id' => $membershipLevel->id,
+                    'membership_level_name' => $membershipLevel->name,
+                    'membership_level_slug' => $membershipLevel->slug,
+                    'discounted_price' => $discountedPrice / 100, // Convert from cents
+                    'savings_amount' => $savingsAmount / 100, // Convert from cents
+                    'savings_percentage' => $savingsPercentage,
+                    'discount_type' => $discountType,
+                    'discount_value' => $discountValue,
+                ];
+            }
+        }
+
+        // Sort by savings percentage (highest first)
+        usort($membershipPrices, function ($a, $b) {
+            return $b['savings_percentage'] <=> $a['savings_percentage'];
+        });
+
+        return $membershipPrices;
     }
 }

@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import axios from 'axios'; // Import axios
+import { Link, usePage } from '@inertiajs/vue3';
+// @ts-expect-error - vue-i18n has no type definitions
+import { useI18n } from 'vue-i18n';
 import { useCurrency } from '@/composables/useCurrency';
+import { ChevronDown, ChevronUp, Crown, Star } from 'lucide-vue-next';
 
-import type { PublicTicketType } from '@/types/ticket';
+import type { PublicTicketType, MembershipPriceInfo } from '@/types/ticket';
 
 interface EventOccurrence {
   id: string | number;
@@ -21,7 +25,19 @@ const props = defineProps({
     type: Object as () => EventOccurrence | undefined,
     required: false,
   },
+  isAuthenticated: {
+    type: Boolean,
+    default: false,
+  },
+  userMembershipLevelId: {
+    type: Number,
+    required: false,
+  },
 });
+
+// i18n and page setup
+const { t } = useI18n();
+const page = usePage();
 
 // Use currency composable
 const { formatPrice } = useCurrency();
@@ -44,6 +60,80 @@ watch(() => props.occurrence, (newOccurrence) => {
   }
 }, { immediate: true });
 
+// Track which ticket's membership tiers are expanded
+const expandedMembershipTiers = ref<Record<string | number, boolean>>({});
+
+const toggleMembershipTiers = (ticketId: string | number) => {
+  expandedMembershipTiers.value[ticketId] = !expandedMembershipTiers.value[ticketId];
+};
+
+// Check if a ticket has membership prices available
+const hasMembershipPrices = (ticket: PublicTicketType): boolean => {
+  return Boolean(ticket.all_membership_prices && ticket.all_membership_prices.length > 0);
+};
+
+// Get membership level name (handles translatable names)
+const getMembershipLevelName = (membershipPrice: MembershipPriceInfo): string => {
+  if (typeof membershipPrice.membership_level_name === 'string') {
+    return membershipPrice.membership_level_name;
+  }
+  // Handle translatable names - get current locale or fallback to 'en'
+  const currentLocale = (page.props as any).locale || 'en';
+  return membershipPrice.membership_level_name[currentLocale]
+    || membershipPrice.membership_level_name['en']
+    || Object.values(membershipPrice.membership_level_name)[0]
+    || '';
+};
+
+// Compute highest savings percentage across all tickets for non-authenticated users CTA
+const highestSavingsPercentage = computed(() => {
+  if (!props.occurrence?.tickets) return 0;
+  let maxSavings = 0;
+  props.occurrence.tickets.forEach(ticket => {
+    if (ticket.all_membership_prices) {
+      ticket.all_membership_prices.forEach(mp => {
+        if (mp.savings_percentage > maxSavings) {
+          maxSavings = mp.savings_percentage;
+        }
+      });
+    }
+  });
+  return maxSavings;
+});
+
+// Check if any ticket has membership pricing available
+const anyTicketHasMembershipPricing = computed(() => {
+  if (!props.occurrence?.tickets) return false;
+  return props.occurrence.tickets.some(ticket => hasMembershipPrices(ticket));
+});
+
+// Get the user's current savings percentage (if they have a membership)
+const userCurrentSavingsPercentage = computed(() => {
+  if (!props.userMembershipLevelId || !props.occurrence?.tickets) return 0;
+  let maxCurrentSavings = 0;
+  props.occurrence.tickets.forEach(ticket => {
+    if (ticket.all_membership_prices) {
+      const userTier = ticket.all_membership_prices.find(
+        mp => mp.membership_level_id === props.userMembershipLevelId
+      );
+      if (userTier && userTier.savings_percentage > maxCurrentSavings) {
+        maxCurrentSavings = userTier.savings_percentage;
+      }
+    }
+  });
+  return maxCurrentSavings;
+});
+
+// Check if there's a better tier available (higher savings than user's current tier)
+const hasUpgradeAvailable = computed(() => {
+  if (!props.userMembershipLevelId) return false;
+  return highestSavingsPercentage.value > userCurrentSavingsPercentage.value;
+});
+
+// Calculate additional savings percentage if user upgrades
+const additionalSavingsWithUpgrade = computed(() => {
+  return highestSavingsPercentage.value - userCurrentSavingsPercentage.value;
+});
 
 const incrementQuantity = (ticketId: string | number) => {
   // Ensure props.occurrence and props.occurrence.tickets are available
@@ -230,51 +320,153 @@ const confirmPurchase = async () => {
             <div
               v-for="ticket in occurrence.tickets"
               :key="ticket.id"
-              class="p-3 border dark:border-gray-700 rounded-md flex justify-between items-center bg-gray-50 dark:bg-gray-700/50"
+              class="p-3 border dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50"
             >
-              <div>
-                <h4 class="font-semibold text-gray-700 dark:text-gray-200">{{ ticket.name }}</h4>
-                <p v-if="ticket.description" class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.description }}</p>
+              <!-- Main ticket row -->
+              <div class="flex justify-between items-center">
+                <div>
+                  <h4 class="font-semibold text-gray-700 dark:text-gray-200">{{ ticket.name }}</h4>
+                  <p v-if="ticket.description" class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.description }}</p>
 
-                <!-- Display pricing with membership discount styling -->
-                <div v-if="(ticket as any).has_membership_discount" class="space-y-1">
-                  <p class="text-sm text-pink-500 dark:text-pink-400 font-medium">
-                    {{ formatTicketPrice((ticket as any).membership_price, ticket.currency) }}
-                    <span class="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-0.5 rounded">
-                      Save {{ (ticket as any).savings_percentage }}%
-                    </span>
-                  </p>
-                  <p class="text-xs text-gray-400 dark:text-gray-500 line-through">
+                  <!-- Display pricing with membership discount styling -->
+                  <div v-if="(ticket as any).has_membership_discount" class="space-y-1">
+                    <p class="text-sm text-pink-500 dark:text-pink-400 font-medium">
+                      {{ formatTicketPrice((ticket as any).membership_price, ticket.currency) }}
+                      <span class="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-0.5 rounded">
+                        {{ t('tickets.membership_pricing.save_percent', { percent: (ticket as any).savings_percentage }) }}
+                      </span>
+                    </p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 line-through">
+                      {{ formatTicketPrice(ticket.price, ticket.currency) }}
+                    </p>
+                  </div>
+
+                  <!-- Regular pricing when no membership discount -->
+                  <p v-else class="text-sm text-pink-500 dark:text-pink-400 font-medium">
                     {{ formatTicketPrice(ticket.price, ticket.currency) }}
                   </p>
                 </div>
-
-                <!-- Regular pricing when no membership discount -->
-                <p v-else class="text-sm text-pink-500 dark:text-pink-400 font-medium">
-                  {{ formatTicketPrice(ticket.price, ticket.currency) }}
-                </p>
+                <div class="flex items-center space-x-2">
+                  <button
+                    @click="decrementQuantity(ticket.id)"
+                    class="px-2 py-1 border dark:border-gray-600 rounded text-pink-500 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-700/30 disabled:opacity-50"
+                    :disabled="(selectedTickets[ticket.id] || 0) === 0"
+                  >
+                    -
+                  </button>
+                  <span class="w-8 text-center text-gray-700 dark:text-gray-300">{{ selectedTickets[ticket.id] || 0 }}</span>
+                  <button
+                    @click="incrementQuantity(ticket.id)"
+                    class="px-2 py-1 border dark:border-gray-600 rounded text-pink-500 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-700/30"
+                    :disabled="ticket.quantity_available !== undefined && (selectedTickets[ticket.id] || 0) >= ticket.quantity_available"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-              <div class="flex items-center space-x-2">
+
+              <!-- Membership Pricing Collapsible Section -->
+              <div v-if="hasMembershipPrices(ticket)" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                 <button
-                  @click="decrementQuantity(ticket.id)"
-                  class="px-2 py-1 border dark:border-gray-600 rounded text-pink-500 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-700/30 disabled:opacity-50"
-                  :disabled="(selectedTickets[ticket.id] || 0) === 0"
+                  @click="toggleMembershipTiers(ticket.id)"
+                  class="flex items-center justify-between w-full text-left text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300"
                 >
-                  -
+                  <span class="flex items-center gap-1.5">
+                    <Crown class="w-4 h-4" />
+                    {{ t('tickets.membership_pricing.title') }}
+                  </span>
+                  <component
+                    :is="expandedMembershipTiers[ticket.id] ? ChevronUp : ChevronDown"
+                    class="w-4 h-4"
+                  />
                 </button>
-                <span class="w-8 text-center text-gray-700 dark:text-gray-300">{{ selectedTickets[ticket.id] || 0 }}</span>
-                <button
-                  @click="incrementQuantity(ticket.id)"
-                  class="px-2 py-1 border dark:border-gray-600 rounded text-pink-500 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-700/30"
-                  :disabled="ticket.quantity_available !== undefined && (selectedTickets[ticket.id] || 0) >= ticket.quantity_available"
-                >
-                  +
-                </button>
+
+                <!-- Expanded membership tiers list -->
+                <Transition name="slide">
+                  <div v-if="expandedMembershipTiers[ticket.id]" class="mt-2 space-y-2">
+                    <div
+                      v-for="membershipPrice in ticket.all_membership_prices"
+                      :key="membershipPrice.membership_level_id"
+                      class="flex items-center justify-between p-2 rounded-md text-sm"
+                      :class="[
+                        userMembershipLevelId === membershipPrice.membership_level_id
+                          ? 'bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-600'
+                          : 'bg-gray-100 dark:bg-gray-600/50'
+                      ]"
+                    >
+                      <div class="flex items-center gap-2">
+                        <Star
+                          v-if="userMembershipLevelId === membershipPrice.membership_level_id"
+                          class="w-4 h-4 text-amber-500"
+                        />
+                        <span class="font-medium text-gray-700 dark:text-gray-200">
+                          {{ getMembershipLevelName(membershipPrice) }}
+                        </span>
+                        <span
+                          v-if="userMembershipLevelId === membershipPrice.membership_level_id"
+                          class="text-xs text-amber-600 dark:text-amber-400"
+                        >
+                          ({{ t('tickets.membership_pricing.your_tier') }})
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-pink-500 dark:text-pink-400 font-medium">
+                          {{ formatTicketPrice(membershipPrice.discounted_price, ticket.currency) }}
+                        </span>
+                        <span class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded">
+                          {{ t('tickets.membership_pricing.save_percent', { percent: membershipPrice.savings_percentage }) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Transition>
               </div>
             </div>
           </div>
           <div v-else class="text-center text-gray-500 dark:text-gray-400 py-4">
             <p>No tickets available for this occurrence.</p>
+          </div>
+        </div>
+
+        <!-- Membership CTA for non-members -->
+        <div
+          v-if="(!isAuthenticated || !userMembershipLevelId) && anyTicketHasMembershipPricing && highestSavingsPercentage > 0"
+          class="mx-4 mb-2 p-3 bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 border border-amber-200 dark:border-amber-700 rounded-lg"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <Crown class="w-5 h-5 text-amber-500 flex-shrink-0" />
+              <span class="text-sm font-medium text-amber-800 dark:text-amber-200">
+                {{ t('tickets.membership_pricing.save_up_to', { percent: highestSavingsPercentage }) }}
+              </span>
+            </div>
+            <Link
+              href="/membership"
+              class="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 rounded-md transition-colors whitespace-nowrap"
+            >
+              {{ t('tickets.membership_pricing.become_member') }}
+            </Link>
+          </div>
+        </div>
+
+        <!-- Membership Upgrade CTA for existing members with upgrade available -->
+        <div
+          v-else-if="isAuthenticated && userMembershipLevelId && hasUpgradeAvailable && additionalSavingsWithUpgrade > 0"
+          class="mx-4 mb-2 p-3 bg-gradient-to-r from-purple-50 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-800/30 border border-purple-200 dark:border-purple-700 rounded-lg"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <Crown class="w-5 h-5 text-purple-500 flex-shrink-0" />
+              <span class="text-sm font-medium text-purple-800 dark:text-purple-200">
+                {{ t('tickets.membership_pricing.upgrade_save_more', { percent: additionalSavingsWithUpgrade }) }}
+              </span>
+            </div>
+            <Link
+              href="/membership"
+              class="px-3 py-1.5 text-sm font-medium text-white bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 rounded-md transition-colors whitespace-nowrap"
+            >
+              {{ t('tickets.membership_pricing.upgrade_membership') }}
+            </Link>
           </div>
         </div>
 
@@ -316,5 +508,26 @@ const confirmPurchase = async () => {
 .modal-enter-from .bg-white,
 .modal-leave-to .bg-white {
   transform: scale(0.95) translateY(20px);
+}
+
+/* Slide transition for membership tiers */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.2s ease-out;
+  overflow: hidden;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-10px);
+}
+
+.slide-enter-to,
+.slide-leave-from {
+  opacity: 1;
+  max-height: 500px;
+  transform: translateY(0);
 }
 </style>

@@ -1095,7 +1095,20 @@
         "add_to_cart": "加入購物車",
         "buy_now": "立即購買",
         "book_now": "立即預訂",
-        "reserve_now": "立即預約"
+        "reserve_now": "立即預約",
+        "membership_pricing": {
+            "title": "會員優惠價格",
+            "regular_price": "原價",
+            "member_price": "會員價",
+            "save_percent": "節省 {percent}%",
+            "save_up_to": "加入會員最高可省 {percent}%！",
+            "become_member": "成為會員",
+            "your_tier": "您的會員等級",
+            "view_all_tiers": "查看所有會員價格",
+            "hide_tiers": "收起會員價格",
+            "upgrade_save_more": "升級會員再省 {percent}%！",
+            "upgrade_membership": "升級會員"
+        }
     },
     "users": {
         "index_title": "使用者",

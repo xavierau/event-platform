@@ -639,7 +639,13 @@ const handleCommentAdded = (newComment: Comment) => {
             </footer>
 
             <!-- Ticket Purchase Modal -->
-            <TicketPurchaseModal :show-modal="showPurchaseModal" :occurrence="selectedOccurrence" @close="closePurchaseModal" />
+            <TicketPurchaseModal
+                :show-modal="showPurchaseModal"
+                :occurrence="selectedOccurrence"
+                :is-authenticated="isAuthenticated"
+                :user-membership-level-id="event.user_membership?.level_id"
+                @close="closePurchaseModal"
+            />
 
             <!-- Member QR Modal -->
             <Teleport to="body">
