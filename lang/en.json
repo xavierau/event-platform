@@ -1094,7 +1094,20 @@
         "add_to_cart": "Add to Cart",
         "buy_now": "Buy Now",
         "book_now": "Book Now",
-        "reserve_now": "Reserve Now"
+        "reserve_now": "Reserve Now",
+        "membership_pricing": {
+            "title": "Membership Savings Available",
+            "regular_price": "Regular Price",
+            "member_price": "Member Price",
+            "save_percent": "Save {percent}%",
+            "save_up_to": "Join Membership & Save up to {percent}%!",
+            "become_member": "Become a Member",
+            "your_tier": "Your Tier",
+            "view_all_tiers": "View all member prices",
+            "hide_tiers": "Hide member prices",
+            "upgrade_save_more": "Upgrade & Save an extra {percent}%!",
+            "upgrade_membership": "Upgrade Membership"
+        }
     },
     "users": {
         "index_title": "Users",

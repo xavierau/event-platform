@@ -1073,7 +1073,20 @@
         "add_to_cart": "加入购物车",
         "buy_now": "立即购买",
         "book_now": "立即预订",
-        "reserve_now": "立即预约"
+        "reserve_now": "立即预约",
+        "membership_pricing": {
+            "title": "会员优惠价格",
+            "regular_price": "原价",
+            "member_price": "会员价",
+            "save_percent": "节省 {percent}%",
+            "save_up_to": "加入会员最高可省 {percent}%！",
+            "become_member": "成为会员",
+            "your_tier": "您的会员等级",
+            "view_all_tiers": "查看所有会员价格",
+            "hide_tiers": "收起会员价格",
+            "upgrade_save_more": "升级会员再省 {percent}%！",
+            "upgrade_membership": "升级会员"
+        }
     },
     "users": {
         "index_title": "用户",

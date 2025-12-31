@@ -24,6 +24,20 @@ export interface TicketDefinition {
 }
 
 /**
+ * Membership price info for public display
+ */
+export interface MembershipPriceInfo {
+    membership_level_id: number;
+    membership_level_name: Record<string, string> | string; // Translatable name
+    membership_level_slug: string;
+    discounted_price: number; // In currency units (not cents)
+    savings_amount: number; // Amount saved
+    savings_percentage: number; // Percentage saved
+    discount_type: 'percentage' | 'fixed';
+    discount_value: number;
+}
+
+/**
  * Simplified ticket definition for public-facing components (e.g., event detail page, purchase modal)
  */
 export interface PublicTicketType {
@@ -40,6 +54,8 @@ export interface PublicTicketType {
     has_membership_discount?: boolean; // Whether user gets a discount
     savings_amount?: number; // Amount saved with membership discount
     savings_percentage?: number; // Percentage saved with membership discount
+    // All available membership prices for this ticket (for public display)
+    all_membership_prices?: MembershipPriceInfo[];
 }
 
 /**
