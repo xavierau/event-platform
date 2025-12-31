@@ -119,7 +119,8 @@
       "Bash(resources/js/types/ticket-hold.ts )",
       "Bash(routes/web.php )",
       "Bash(tests/Feature/TicketHold/ )",
-      "Bash(tests/Unit/TicketHold/)"
+      "Bash(tests/Unit/TicketHold/)",
+      "Bash(GIT_MERGE_AUTOEDIT=no git flow hotfix finish:*)"
     ],
     "deny": []
   },
