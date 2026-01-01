@@ -112,6 +112,8 @@ class PublicEventDisplayService
             'eventOccurrences.ticketDefinitions' => function ($query) {
                 // Apply the same availability filtering as EventService
                 $this->applyTicketAvailabilityFilter($query);
+                // Eager load membership discounts for pricing display
+                $query->with('membershipDiscounts');
             },
         ]);
 

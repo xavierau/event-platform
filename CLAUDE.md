@@ -89,6 +89,30 @@ return Inertia::render('Page', [
 
 **Route errors usually = missing data, not bad routes. Check `props.model.id` exists.**
 
+## Bug Prevention Guidelines (Learned from Production Issues)
+
+These 10 rules are distilled from 17 debugging journals. Follow them to avoid recurring bugs:
+
+1. **Every class, enum, or composable you use MUST have an explicit import statement at the top of the file—never rely on namespace resolution or auto-imports.**
+
+2. **Use `v-model` for Vue form inputs; never use `:value` + `@input` unless the component library explicitly requires a different pattern.**
+
+3. **DTO parameter types must exactly match model attribute types—when you change an enum or type on a model, update ALL corresponding DTOs immediately.**
+
+4. **Never transform, filter, or strip keys from data objects before sending to the backend—preserve the complete structure and let backend validation handle it.**
+
+5. **Controller prop names and data structures MUST exactly match what the Vue component expects—always reference existing working components to verify the contract.**
+
+6. **Never assume database relationships exist—use `whereHas()` to filter orphaned records and null-safe operators (`?->`) for optional relationships.**
+
+7. **Every `Inertia::render('Path/Page')` call MUST have a corresponding Vue file at `resources/js/pages/Path/Page.vue`—run `npm run build` before deploying to catch missing pages.**
+
+8. **Always verify migration status with `php artisan migrate:status` before testing features—silent migration failures cause "working code" to appear broken.**
+
+9. **In Vue templates, use single backslashes for PHP class names (`App\Models\Event`), and always test with actual frontend-generated requests, not just manual curl commands.**
+
+10. **When switching state in SPAs (locale, user, theme), load the new data BEFORE updating the reactive state—the UI will render with stale data if you update state first.**
+
 ## Laravel Boost Guidelines
 
 ### Package Versions
